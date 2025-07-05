@@ -36,6 +36,8 @@ export const availableTickers = pgTable("available_tickers", {
   id: uuid("id").primaryKey().defaultRandom(),
   symbol: text("symbol").notNull().unique(),
   description: text("description").notNull(),
+  category: text("category", { enum: ["major", "layer1", "defi", "legacy", "utility", "emerging", "other"] }).notNull().default("other"),
+  marketCap: integer("market_cap").default(999), // market cap ranking
   isEnabled: boolean("is_enabled").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
