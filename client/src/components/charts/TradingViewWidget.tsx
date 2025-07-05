@@ -12,12 +12,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, Activity, DollarSign } from "lucide-react";
 
-declare global {
-  interface Window {
-    TradingView: any;
-  }
-}
-
 interface TradingViewWidgetProps {
   symbol?: string;
   theme?: 'light' | 'dark';
@@ -35,6 +29,15 @@ interface Signal {
   notes?: string;
 }
 
+interface MarketData {
+  symbol: string;
+  price: number;
+  change24h?: number;
+  volume24h?: number;
+  high24h?: number;
+  low24h?: number;
+}
+
 export default function TradingViewWidget({ 
   symbol = 'BINANCE:BTCUSDT', 
   theme = 'dark',
@@ -42,246 +45,218 @@ export default function TradingViewWidget({
   enableTrading = true,
   showSignals = true
 }: TradingViewWidgetProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const widgetRef = useRef<any>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [tradeAmount, setTradeAmount] = useState('');
   const [tradeMode, setTradeMode] = useState<'market' | 'limit'>('market');
   const [limitPrice, setLimitPrice] = useState('');
+  const [priceHistory, setPriceHistory] = useState<number[]>([]);
+  const [currentPrice, setCurrentPrice] = useState<number>(0);
   const { toast } = useToast();
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
 
-  // Handle unhandled promise rejections
-  useEffect(() => {
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('Unhandled promise rejection:', event.reason);
-      event.preventDefault(); // Prevent default browser behavior
-    };
+  // Extract ticker from symbol (BINANCE:BTCUSDT -> BTCUSDT)
+  const ticker = symbol.includes(':') ? symbol.split(':')[1] : symbol;
 
-    window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    
-    return () => {
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-    };
-  }, []);
-
-  // Get current price and signals
-  const { data: priceData } = useQuery({
-    queryKey: [`/api/market/price/${symbol.split(':')[1] || 'BTCUSDT'}`],
-    refetchInterval: 5000,
+  // Fetch current market data
+  const { data: marketData } = useQuery({
+    queryKey: [`/api/market/price/${ticker}`],
+    refetchInterval: 5000, // Update every 5 seconds
   });
 
-  const { data: signals } = useQuery({
-    queryKey: ['/api/signals'],
-    enabled: isAuthenticated && showSignals,
-    refetchInterval: 10000,
-    retry: false,
-    staleTime: 30000,
-  });
-
-  const { data: portfolio } = useQuery({
-    queryKey: ['/api/user/portfolio'],
-    enabled: isAuthenticated,
-    retry: false,
-    staleTime: 30000,
-  });
-
-  const { data: tradingSettings } = useQuery({
-    queryKey: ['/api/user/trading-settings'],
-    enabled: isAuthenticated,
-    retry: false,
-    staleTime: 30000,
+  // Fetch signals for this ticker
+  const { data: signals = [] } = useQuery({
+    queryKey: [`/api/signals/${ticker}`],
   });
 
   // Trading mutations
-  const executeTradeMutation = useMutation({
-    mutationFn: async (tradeData: {
-      ticker: string;
-      type: 'buy' | 'sell';
-      amount: string;
-      price?: string;
-      mode: 'market' | 'limit';
-    }) => {
-      const response = await apiRequest('POST', '/api/trading/execute', tradeData);
-      return response.json();
+  const buyMutation = useMutation({
+    mutationFn: async (data: { amount: number; price?: number }) => {
+      return apiRequest('POST', '/api/trading/buy', {
+        ticker,
+        amount: data.amount,
+        type: tradeMode,
+        price: data.price
+      });
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast({
-        title: "Trade Executed",
-        description: `${data.type.toUpperCase()} order for ${data.amount} ${data.ticker} completed`,
+        title: "Buy Order Placed",
+        description: `Successfully placed ${tradeMode} buy order for ${ticker}`,
       });
       setTradeAmount('');
       setLimitPrice('');
     },
-    onError: (error: any) => {
-      console.error('Trading error:', error);
+    onError: (error) => {
       toast({
         title: "Trade Failed",
-        description: error?.message || "An error occurred while executing the trade",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  // Load TradingView script
+  const sellMutation = useMutation({
+    mutationFn: async (data: { amount: number; price?: number }) => {
+      return apiRequest('POST', '/api/trading/sell', {
+        ticker,
+        amount: data.amount,
+        type: tradeMode,
+        price: data.price
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sell Order Placed", 
+        description: `Successfully placed ${tradeMode} sell order for ${ticker}`,
+      });
+      setTradeAmount('');
+      setLimitPrice('');
+    },
+    onError: (error) => {
+      toast({
+        title: "Trade Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update price history and current price
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/tv.js';
-    script.async = true;
-    script.onload = () => setIsLoaded(true);
-    document.head.appendChild(script);
+    if (marketData?.price) {
+      setCurrentPrice(marketData.price);
+      setPriceHistory(prev => {
+        const newHistory = [...prev, marketData.price];
+        return newHistory.slice(-100); // Keep last 100 price points
+      });
+    }
+  }, [marketData]);
 
-    return () => {
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
-    };
-  }, []);
-
-  // Initialize TradingView widget with comprehensive error handling
+  // Draw chart on canvas
   useEffect(() => {
-    let isMounted = true;
-    
-    const initializeWidget = async () => {
-      if (!isLoaded || !containerRef.current || !window.TradingView || !isMounted) {
-        return;
+    const canvas = canvasRef.current;
+    if (!canvas || priceHistory.length < 2) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Set canvas size
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * devicePixelRatio;
+    canvas.height = rect.height * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    const width = rect.width;
+    const height = rect.height;
+
+    // Clear canvas
+    ctx.fillStyle = theme === 'dark' ? '#0a0a0a' : '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+
+    // Calculate price range
+    const minPrice = Math.min(...priceHistory);
+    const maxPrice = Math.max(...priceHistory);
+    const priceRange = maxPrice - minPrice || 1;
+
+    // Draw grid lines
+    ctx.strokeStyle = theme === 'dark' ? '#333333' : '#e5e5e5';
+    ctx.lineWidth = 1;
+
+    // Horizontal grid lines
+    for (let i = 0; i <= 5; i++) {
+      const y = (height / 5) * i;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+
+      // Price labels
+      const price = maxPrice - (priceRange / 5) * i;
+      ctx.fillStyle = theme === 'dark' ? '#888888' : '#666666';
+      ctx.font = '12px Arial';
+      ctx.fillText(`$${price.toFixed(0)}`, 5, y - 5);
+    }
+
+    // Vertical grid lines
+    for (let i = 0; i <= 10; i++) {
+      const x = (width / 10) * i;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+
+    // Draw price line
+    ctx.strokeStyle = '#00d4aa';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    priceHistory.forEach((price, index) => {
+      const x = (width / (priceHistory.length - 1)) * index;
+      const y = height - ((price - minPrice) / priceRange) * height;
+
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
       }
+    });
 
-      try {
-        // Clear existing widget safely
-        if (widgetRef.current) {
-          try {
-            widgetRef.current.remove();
-          } catch (removeError) {
-            console.warn('Widget removal error (non-critical):', removeError);
-          }
-          widgetRef.current = null;
-        }
+    ctx.stroke();
 
-        // Add promise rejection handler specifically for TradingView
-        const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-          if (event.reason && event.reason.message && 
-              event.reason.message.includes('TradingView')) {
-            event.preventDefault();
-            console.warn('TradingView promise rejection handled:', event.reason);
-          }
-        };
+    // Draw current price indicator
+    if (currentPrice > 0) {
+      const currentY = height - ((currentPrice - minPrice) / priceRange) * height;
+      
+      // Price line
+      ctx.strokeStyle = '#ffcc00';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(0, currentY);
+      ctx.lineTo(width, currentY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Price label
+      ctx.fillStyle = '#ffcc00';
+      ctx.font = 'bold 14px Arial';
+      ctx.fillText(`$${currentPrice.toFixed(2)}`, width - 100, currentY - 5);
+    }
+
+    // Draw buy/sell signals
+    if (showSignals && signals.length > 0) {
+      signals.forEach((signal: Signal) => {
+        const signalPrice = parseFloat(signal.price);
+        const signalY = height - ((signalPrice - minPrice) / priceRange) * height;
         
-        window.addEventListener('unhandledrejection', handleUnhandledRejection);
+        // Signal marker
+        ctx.fillStyle = signal.type === 'buy' ? '#22c55e' : '#ef4444';
+        ctx.beginPath();
+        ctx.arc(width - 20, signalY, 6, 0, 2 * Math.PI);
+        ctx.fill();
 
-        // Initialize widget with timeout
-        const widgetPromise = new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            reject(new Error('TradingView widget initialization timeout'));
-          }, 10000);
+        // Signal label
+        ctx.fillStyle = signal.type === 'buy' ? '#22c55e' : '#ef4444';
+        ctx.font = '12px Arial';
+        ctx.fillText(signal.type.toUpperCase(), width - 50, signalY + 4);
+      });
+    }
 
-          try {
-            const widget = new window.TradingView.widget({
-              width: '100%',
-              height: typeof window !== 'undefined' && window.innerWidth < 768 
-                ? Math.max(300, height - 200) 
-                : height - 150,
-              symbol: symbol,
-              interval: '15',
-              timezone: 'Etc/UTC',
-              theme: theme,
-              style: '1',
-              locale: 'en',
-              toolbar_bg: theme === 'dark' ? '#1a1a1a' : '#ffffff',
-              enable_publishing: false,
-              hide_top_toolbar: false,
-              hide_legend: false,
-              save_image: false,
-              container_id: containerRef.current!.id,
-              studies: [
-                'Volume@tv-basicstudies',
-                'RSI@tv-basicstudies',
-              ],
-              overrides: {
-                'paneProperties.background': theme === 'dark' ? '#0a0a0a' : '#ffffff',
-                'paneProperties.vertGridProperties.color': theme === 'dark' ? '#2a2a2a' : '#e0e0e0',
-                'paneProperties.horzGridProperties.color': theme === 'dark' ? '#2a2a2a' : '#e0e0e0',
-                'symbolWatermarkProperties.transparency': 90,
-                'scalesProperties.textColor': theme === 'dark' ? '#d1d5db' : '#374151',
-              },
-              loading_screen: {
-                backgroundColor: theme === 'dark' ? '#0a0a0a' : '#ffffff',
-                foregroundColor: theme === 'dark' ? '#ffffff' : '#000000'
-              },
-              disabled_features: [
-                'use_localstorage_for_settings',
-                'save_chart_properties_to_local_storage'
-              ],
-              enabled_features: [
-                'study_templates',
-                'side_toolbar_in_fullscreen_mode'
-              ],
-              onChartReady: () => {
-                clearTimeout(timeout);
-                resolve(widget);
-              }
-            });
+  }, [priceHistory, currentPrice, theme, showSignals, signals]);
 
-            if (isMounted) {
-              widgetRef.current = widget;
-            }
-          } catch (error) {
-            clearTimeout(timeout);
-            reject(error);
-          }
-        });
-
-        await widgetPromise;
-        
-        // Remove the event listener after successful initialization
-        setTimeout(() => {
-          window.removeEventListener('unhandledrejection', handleUnhandledRejection);
-        }, 1000);
-
-      } catch (error) {
-        console.error('TradingView widget initialization error:', error);
-        // Fallback: show a simple message instead of crashing
-        if (containerRef.current && isMounted) {
-          containerRef.current.innerHTML = `
-            <div class="flex items-center justify-center h-full bg-background border rounded-lg">
-              <div class="text-center p-4">
-                <p class="text-muted-foreground">Chart loading...</p>
-                <p class="text-xs text-muted-foreground mt-2">Symbol: ${symbol}</p>
-              </div>
-            </div>
-          `;
-        }
-      }
-    };
-
-    // Add delay to ensure proper mounting
-    const timeoutId = setTimeout(initializeWidget, 100);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
-      if (widgetRef.current) {
-        try {
-          widgetRef.current.remove();
-        } catch (error) {
-          console.warn('Widget cleanup error (non-critical):', error);
-        }
-        widgetRef.current = null;
-      }
-    };
-  }, [isLoaded, symbol, theme, height]);
-
-  const handleTrade = async (type: 'buy' | 'sell') => {
-    if (!isAuthenticated) {
+  const handleTrade = (action: 'buy' | 'sell') => {
+    if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please log in to execute trades",
+        description: "Please log in to trade",
         variant: "destructive",
       });
       return;
     }
 
-    if (!tradeAmount || parseFloat(tradeAmount) <= 0) {
+    const amount = parseFloat(tradeAmount);
+    if (!amount || amount <= 0) {
       toast({
         title: "Invalid Amount",
         description: "Please enter a valid trade amount",
@@ -290,269 +265,205 @@ export default function TradingViewWidget({
       return;
     }
 
-    if (tradeMode === 'limit' && (!limitPrice || parseFloat(limitPrice) <= 0)) {
-      toast({
-        title: "Invalid Price",
-        description: "Please enter a valid limit price",
-        variant: "destructive",
-      });
-      return;
+    const tradeData: { amount: number; price?: number } = { amount };
+    
+    if (tradeMode === 'limit') {
+      const price = parseFloat(limitPrice);
+      if (!price || price <= 0) {
+        toast({
+          title: "Invalid Price",
+          description: "Please enter a valid limit price",
+          variant: "destructive",
+        });
+        return;
+      }
+      tradeData.price = price;
     }
 
-    const ticker = symbol.split(':')[1] || 'BTCUSDT';
-    
-    await executeTradeMutation.mutateAsync({
-      ticker,
-      type,
-      amount: tradeAmount,
-      price: tradeMode === 'limit' ? limitPrice : undefined,
-      mode: tradeMode,
-    });
+    if (action === 'buy') {
+      buyMutation.mutate(tradeData);
+    } else {
+      sellMutation.mutate(tradeData);
+    }
   };
 
-  const currentPrice = priceData?.price || 0;
-  const currentTicker = symbol.split(':')[1] || 'BTCUSDT';
-  const tickerPortfolio = portfolio?.find((p: any) => p.ticker === currentTicker);
-
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            {currentTicker} Trading Chart
-          </CardTitle>
-          <div className="flex items-center gap-4">
-            {priceData && (
-              <Badge variant="outline" className="text-lg px-3 py-1">
-                <DollarSign className="h-4 w-4 mr-1" />
-                ${parseFloat(priceData.price).toLocaleString()}
-              </Badge>
-            )}
-            {showSignals && signals && signals.length > 0 && (
-              <Badge variant="secondary">
-                {signals.length} Active Signals
-              </Badge>
+    <div className="space-y-4">
+      {/* Chart Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">{ticker} Trading Chart</h3>
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+            <span>Price: ${currentPrice.toFixed(2)}</span>
+            {marketData?.change24h && (
+              <span className={marketData.change24h >= 0 ? 'text-green-400' : 'text-red-400'}>
+                {marketData.change24h >= 0 ? '+' : ''}{marketData.change24h.toFixed(2)}%
+              </span>
             )}
           </div>
         </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {/* TradingView Chart Container */}
-        <div 
-          ref={containerRef}
-          id={`tradingview-widget-${symbol.replace(':', '-')}`}
-          className="w-full bg-background border rounded-lg min-h-[300px] sm:min-h-[400px] tradingview-widget-container chart-container"
-          style={{ 
-            height: typeof window !== 'undefined' && window.innerWidth < 768 
-              ? Math.max(300, height - 200) 
-              : height - 150 
-          }}
-        >
-          {!isLoaded && (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-            </div>
-          )}
+        <div className="flex items-center space-x-2">
+          <Badge variant="outline">Live</Badge>
+          <Badge variant={showSignals ? "default" : "secondary"}>
+            Signals {showSignals ? 'On' : 'Off'}
+          </Badge>
         </div>
+      </div>
 
-        {/* Trading Controls */}
-        {enableTrading && (
-          <Tabs defaultValue="trade" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 tabs-list">
-              <TabsTrigger value="trade" className="text-xs sm:text-sm tabs-trigger">Trade</TabsTrigger>
-              <TabsTrigger value="portfolio" className="text-xs sm:text-sm tabs-trigger">Portfolio</TabsTrigger>
-              <TabsTrigger value="signals" className="text-xs sm:text-sm tabs-trigger">Signals</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="trade" className="space-y-4">
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                <div className="space-y-4 trading-controls">
-                  <div>
-                    <Label htmlFor="trade-mode" className="text-sm font-medium">Order Type</Label>
-                    <Select value={tradeMode} onValueChange={(value: 'market' | 'limit') => setTradeMode(value)}>
-                      <SelectTrigger className="h-12 text-base">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="market">Market Order</SelectItem>
-                        <SelectItem value="limit">Limit Order</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="trade-amount" className="text-sm font-medium">Amount</Label>
+      {/* Chart Canvas */}
+      <div className="relative bg-card border border-border rounded-lg overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          className="w-full block"
+          style={{ height: `${height}px` }}
+        />
+        
+        {/* Loading overlay */}
+        {priceHistory.length < 2 && (
+          <div className="absolute inset-0 flex items-center justify-center bg-card/80">
+            <div className="text-center">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+              <p className="text-muted-foreground">Loading chart data...</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Trading Panel */}
+      {enableTrading && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground">Quick Trade</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={tradeMode} onValueChange={(value) => setTradeMode(value as 'market' | 'limit')}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="market">Market Order</TabsTrigger>
+                <TabsTrigger value="limit">Limit Order</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="market" className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount" className="text-foreground">Amount (USD)</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    placeholder="Enter amount"
+                    value={tradeAmount}
+                    onChange={(e) => setTradeAmount(e.target.value)}
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={() => handleTrade('buy')} 
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    disabled={buyMutation.isPending}
+                  >
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    {buyMutation.isPending ? 'Processing...' : 'Buy'}
+                  </Button>
+                  <Button 
+                    onClick={() => handleTrade('sell')} 
+                    variant="destructive" 
+                    className="flex-1"
+                    disabled={sellMutation.isPending}
+                  >
+                    <TrendingDown className="w-4 h-4 mr-2" />
+                    {sellMutation.isPending ? 'Processing...' : 'Sell'}
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="limit" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="limit-amount" className="text-foreground">Amount (USD)</Label>
                     <Input
-                      id="trade-amount"
+                      id="limit-amount"
                       type="number"
-                      placeholder="0.00"
+                      placeholder="Enter amount"
                       value={tradeAmount}
                       onChange={(e) => setTradeAmount(e.target.value)}
-                      min="0"
-                      step="0.01"
-                      className="h-12 text-base"
                     />
                   </div>
-                  
-                  {tradeMode === 'limit' && (
-                    <div>
-                      <Label htmlFor="limit-price" className="text-sm font-medium">Limit Price</Label>
-                      <Input
-                        id="limit-price"
-                        type="number"
-                        placeholder={currentPrice.toString()}
-                        value={limitPrice}
-                        onChange={(e) => setLimitPrice(e.target.value)}
-                        min="0"
-                        step="0.01"
-                        className="h-12 text-base"
-                      />
-                    </div>
-                  )}
-                  
-                  {/* Quick Amount Buttons */}
-                  <div className="quick-amount-buttons grid grid-cols-4 gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setTradeAmount('0.01')}
-                      className="text-xs h-8 min-h-[44px] sm:min-h-[32px]"
-                    >
-                      0.01
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setTradeAmount('0.1')}
-                      className="text-xs h-8 min-h-[44px] sm:min-h-[32px]"
-                    >
-                      0.1
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setTradeAmount('1')}
-                      className="text-xs h-8 min-h-[44px] sm:min-h-[32px]"
-                    >
-                      1.0
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setTradeAmount('10')}
-                      className="text-xs h-8 min-h-[44px] sm:min-h-[32px]"
-                    >
-                      10
-                    </Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="limit-price" className="text-foreground">Limit Price</Label>
+                    <Input
+                      id="limit-price"
+                      type="number"
+                      placeholder="Enter price"
+                      value={limitPrice}
+                      onChange={(e) => setLimitPrice(e.target.value)}
+                    />
                   </div>
                 </div>
-                
-                <div className="space-y-4">
-                  <div className="buy-sell-buttons grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Button
-                      onClick={() => handleTrade('buy')}
-                      disabled={!isAuthenticated || executeTradeMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700 h-12 text-base font-semibold min-h-[48px]"
-                      size="lg"
-                    >
-                      <TrendingUp className="h-5 w-5 mr-2" />
-                      {executeTradeMutation.isPending ? 'Processing...' : 'BUY'}
-                    </Button>
-                    <Button
-                      onClick={() => handleTrade('sell')}
-                      disabled={!isAuthenticated || executeTradeMutation.isPending}
-                      variant="destructive"
-                      className="h-12 text-base font-semibold min-h-[48px]"
-                      size="lg"
-                    >
-                      <TrendingDown className="h-5 w-5 mr-2" />
-                      {executeTradeMutation.isPending ? 'Processing...' : 'SELL'}
-                    </Button>
-                  </div>
-                  
-                  {!isAuthenticated && (
-                    <div className="bg-muted border border-border p-4 rounded-lg text-center">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Authentication required to trade
-                      </p>
-                      <Button variant="outline" size="sm" asChild>
-                        <a href="/login">Log In</a>
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {tradeAmount && currentPrice && (
-                    <div className="bg-muted p-4 rounded-lg">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-muted-foreground">Estimated Total:</span>
-                        <span className="font-semibold text-lg">
-                          ${(parseFloat(tradeAmount) * currentPrice).toFixed(2)}
-                        </span>
-                      </div>
-                      {tradeMode === 'market' && (
-                        <p className="text-xs text-muted-foreground">Market price execution</p>
-                      )}
-                      {tradeMode === 'limit' && limitPrice && (
-                        <p className="text-xs text-muted-foreground">
-                          Limit order at ${parseFloat(limitPrice).toFixed(2)}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={() => handleTrade('buy')} 
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    disabled={buyMutation.isPending}
+                  >
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    {buyMutation.isPending ? 'Processing...' : 'Buy Limit'}
+                  </Button>
+                  <Button 
+                    onClick={() => handleTrade('sell')} 
+                    variant="destructive" 
+                    className="flex-1"
+                    disabled={sellMutation.isPending}
+                  >
+                    <TrendingDown className="w-4 h-4 mr-2" />
+                    {sellMutation.isPending ? 'Processing...' : 'Sell Limit'}
+                  </Button>
                 </div>
+              </TabsContent>
+            </Tabs>
+
+            {/* Quick Amount Buttons */}
+            <div className="mt-4">
+              <Label className="text-foreground">Quick amounts:</Label>
+              <div className="flex space-x-2 mt-2">
+                {['100', '500', '1000', '5000'].map((amount) => (
+                  <Button
+                    key={amount}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTradeAmount(amount)}
+                  >
+                    ${amount}
+                  </Button>
+                ))}
               </div>
-            </TabsContent>
-            
-            <TabsContent value="portfolio" className="space-y-4">
-              {isAuthenticated ? (
-                <div className="space-y-2">
-                  {tickerPortfolio ? (
-                    <div className="bg-muted p-4 rounded-lg">
-                      <h3 className="font-semibold">{currentTicker} Position</h3>
-                      <p>Holdings: {tickerPortfolio.quantity}</p>
-                      <p>Avg Price: ${parseFloat(tickerPortfolio.averagePrice).toFixed(2)}</p>
-                      <p className={`font-semibold ${parseFloat(tickerPortfolio.totalPnl) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        P&L: ${parseFloat(tickerPortfolio.totalPnl).toFixed(2)}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">No position in {currentTicker}</p>
-                  )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Signals */}
+      {showSignals && signals.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground">Recent Signals</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {signals.slice(0, 3).map((signal: Signal) => (
+                <div key={signal.id} className="flex items-center justify-between p-2 border border-border rounded">
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={signal.type === 'buy' ? 'default' : 'destructive'}>
+                      {signal.type.toUpperCase()}
+                    </Badge>
+                    <span className="text-foreground">${signal.price}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(signal.timestamp).toLocaleTimeString()}
+                  </span>
                 </div>
-              ) : (
-                <p className="text-muted-foreground">Log in to view portfolio</p>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="signals" className="space-y-4">
-              {showSignals && signals && signals.length > 0 ? (
-                <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {signals.slice(0, 5).map((signal: Signal) => (
-                    <div key={signal.id} className="flex items-center justify-between bg-muted p-2 rounded">
-                      <div className="flex items-center gap-2">
-                        {signal.type === 'buy' ? (
-                          <TrendingUp className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4 text-red-600" />
-                        )}
-                        <span className="font-medium">{signal.ticker}</span>
-                        <Badge variant={signal.type === 'buy' ? 'default' : 'destructive'}>
-                          {signal.type.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <span className="text-sm">${parseFloat(signal.price).toFixed(2)}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No active signals</p>
-              )}
-            </TabsContent>
-          </Tabs>
-        )}
-      </CardContent>
-    </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
