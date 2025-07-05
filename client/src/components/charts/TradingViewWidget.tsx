@@ -61,16 +61,22 @@ export default function TradingViewWidget({
     queryKey: ['/api/signals'],
     enabled: isAuthenticated && showSignals,
     refetchInterval: 10000,
+    retry: false,
+    staleTime: 30000,
   });
 
   const { data: portfolio } = useQuery({
     queryKey: ['/api/user/portfolio'],
     enabled: isAuthenticated,
+    retry: false,
+    staleTime: 30000,
   });
 
   const { data: tradingSettings } = useQuery({
     queryKey: ['/api/user/trading-settings'],
     enabled: isAuthenticated,
+    retry: false,
+    staleTime: 30000,
   });
 
   // Trading mutations
@@ -93,10 +99,11 @@ export default function TradingViewWidget({
       setTradeAmount('');
       setLimitPrice('');
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Trading error:', error);
       toast({
         title: "Trade Failed",
-        description: error.message,
+        description: error?.message || "An error occurred while executing the trade",
         variant: "destructive",
       });
     },
