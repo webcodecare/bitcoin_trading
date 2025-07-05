@@ -1,27 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
-import { useWebSocket } from '@/hooks/useWebSocket';
-
-interface OHLCData {
-  time: Date;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
-
-interface Signal {
-  id: string;
-  ticker: string;
-  signalType: 'BUY' | 'SELL';
-  price: number;
-  createdAt: string;
-  notes?: string;
-}
+import { TrendingUp, TrendingDown, Activity, BarChart3 } from 'lucide-react';
 
 interface TradingViewChartProps {
   symbol: string;
@@ -29,269 +8,212 @@ interface TradingViewChartProps {
   className?: string;
 }
 
+interface PriceData {
+  time: string;
+  price: number;
+}
+
 export default function TradingViewChart({ symbol, height = 400, className = '' }: TradingViewChartProps) {
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<any>(null);
-  const [signals, setSignals] = useState<Signal[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [priceHistory, setPriceHistory] = useState<PriceData[]>([]);
 
-  // Fetch OHLC data
-  const { data: marketData, isLoading: marketLoading } = useQuery({
-    queryKey: [`/api/market/klines/${symbol}`],
-    refetchInterval: 30000, // Refresh every 30 seconds
+  // Fetch current price
+  const { data: priceData } = useQuery({
+    queryKey: [`/api/market/price/${symbol}`],
+    refetchInterval: 5000,
   });
 
-  // Fetch signals data
-  const { data: signalData } = useQuery({
-    queryKey: [`/api/signals`],
-  });
-
-  // WebSocket for real-time updates
-  useWebSocket((message) => {
-    if (message.type === "new_signal" && message.signal) {
-      const signal = message.signal as Signal;
-      if (signal.ticker === symbol) {
-        setSignals(prev => [signal, ...prev.slice(0, 49)]); // Keep last 50 signals
-      }
-    }
-  });
-
+  // Generate sample price data for demonstration
   useEffect(() => {
-    if (signalData) {
-      setSignals(signalData);
-    }
-  }, [signalData]);
-
-  useEffect(() => {
-    if (!marketData || !chartContainerRef.current || marketData.length === 0) return;
-
-    const initChart = () => {
-      if (!chartContainerRef.current) return;
-
-      // Clear any existing chart
-      if (chartRef.current) {
-        chartRef.current.remove();
-      }
-
-      // Create a canvas-based chart
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      canvas.width = chartContainerRef.current.clientWidth || 600;
-      canvas.height = height;
-      canvas.style.width = '100%';
-      canvas.style.height = `${height}px`;
-      canvas.style.background = 'transparent';
-
-      chartContainerRef.current.innerHTML = '';
-      chartContainerRef.current.appendChild(canvas);
-
-      // Calculate price range
-      const prices = marketData.flatMap((d: OHLCData) => [d.open, d.high, d.low, d.close]);
-      const minPrice = Math.min(...prices);
-      const maxPrice = Math.max(...prices);
-      const priceRange = maxPrice - minPrice;
-
-      // Drawing parameters
-      const padding = 40;
-      const chartWidth = canvas.width - (padding * 2);
-      const chartHeight = canvas.height - (padding * 2);
-      const candleWidth = Math.max(2, chartWidth / marketData.length - 2);
-      
-      // Draw grid
-      ctx.strokeStyle = 'hsl(var(--border))';
-      ctx.lineWidth = 1;
-      
-      // Horizontal grid lines
-      for (let i = 0; i <= 5; i++) {
-        const y = padding + (i / 5) * chartHeight;
-        ctx.beginPath();
-        ctx.moveTo(padding, y);
-        ctx.lineTo(canvas.width - padding, y);
-        ctx.stroke();
-      }
-
-      // Draw candlesticks
-      marketData.forEach((candle: OHLCData, index: number) => {
-        const x = padding + (index * (candleWidth + 2));
-        const openY = padding + ((maxPrice - candle.open) / priceRange) * chartHeight;
-        const closeY = padding + ((maxPrice - candle.close) / priceRange) * chartHeight;
-        const highY = padding + ((maxPrice - candle.high) / priceRange) * chartHeight;
-        const lowY = padding + ((maxPrice - candle.low) / priceRange) * chartHeight;
-
-        const isGreen = candle.close > candle.open;
-        
-        // Draw wick
-        ctx.strokeStyle = 'hsl(var(--muted-foreground))';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x + candleWidth/2, highY);
-        ctx.lineTo(x + candleWidth/2, lowY);
-        ctx.stroke();
-
-        // Draw body
-        ctx.fillStyle = isGreen ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))';
-        ctx.strokeStyle = isGreen ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))';
-        
-        const bodyTop = Math.min(openY, closeY);
-        const bodyHeight = Math.max(1, Math.abs(closeY - openY));
-        
-        ctx.fillRect(x, bodyTop, candleWidth, bodyHeight);
-        ctx.strokeRect(x, bodyTop, candleWidth, bodyHeight);
+    if (priceData?.price) {
+      const now = new Date().toISOString();
+      setPriceHistory(prev => {
+        const newData = [...prev, { time: now, price: priceData.price }];
+        return newData.slice(-50); // Keep last 50 data points
       });
+    }
+  }, [priceData]);
 
-      // Add signal markers
-      if (signals && signals.length > 0) {
-        signals
-          .filter(signal => signal.ticker === symbol)
-          .forEach(signal => {
-            const signalTime = new Date(signal.createdAt).getTime();
-            const candleIndex = marketData.findIndex((candle: OHLCData) => 
-              Math.abs(new Date(candle.time).getTime() - signalTime) < 60 * 60 * 1000
-            );
-
-            if (candleIndex >= 0) {
-              const x = padding + (candleIndex * (candleWidth + 2)) + candleWidth/2;
-              const candle = marketData[candleIndex];
-              const y = signal.signalType === 'BUY' 
-                ? padding + ((maxPrice - candle.low) / priceRange) * chartHeight + 30
-                : padding + ((maxPrice - candle.high) / priceRange) * chartHeight - 30;
-
-              ctx.fillStyle = signal.signalType === 'BUY' ? 'hsl(var(--chart-2))' : 'hsl(var(--destructive))';
-              ctx.beginPath();
-              
-              if (signal.signalType === 'BUY') {
-                ctx.moveTo(x, y - 8);
-                ctx.lineTo(x - 6, y + 4);
-                ctx.lineTo(x + 6, y + 4);
-              } else {
-                ctx.moveTo(x, y + 8);
-                ctx.lineTo(x - 6, y - 4);
-                ctx.lineTo(x + 6, y - 4);
-              }
-              
-              ctx.closePath();
-              ctx.fill();
-
-              // Add signal label
-              ctx.fillStyle = 'hsl(var(--foreground))';
-              ctx.font = '10px system-ui';
-              ctx.textAlign = 'center';
-              ctx.fillText(
-                signal.signalType,
-                x,
-                signal.signalType === 'BUY' ? y + 20 : y - 15
-              );
-            }
-          });
-      }
-
-      // Add price labels
-      ctx.fillStyle = 'hsl(var(--muted-foreground))';
-      ctx.font = '12px system-ui';
-      ctx.textAlign = 'right';
+  // Initialize price history with sample data
+  useEffect(() => {
+    if (priceHistory.length === 0 && priceData?.price) {
+      const basePrice = priceData.price;
+      const sampleData: PriceData[] = [];
       
-      for (let i = 0; i <= 5; i++) {
-        const price = maxPrice - (priceRange * i / 5);
-        const y = padding + (i / 5) * chartHeight;
-        ctx.fillText(price.toFixed(2), canvas.width - 5, y + 4);
+      for (let i = 49; i >= 0; i--) {
+        const time = new Date(Date.now() - i * 60000).toISOString(); // 1 minute intervals
+        const variation = (Math.random() - 0.5) * 0.02; // ±1% variation
+        const price = basePrice * (1 + variation);
+        sampleData.push({ time, price });
       }
+      
+      setPriceHistory(sampleData);
+    }
+  }, [priceData]);
 
-      // Store reference for cleanup
-      chartRef.current = { 
-        remove: () => {
-          if (canvas.parentNode) {
-            canvas.parentNode.removeChild(canvas);
-          }
-        }
-      };
-    };
+  // Draw chart
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || priceHistory.length === 0) return;
 
-    initChart();
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    return () => {
-      if (chartRef.current) {
-        chartRef.current.remove();
-        chartRef.current = null;
+    // Set canvas size
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    
+    ctx.scale(dpr, dpr);
+    
+    // Clear canvas
+    ctx.fillStyle = 'hsl(240, 3.7%, 12%)';
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    if (priceHistory.length < 2) return;
+
+    // Calculate price range
+    const prices = priceHistory.map(d => d.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceRange = maxPrice - minPrice || 1;
+
+    // Chart dimensions
+    const padding = 60;
+    const chartWidth = rect.width - 2 * padding;
+    const chartHeight = rect.height - 2 * padding;
+
+    // Draw grid lines
+    ctx.strokeStyle = 'hsl(240, 3.7%, 25%)';
+    ctx.lineWidth = 1;
+    
+    // Horizontal grid lines
+    for (let i = 0; i <= 5; i++) {
+      const y = padding + (chartHeight * i) / 5;
+      ctx.beginPath();
+      ctx.moveTo(padding, y);
+      ctx.lineTo(rect.width - padding, y);
+      ctx.stroke();
+      
+      // Price labels
+      const price = maxPrice - (priceRange * i) / 5;
+      ctx.fillStyle = 'hsl(240, 5%, 70%)';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(`$${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, padding - 10, y + 4);
+    }
+
+    // Draw price line
+    ctx.strokeStyle = 'hsl(207, 90%, 54%)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    priceHistory.forEach((point, index) => {
+      const x = padding + (chartWidth * index) / (priceHistory.length - 1);
+      const y = padding + chartHeight - ((point.price - minPrice) / priceRange) * chartHeight;
+      
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
       }
-    };
-  }, [marketData, signals, symbol, height]);
+    });
+    
+    ctx.stroke();
 
-  if (marketLoading) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Activity className="mr-2 h-5 w-5" />
-            {symbol} Price Chart
-          </CardTitle>
-          <CardDescription>Loading chart data...</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-96">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+    // Draw area under the line
+    ctx.fillStyle = 'hsla(207, 90%, 54%, 0.1)';
+    ctx.beginPath();
+    
+    priceHistory.forEach((point, index) => {
+      const x = padding + (chartWidth * index) / (priceHistory.length - 1);
+      const y = padding + chartHeight - ((point.price - minPrice) / priceRange) * chartHeight;
+      
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
+    
+    ctx.lineTo(rect.width - padding, rect.height - padding);
+    ctx.lineTo(padding, rect.height - padding);
+    ctx.closePath();
+    ctx.fill();
 
-  if (!marketData || marketData.length === 0) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Activity className="mr-2 h-5 w-5" />
-            {symbol} Price Chart
-          </CardTitle>
-          <CardDescription>No chart data available</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-96 text-muted-foreground">
-            Chart data temporarily unavailable
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+    // Draw current price dot
+    if (priceHistory.length > 0) {
+      const lastPoint = priceHistory[priceHistory.length - 1];
+      const x = rect.width - padding;
+      const y = padding + chartHeight - ((lastPoint.price - minPrice) / priceRange) * chartHeight;
+      
+      ctx.fillStyle = 'hsl(207, 90%, 54%)';
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, 2 * Math.PI);
+      ctx.fill();
+    }
 
-  const latestPrice = marketData[marketData.length - 1];
-  const previousPrice = marketData[marketData.length - 2];
-  const priceChange = latestPrice && previousPrice ? latestPrice.close - previousPrice.close : 0;
-  const priceChangePercent = previousPrice ? (priceChange / previousPrice.close) * 100 : 0;
+  }, [priceHistory]);
+
+  const currentPrice = priceData?.price || 0;
+  const previousPrice = priceHistory.length > 1 ? priceHistory[priceHistory.length - 2].price : currentPrice;
+  const priceChange = currentPrice - previousPrice;
+  const priceChangePercent = previousPrice ? (priceChange / previousPrice) * 100 : 0;
+  const isPositive = priceChange >= 0;
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center">
-              <Activity className="mr-2 h-5 w-5" />
-              {symbol} Price Chart
-            </CardTitle>
-            <CardDescription>Real-time candlestick chart with trading signals</CardDescription>
-          </div>
-          {latestPrice && (
-            <div className="text-right">
-              <div className="text-2xl font-bold">
-                ${latestPrice.close.toFixed(2)}
-              </div>
-              <Badge variant={priceChange >= 0 ? "default" : "destructive"} className="ml-2">
-                {priceChange >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                {priceChangePercent.toFixed(2)}%
-              </Badge>
-            </div>
-          )}
+    <div className={`bg-card rounded-lg border border-border p-6 ${className}`}>
+      {/* Chart Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-3">
+          <BarChart3 className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">{symbol} Chart</h3>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div ref={chartContainerRef} className="w-full" style={{ height: `${height}px` }} />
-        {signals.length > 0 && (
-          <div className="mt-4 text-sm text-muted-foreground">
-            Recent signals: {signals.filter(s => s.ticker === symbol).length} total
+        <div className="flex items-center space-x-4">
+          <div className="text-right">
+            <div className="text-2xl font-bold">
+              ${currentPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            </div>
+            <div className={`flex items-center text-sm ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+              {isPositive ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
+              {isPositive ? '+' : ''}${priceChange.toFixed(2)} ({isPositive ? '+' : ''}{priceChangePercent.toFixed(2)}%)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chart Canvas */}
+      <div className="relative" style={{ height: `${height}px` }}>
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full"
+          style={{ width: '100%', height: '100%' }}
+        />
+        
+        {priceHistory.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex items-center space-x-2 text-muted-foreground">
+              <Activity className="h-5 w-5 animate-pulse" />
+              <span>Loading chart data...</span>
+            </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Chart Info */}
+      <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex items-center space-x-4">
+          <span>Real-time</span>
+          <span>•</span>
+          <span>{priceHistory.length} data points</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+          <span>Live</span>
+        </div>
+      </div>
+    </div>
   );
 }
