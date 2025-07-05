@@ -131,6 +131,7 @@ export const alertSignals = pgTable("alert_signals", {
   signalType: text("signal_type", { enum: ["buy", "sell"] }).notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   timestamp: timestamp("timestamp").notNull(),
+  timeframe: text("timeframe", { enum: ["1M", "1W", "1D", "12H", "4H", "1H", "30M"] }),
   source: text("source").notNull().default("webhook"),
   note: text("note"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

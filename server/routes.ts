@@ -431,7 +431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Signal routes
   app.get('/api/signals', requireAuth, async (req: any, res) => {
     try {
-      const { ticker, limit } = req.query;
+      const { ticker, limit, timeframe } = req.query;
       let signals;
       
       if (ticker) {
@@ -440,9 +440,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         signals = await storage.getSignals(limit ? parseInt(limit) : undefined);
       }
       
+      // Filter by timeframe if specified
+      if (timeframe && typeof timeframe === 'string') {
+        signals = signals.filter(signal => signal.timeframe === timeframe);
+      }
+      
       res.json(signals);
     } catch (error) {
       res.status(500).json({ message: 'Failed to get signals' });
+    }
+  });
+
+  // Get signals by ticker and timeframe specifically
+  app.get('/api/signals/:ticker/:timeframe', requireAuth, async (req: any, res) => {
+    try {
+      const { ticker, timeframe } = req.params;
+      const { limit } = req.query;
+      const signals = await storage.getSignalsByTicker(ticker, limit ? parseInt(limit) : undefined);
+      
+      // Filter by timeframe
+      const filteredSignals = signals.filter(signal => signal.timeframe === timeframe);
+      
+      res.json(filteredSignals);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to get signals for timeframe' });
     }
   });
 
@@ -459,17 +480,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Webhook for TradingView signals
   app.post('/api/webhook/signal', async (req, res) => {
     try {
-      const { token, symbol, price, type, time, note } = z.object({
+      const { token, symbol, price, type, time, timeframe, note } = z.object({
         token: z.string(),
         symbol: z.string(),
         price: z.number(),
         type: z.enum(['buy', 'sell']),
         time: z.string(),
+        timeframe: z.enum(['1M', '1W', '1D', '12H', '4H', '1H', '30M']),
         note: z.string().optional(),
       }).parse(req.body);
 
       // Validate webhook token
-      const expectedToken = process.env.WEBHOOK_SECRET || 'default_secret';
+      const expectedToken = process.env.WEBHOOK_SECRET || 'tradingview_crypto_bot_2025';
       if (token !== expectedToken) {
         return res.status(401).json({ message: 'Invalid webhook token' });
       }
@@ -479,6 +501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         signalType: type,
         price: price.toString(),
         timestamp: new Date(time),
+        timeframe,
         source: 'tradingview_webhook',
         note,
         userId: null, // System-generated signal
