@@ -25,6 +25,8 @@ import AdminPayments from "@/pages/admin/payments";
 import AdminIntegrations from "@/pages/admin/integrations";
 import AdminContent from "@/pages/admin/content";
 import Alerts from "@/pages/alerts";
+import AdvancedAlertsPage from "@/pages/advanced-alerts";
+import AdvancedPortfolioPage from "@/pages/advanced-portfolio";
 import Settings from "@/pages/settings";
 import Preferences from "@/pages/preferences";
 import Pricing from "@/pages/pricing";
@@ -133,6 +135,16 @@ function Router() {
       <Route path="/preferences">
         <AuthGuard>
           <Preferences />
+        </AuthGuard>
+      </Route>
+      <Route path="/advanced-alerts">
+        <AuthGuard>
+          <AdvancedAlertsPage />
+        </AuthGuard>
+      </Route>
+      <Route path="/advanced-portfolio">
+        <AuthGuard>
+          <AdvancedPortfolioPage />
         </AuthGuard>
       </Route>
       <Route path="/subscription">
