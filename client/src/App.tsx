@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Auth from "@/pages/auth";
+import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import MultiTickerDashboard from "@/pages/multi-ticker-dashboard";
 import Admin from "@/pages/admin";
@@ -40,6 +41,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/auth" component={Auth} />
+      <Route path="/login" component={Login} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/dashboard">
         <AuthGuard>
