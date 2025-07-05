@@ -470,6 +470,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get enabled tickers for user selection
+  app.get("/api/tickers/enabled", async (req, res) => {
+    try {
+      const enabledTickers = await storage.getEnabledTickers();
+      res.json(enabledTickers);
+    } catch (error: any) {
+      console.error("Error fetching enabled tickers:", error);
+      res.status(500).json({ message: "Failed to get enabled tickers" });
+    }
+  });
+
+  // Get market price for single ticker
+  app.get("/api/market/price/:symbol", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      
+      const response = await fetch(
+        `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch price from Binance');
+      }
+      
+      const data = await response.json();
+      
+      const priceData = {
+        symbol: data.symbol,
+        price: parseFloat(data.lastPrice),
+        change24h: parseFloat(data.priceChange),
+        changePercent24h: parseFloat(data.priceChangePercent),
+        volume24h: parseFloat(data.volume),
+        lastUpdate: new Date().toISOString(),
+      };
+      
+      res.json(priceData);
+    } catch (error: any) {
+      console.error("Error fetching market price:", error);
+      res.status(500).json({ message: "Failed to get market price" });
+    }
+  });
+
+  // Get market prices for multiple tickers
+  app.get("/api/market/prices", async (req, res) => {
+    try {
+      const { symbols } = req.query;
+      if (!symbols) {
+        return res.status(400).json({ message: "Symbols parameter required" });
+      }
+
+      const symbolList = (symbols as string).split(',');
+      const priceData = [];
+
+      // Fetch data for each symbol from Binance
+      for (const symbol of symbolList) {
+        try {
+          const response = await fetch(
+            `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            priceData.push({
+              symbol: data.symbol,
+              price: parseFloat(data.lastPrice),
+              change24h: parseFloat(data.priceChange),
+              changePercent24h: parseFloat(data.priceChangePercent),
+              volume24h: parseFloat(data.volume),
+              lastUpdate: new Date().toISOString(),
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching price for ${symbol}:`, error);
+        }
+      }
+
+      res.json(priceData);
+    } catch (error: any) {
+      console.error("Error fetching market prices:", error);
+      res.status(500).json({ message: "Failed to get market prices" });
+    }
+  });
+
   app.get('/api/market/klines/:symbol', async (req, res) => {
     try {
       const { symbol } = req.params;

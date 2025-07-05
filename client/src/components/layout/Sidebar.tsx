@@ -36,6 +36,11 @@ export default function Sidebar({ className }: SidebarProps) {
       icon: TrendingUp,
     },
     {
+      title: "Multi-Ticker",
+      href: "/multi-ticker",
+      icon: BarChart3,
+    },
+    {
       title: "Alerts",
       href: "/alerts",
       icon: Bell,
