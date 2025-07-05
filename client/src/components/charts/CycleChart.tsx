@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Activity, TrendingUp, TrendingDown } from "lucide-react";
 
 interface CycleChartProps {
   symbol?: string;
@@ -15,6 +16,8 @@ interface CycleData {
   date: string;
   ma2y: string;
   deviation: string;
+  cyclePhase: string;
+  strengthScore: string;
   createdAt: string;
 }
 
@@ -26,184 +29,273 @@ export default function CycleChart({
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: cycleData, isLoading } = useQuery({
-    queryKey: ["/api/chart/cycle", symbol],
-    queryFn: async () => {
-      const response = await fetch(`/api/chart/cycle/${symbol}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch cycle data");
-      }
-      return await response.json() as CycleData[];
-    },
+    queryKey: [`/api/chart/cycle/${symbol}`],
+    refetchInterval: 60000, // Refresh every minute
   });
 
   const { data: forecastData } = useQuery({
-    queryKey: ["/api/chart/forecast", symbol],
-    queryFn: async () => {
-      const response = await fetch(`/api/chart/forecast/${symbol}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch forecast data");
-      }
-      return await response.json();
-    },
+    queryKey: [`/api/chart/forecast/${symbol}`],
+    refetchInterval: 60000,
   });
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    const loadChart = async () => {
-      if (!window.LightweightCharts) {
-        const script = document.createElement("script");
-        script.src = "https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js";
-        script.onload = initChart;
-        document.head.appendChild(script);
-      } else {
-        initChart();
+    // Clear any existing chart
+    chartContainerRef.current.innerHTML = '';
+
+    // Create canvas-based cycle chart
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = chartContainerRef.current.clientWidth || 600;
+    canvas.height = height;
+    canvas.style.width = '100%';
+    canvas.style.height = `${height}px`;
+
+    chartContainerRef.current.appendChild(canvas);
+
+    // Chart dimensions
+    const padding = 40;
+    const chartWidth = canvas.width - (padding * 2);
+    const chartHeight = canvas.height - (padding * 2);
+
+    // Generate time-series data (2 years)
+    const dataPoints = 730; // 2 years daily
+    const dataSpacing = chartWidth / dataPoints;
+
+    // Use real data if available, otherwise generate realistic sample
+    const generateData = () => {
+      const ma2yData = [];
+      const deviationData = [];
+      const halvingEvents = [];
+
+      for (let i = 0; i < dataPoints; i++) {
+        const x = padding + i * dataSpacing;
+        
+        if (cycleData && cycleData.length > 0) {
+          // Use real cycle data
+          const dataIndex = Math.floor(i / dataPoints * cycleData.length);
+          const point = cycleData[dataIndex];
+          ma2yData.push({ x, y: padding + chartHeight - (parseFloat(point.ma2y) / 80000) * chartHeight });
+          deviationData.push({ x, y: padding + chartHeight - (parseFloat(point.deviation) + 1) * chartHeight / 2 });
+        } else {
+          // Generate realistic crypto cycle pattern
+          const basePrice = 35000 + Math.sin(i * 0.008) * 25000; // 2-year cycle
+          const ma2y = basePrice + Math.sin(i * 0.002) * 5000; // Smoother MA
+          const deviation = Math.sin(i * 0.01) * 0.5 + Math.random() * 0.1;
+          
+          ma2yData.push({ x, y: padding + chartHeight - (ma2y / 80000) * chartHeight });
+          deviationData.push({ x, y: padding + chartHeight - (deviation + 1) * chartHeight / 2 });
+        }
+
+        // Add halving events (approximately every 4 years = ~1460 days)
+        if (i % 1460 === 0 && i > 0) {
+          halvingEvents.push({ x, label: `Halving ${Math.floor(i / 1460)}` });
+        }
       }
+
+      return { ma2yData, deviationData, halvingEvents };
     };
 
-    const initChart = () => {
-      if (!window.LightweightCharts || !chartContainerRef.current) return;
+    const { ma2yData, deviationData, halvingEvents } = generateData();
 
-      const chart = window.LightweightCharts.createChart(chartContainerRef.current, {
-        width: chartContainerRef.current.clientWidth,
-        height,
-        layout: {
-          background: { color: "transparent" },
-          textColor: "#a0a0a0",
-        },
-        grid: {
-          vertLines: { color: "#404040" },
-          horzLines: { color: "#404040" },
-        },
-        crosshair: {
-          mode: window.LightweightCharts.CrosshairMode.Normal,
-        },
-        rightPriceScale: {
-          borderColor: "#404040",
-        },
-        timeScale: {
-          borderColor: "#404040",
-          timeVisible: true,
-          secondsVisible: false,
-        },
-      });
+    // Draw grid lines
+    ctx.strokeStyle = 'hsl(var(--border))';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 5; i++) {
+      const y = padding + (i / 5) * chartHeight;
+      ctx.beginPath();
+      ctx.moveTo(padding, y);
+      ctx.lineTo(canvas.width - padding, y);
+      ctx.stroke();
+    }
 
-      // 2-Year Moving Average Line
-      const ma2ySeries = chart.addLineSeries({
-        color: "#0052ff",
-        lineWidth: 2,
-        title: "2-Year MA",
-      });
+    // Draw 2-year MA line
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ma2yData.forEach((point, i) => {
+      if (i === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    });
+    ctx.stroke();
 
-      // Price deviation area
-      const deviationSeries = chart.addAreaSeries({
-        topColor: "rgba(0, 212, 170, 0.4)",
-        bottomColor: "rgba(0, 212, 170, 0.0)",
-        lineColor: "#00d4aa",
-        lineWidth: 2,
-        title: "Price Deviation",
-      });
+    // Draw deviation area
+    ctx.fillStyle = 'rgba(34, 197, 94, 0.2)';
+    ctx.beginPath();
+    deviationData.forEach((point, i) => {
+      if (i === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    });
+    // Close area to bottom
+    ctx.lineTo(deviationData[deviationData.length - 1].x, padding + chartHeight);
+    ctx.lineTo(padding, padding + chartHeight);
+    ctx.closePath();
+    ctx.fill();
 
-      // Generate mock data for demonstration
-      const generateMockData = () => {
-        const data = [];
-        const ma2yData = [];
-        const now = Date.now();
-        const oneDay = 24 * 60 * 60 * 1000;
+    // Draw deviation line
+    ctx.strokeStyle = '#22c55e';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    deviationData.forEach((point, i) => {
+      if (i === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    });
+    ctx.stroke();
 
-        for (let i = 0; i < 365 * 2; i++) {
-          const time = (now - (365 * 2 - i) * oneDay) / 1000;
-          const basePrice = 30000 + Math.sin(i * 0.01) * 20000 + Math.random() * 5000;
-          const ma2y = basePrice * (0.8 + Math.sin(i * 0.005) * 0.2);
-          const deviation = ((basePrice - ma2y) / ma2y) * 100;
+    // Draw halving event markers
+    halvingEvents.forEach(event => {
+      // Vertical line
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(event.x, padding);
+      ctx.lineTo(event.x, padding + chartHeight);
+      ctx.stroke();
+      ctx.setLineDash([]);
 
-          ma2yData.push({ time, value: ma2y });
-          data.push({ time, value: Math.max(0, deviation) });
-        }
+      // Event marker circle
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.arc(event.x, padding + 20, 6, 0, 2 * Math.PI);
+      ctx.fill();
 
-        return { ma2yData, deviationData: data };
-      };
+      // Event label
+      ctx.fillStyle = 'hsl(var(--foreground))';
+      ctx.font = '10px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(event.label, event.x, padding + 10);
+    });
 
-      const { ma2yData, deviationData } = generateMockData();
+    // Add Y-axis labels
+    ctx.fillStyle = 'hsl(var(--muted-foreground))';
+    ctx.font = '12px system-ui';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 5; i++) {
+      const y = padding + (i / 5) * chartHeight;
+      const value = (1 - i / 5) * 2 - 1; // Range from 1 to -1
+      ctx.fillText(value.toFixed(1), padding - 5, y + 4);
+    }
 
-      ma2ySeries.setData(ma2yData);
-      deviationSeries.setData(deviationData);
+    // Add current time indicator
+    const currentX = padding + chartWidth * 0.9; // 90% through the timeline
+    ctx.strokeStyle = '#dc2626';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(currentX, padding);
+    ctx.lineTo(currentX, padding + chartHeight);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-      // Add halving event markers
-      const halvingEvents = [
-        { time: new Date("2020-05-11").getTime() / 1000, text: "Halving 2020" },
-        { time: new Date("2024-04-19").getTime() / 1000, text: "Halving 2024" },
-        { time: new Date("2028-04-01").getTime() / 1000, text: "Next Halving" },
-      ];
-
-      const markers = halvingEvents.map(event => ({
-        time: event.time,
-        position: "aboveBar",
-        color: "#ffa502",
-        shape: "circle",
-        text: event.text,
-      }));
-
-      ma2ySeries.setMarkers(markers);
-
-      // Handle resize
-      const handleResize = () => {
-        if (chartContainerRef.current) {
-          chart.applyOptions({
-            width: chartContainerRef.current.clientWidth,
-          });
-        }
-      };
-
-      window.addEventListener("resize", handleResize);
-
-      return () => {
-        window.removeEventListener("resize", handleResize);
-        chart.remove();
-      };
-    };
-
-    loadChart();
-  }, [cycleData, forecastData, height]);
+  }, [cycleData, forecastData, symbol, height]);
 
   if (isLoading) {
     return (
       <Card className={className}>
-        <div className="p-6">
-          <Skeleton className="h-6 w-48 mb-4" />
-          <Skeleton className={`h-[${height}px] w-full`} />
-        </div>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Activity className="mr-2 h-5 w-5" />
+            2-Year Cycle Analysis
+          </CardTitle>
+          <CardDescription>Loading cycle data...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center" style={{ height: `${height}px` }}>
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          </div>
+        </CardContent>
       </Card>
     );
   }
 
+  // Get current cycle phase and deviation
+  const currentCycle = cycleData && cycleData.length > 0 ? cycleData[0] : null;
+  const currentPhase = currentCycle?.cyclePhase || 'accumulation';
+  const currentDeviation = currentCycle ? parseFloat(currentCycle.deviation) : 0.15;
+  const strengthScore = currentCycle ? parseFloat(currentCycle.strengthScore) : 0.78;
+
+  const getPhaseColor = (phase: string) => {
+    switch (phase) {
+      case 'accumulation': return 'bg-blue-500';
+      case 'markup': return 'bg-green-500';
+      case 'distribution': return 'bg-orange-500';
+      case 'markdown': return 'bg-red-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const getPhaseDescription = (phase: string) => {
+    switch (phase) {
+      case 'accumulation': return 'Smart money accumulating, prices stable';
+      case 'markup': return 'Uptrend in progress, momentum building';
+      case 'distribution': return 'Late stage bull, smart money selling';
+      case 'markdown': return 'Downtrend active, bear market';
+      default: return 'Cycle phase undefined';
+    }
+  };
+
   return (
     <Card className={className}>
-      <div className="p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold">2-Year Cycle Deviation Indicator</h3>
-          <p className="text-sm text-muted-foreground">
-            Price deviation from 2-year moving average with halving events
-          </p>
-        </div>
-        <div ref={chartContainerRef} className="w-full" style={{ height }} />
-        <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-blue-500 rounded"></div>
-              <span>2-Year MA</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-emerald-400 rounded"></div>
-              <span>Price Deviation</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-orange-400 rounded-full"></div>
-              <span>Halving Events</span>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center">
+              <Activity className="mr-2 h-5 w-5" />
+              2-Year Cycle Analysis
+            </CardTitle>
+            <CardDescription>Price deviation from 2-year moving average with market cycles</CardDescription>
+          </div>
+          <div className="text-right">
+            <Badge className={getPhaseColor(currentPhase)}>
+              {currentPhase}
+            </Badge>
+            <div className="text-sm text-muted-foreground mt-1">
+              Strength: {(strengthScore * 100).toFixed(0)}%
             </div>
           </div>
         </div>
-      </div>
+      </CardHeader>
+      <CardContent>
+        <div ref={chartContainerRef} className="w-full" style={{ height: `${height}px` }} />
+        
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                <span>2-Year MA</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-green-400 rounded"></div>
+                <span>Price Deviation</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-orange-400 rounded-full"></div>
+                <span>Halving Events</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {currentDeviation > 0 ? (
+                <TrendingUp className="w-4 h-4 text-green-500" />
+              ) : (
+                <TrendingDown className="w-4 h-4 text-red-500" />
+              )}
+              <span className="font-medium">
+                {currentDeviation > 0 ? '+' : ''}{(currentDeviation * 100).toFixed(1)}%
+              </span>
+            </div>
+          </div>
+          
+          <div className="text-xs text-muted-foreground">
+            <p><strong>Current Phase:</strong> {getPhaseDescription(currentPhase)}</p>
+            <p><strong>Signal:</strong> {currentDeviation > 0.5 ? 'Overbought - Consider taking profits' : currentDeviation < -0.3 ? 'Oversold - Potential accumulation zone' : 'Neutral - Watch for trend continuation'}</p>
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
 }
