@@ -6,6 +6,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import TradingViewChart from "@/components/charts/TradingViewChart";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
+import AdvancedForecastChart from "@/components/charts/AdvancedForecastChart";
 import TickerSelector from "@/components/ui/ticker-selector";
 import CategoryFilter from "@/components/ui/category-filter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -371,26 +372,33 @@ export default function MultiTickerDashboard() {
               </TabsContent>
 
               <TabsContent value="analytics" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Heatmap */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>200-Week SMA Heatmap</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <HeatmapChart />
-                    </CardContent>
-                  </Card>
+                <div className="space-y-6">
+                  {/* Advanced Cycle Forecasting */}
+                  {selectedChart && (
+                    <AdvancedForecastChart ticker={selectedChart} />
+                  )}
 
-                  {/* Cycle Analysis */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Cycle Analysis</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CycleChart />
-                    </CardContent>
-                  </Card>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Heatmap */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>200-Week SMA Heatmap</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <HeatmapChart />
+                      </CardContent>
+                    </Card>
+
+                    {/* Cycle Analysis */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Cycle Analysis</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <CycleChart />
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
               </TabsContent>
 
