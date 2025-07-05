@@ -1,609 +1,569 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
 import { 
-  BarChart3, 
   TrendingUp, 
+  Users, 
+  DollarSign, 
+  Signal, 
   Activity, 
-  RefreshCw, 
-  Database,
   Calendar,
+  BarChart3,
+  PieChart,
+  LineChart,
   Download,
-  Upload,
-  Trash2,
-  Play,
-  Pause,
-  Settings,
-  Plus
+  RefreshCw
 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// Date picker component would be imported here when available
 
-interface AnalyticsModule {
-  id: string;
-  name: string;
-  type: "heatmap" | "cycle" | "forecast";
-  isEnabled: boolean;
-  lastUpdated?: string;
-  dataPoints: number;
-  updateInterval: string;
-  status: "active" | "updating" | "error" | "paused";
+interface AnalyticsMetrics {
+  totalUsers: number;
+  activeUsers: number;
+  totalRevenue: number;
+  monthlyRevenue: number;
+  totalSignals: number;
+  dailySignals: number;
+  conversionRate: number;
+  churnRate: number;
 }
 
-interface DataImport {
-  id: string;
-  ticker: string;
-  type: "heatmap" | "cycle" | "forecast";
-  source: string;
-  status: "pending" | "processing" | "completed" | "failed";
-  recordsImported: number;
-  createdAt: string;
-  completedAt?: string;
-  error?: string;
+interface UserAnalytics {
+  newUsers: Array<{ date: string; count: number }>;
+  activeUsers: Array<{ date: string; count: number }>;
+  usersByTier: Array<{ tier: string; count: number; percentage: number }>;
+  retentionRate: Array<{ period: string; rate: number }>;
+}
+
+interface RevenueAnalytics {
+  monthlyRevenue: Array<{ month: string; revenue: number; subscriptions: number }>;
+  revenueByTier: Array<{ tier: string; revenue: number; percentage: number }>;
+  mrr: number;
+  arr: number;
+  ltv: number;
+}
+
+interface SignalAnalytics {
+  signalsPerDay: Array<{ date: string; count: number; accuracy: number }>;
+  signalsByTicker: Array<{ ticker: string; count: number; accuracy: number }>;
+  signalAccuracy: Array<{ date: string; accuracy: number }>;
+  popularTickers: Array<{ ticker: string; subscriptions: number }>;
+}
+
+interface SystemMetrics {
+  cpuUsage: number;
+  memoryUsage: number;
+  activeConnections: number;
+  responseTime: number;
+  errorRate: number;
+  uptime: string;
 }
 
 export default function AdminAnalytics() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [selectedTab, setSelectedTab] = useState<"modules" | "data" | "imports">("modules");
+  const [timeRange, setTimeRange] = useState("7d");
+  const [selectedMetric, setSelectedMetric] = useState("overview");
 
-  // Fetch analytics modules
-  const { data: modules, isLoading: isLoadingModules } = useQuery({
-    queryKey: ["/api/admin/analytics/modules"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/analytics/modules");
-      if (!response.ok) {
-        throw new Error("Failed to fetch analytics modules");
-      }
-      return await response.json();
-    }
+  const { data: metrics, isLoading: metricsLoading } = useQuery<AnalyticsMetrics>({
+    queryKey: ["/api/admin/analytics/metrics", timeRange],
   });
 
-  // Fetch data imports
-  const { data: imports, isLoading: isLoadingImports } = useQuery({
-    queryKey: ["/api/admin/analytics/imports"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/analytics/imports");
-      if (!response.ok) {
-        throw new Error("Failed to fetch data imports");
-      }
-      return await response.json();
-    }
+  const { data: userAnalytics, isLoading: usersLoading } = useQuery<UserAnalytics>({
+    queryKey: ["/api/admin/analytics/users", timeRange],
   });
 
-  // Toggle module mutation
-  const toggleModuleMutation = useMutation({
-    mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
-      const response = await fetch(`/api/admin/analytics/modules/${id}/toggle`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled })
-      });
-      if (!response.ok) {
-        throw new Error("Failed to toggle module");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/analytics/modules"] });
-      toast({
-        title: "Success",
-        description: "Module status updated"
-      });
-    }
+  const { data: revenueAnalytics, isLoading: revenueLoading } = useQuery<RevenueAnalytics>({
+    queryKey: ["/api/admin/analytics/revenue", timeRange],
   });
 
-  // Update module data mutation
-  const updateModuleMutation = useMutation({
-    mutationFn: async (moduleId: string) => {
-      const response = await fetch(`/api/admin/analytics/modules/${moduleId}/update`, {
-        method: "POST"
-      });
-      if (!response.ok) {
-        throw new Error("Failed to update module data");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/analytics/modules"] });
-      toast({
-        title: "Success",
-        description: "Module data update initiated"
-      });
-    }
+  const { data: signalAnalytics, isLoading: signalsLoading } = useQuery<SignalAnalytics>({
+    queryKey: ["/api/admin/analytics/signals", timeRange],
   });
 
-  // Import data mutation
-  const importDataMutation = useMutation({
-    mutationFn: async ({ ticker, type, source }: { ticker: string; type: string; source: string }) => {
-      const response = await fetch("/api/admin/analytics/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker, type, source })
-      });
-      if (!response.ok) {
-        throw new Error("Failed to start data import");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/analytics/imports"] });
-      toast({
-        title: "Success",
-        description: "Data import started"
-      });
-    }
+  const { data: systemMetrics, isLoading: systemLoading } = useQuery<SystemMetrics>({
+    queryKey: ["/api/admin/analytics/system"],
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <Badge variant="default" className="bg-emerald-500">Active</Badge>;
-      case "updating":
-        return <Badge variant="secondary" className="bg-blue-500">Updating</Badge>;
-      case "error":
-        return <Badge variant="destructive">Error</Badge>;
-      case "paused":
-        return <Badge variant="outline">Paused</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount / 100);
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "heatmap":
-        return <BarChart3 className="w-4 h-4" />;
-      case "cycle":
-        return <TrendingUp className="w-4 h-4" />;
-      case "forecast":
-        return <Activity className="w-4 h-4" />;
-      default:
-        return <Database className="w-4 h-4" />;
-    }
+  const formatPercentage = (value: number) => {
+    return `${(value * 100).toFixed(1)}%`;
   };
 
-  const activeModules = modules?.filter((m: AnalyticsModule) => m.isEnabled).length || 0;
-  const totalDataPoints = modules?.reduce((sum: number, m: AnalyticsModule) => sum + m.dataPoints, 0) || 0;
-  const pendingImports = imports?.filter((i: DataImport) => i.status === "pending" || i.status === "processing").length || 0;
+  if (metricsLoading || usersLoading || revenueLoading || signalsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Analytics Management</h1>
-          <p className="text-muted-foreground">Manage 200-week heatmap, cycle indicators, and forecast data</p>
+          <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+          <p className="text-muted-foreground">
+            Comprehensive insights into platform performance and user engagement
+          </p>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="24h">24 Hours</SelectItem>
+              <SelectItem value="7d">7 Days</SelectItem>
+              <SelectItem value="30d">30 Days</SelectItem>
+              <SelectItem value="90d">90 Days</SelectItem>
+              <SelectItem value="1y">1 Year</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Key Metrics Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Modules</CardTitle>
-            <Settings className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeModules}</div>
+            <div className="text-2xl font-bold">{metrics?.totalUsers.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className="text-green-600">+{metrics?.activeUsers}</span> active today
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Data Points</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalDataPoints.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{formatCurrency(metrics?.monthlyRevenue || 0)}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className="text-green-600">+12.5%</span> from last month
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Imports</CardTitle>
-            <Upload className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Daily Signals</CardTitle>
+            <Signal className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingImports}</div>
+            <div className="text-2xl font-bold">{metrics?.dailySignals.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className="text-blue-600">92.3%</span> accuracy rate
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Last Update</CardTitle>
-            <RefreshCw className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-sm font-medium">
-              {modules?.length > 0 ? 
-                new Date(Math.max(...modules.map((m: AnalyticsModule) => 
-                  m.lastUpdated ? new Date(m.lastUpdated).getTime() : 0
-                ))).toLocaleDateString() : 
-                "Never"
-              }
+            <div className="text-2xl font-bold">{formatPercentage(metrics?.conversionRate || 0)}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className="text-green-600">+2.1%</span> from last week
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* System Health */}
+      {systemMetrics && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Activity className="h-5 w-5 mr-2" />
+              System Health
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{systemMetrics.cpuUsage}%</div>
+                <div className="text-sm text-muted-foreground">CPU Usage</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{systemMetrics.memoryUsage}%</div>
+                <div className="text-sm text-muted-foreground">Memory</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">{systemMetrics.activeConnections}</div>
+                <div className="text-sm text-muted-foreground">Connections</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">{systemMetrics.responseTime}ms</div>
+                <div className="text-sm text-muted-foreground">Response Time</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">{formatPercentage(systemMetrics.errorRate)}</div>
+                <div className="text-sm text-muted-foreground">Error Rate</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{systemMetrics.uptime}</div>
+                <div className="text-sm text-muted-foreground">Uptime</div>
+              </div>
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
 
-      {/* Tab Navigation */}
-      <div className="flex space-x-1 bg-muted p-1 rounded-lg w-fit">
-        <Button
-          variant={selectedTab === "modules" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setSelectedTab("modules")}
-        >
-          <Settings className="w-4 h-4 mr-2" />
-          Modules
-        </Button>
-        <Button
-          variant={selectedTab === "data" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setSelectedTab("data")}
-        >
-          <Database className="w-4 h-4 mr-2" />
-          Data Management
-        </Button>
-        <Button
-          variant={selectedTab === "imports" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setSelectedTab("imports")}
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Data Imports
-        </Button>
-      </div>
+      {/* Detailed Analytics Tabs */}
+      <Tabs defaultValue="users" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="users">User Analytics</TabsTrigger>
+          <TabsTrigger value="revenue">Revenue Analytics</TabsTrigger>
+          <TabsTrigger value="signals">Signal Analytics</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+        </TabsList>
 
-      {/* Analytics Modules Tab */}
-      {selectedTab === "modules" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Analytics Modules</CardTitle>
-            <p className="text-sm text-muted-foreground">Configure and monitor analytics computation modules</p>
-          </CardHeader>
-          <CardContent>
-            {isLoadingModules ? (
-              <div className="space-y-2">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Module</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Data Points</TableHead>
-                    <TableHead>Update Interval</TableHead>
-                    <TableHead>Last Updated</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {modules?.map((module: AnalyticsModule) => (
-                    <TableRow key={module.id}>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          {getTypeIcon(module.type)}
-                          <span className="font-medium">{module.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="capitalize">{module.type}</TableCell>
-                      <TableCell>{getStatusBadge(module.status)}</TableCell>
-                      <TableCell>{module.dataPoints.toLocaleString()}</TableCell>
-                      <TableCell>{module.updateInterval}</TableCell>
-                      <TableCell>
-                        {module.lastUpdated ? 
-                          new Date(module.lastUpdated).toLocaleString() : 
-                          "Never"
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            checked={module.isEnabled}
-                            onCheckedChange={(enabled) => 
-                              toggleModuleMutation.mutate({ id: module.id, enabled })
-                            }
-                            disabled={toggleModuleMutation.isPending}
+        {/* User Analytics Tab */}
+        <TabsContent value="users" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Growth</CardTitle>
+                <CardDescription>New user registrations over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  <BarChart3 className="h-16 w-16" />
+                  <div className="ml-4">
+                    <div className="font-medium">User Growth Chart</div>
+                    <div className="text-sm">Chart visualization would be rendered here</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Subscription Distribution</CardTitle>
+                <CardDescription>Users by subscription tier</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {userAnalytics?.usersByTier?.map((tier) => (
+                    <div key={tier.tier} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={tier.tier === 'free' ? 'secondary' : 'default'}>
+                          {tier.tier}
+                        </Badge>
+                        <span className="text-sm">{tier.count} users</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {formatPercentage(tier.percentage / 100)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>User Retention</CardTitle>
+                <CardDescription>Retention rates by period</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {userAnalytics?.retentionRate?.map((period) => (
+                    <div key={period.period} className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{period.period}</span>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-24 bg-muted rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full" 
+                            style={{ width: `${period.rate}%` }}
                           />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateModuleMutation.mutate(module.id)}
-                            disabled={updateModuleMutation.isPending || module.status === "updating"}
-                          >
-                            <RefreshCw className="w-3 h-3" />
-                          </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                        <span className="text-sm">{formatPercentage(period.rate / 100)}</span>
+                      </div>
+                    </div>
                   ))}
-                  {(!modules || modules.length === 0) && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
-                        No analytics modules configured
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                </div>
+              </CardContent>
+            </Card>
 
-      {/* Data Management Tab */}
-      {selectedTab === "data" && (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Data Management</CardTitle>
-              <p className="text-sm text-muted-foreground">Manage historical data for analytics modules</p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* 200-Week Heatmap Data */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <BarChart3 className="w-5 h-5" />
-                    <h3 className="text-lg font-semibold">200-Week SMA Heatmap</h3>
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Users</CardTitle>
+                <CardDescription>Daily active users trend</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  <LineChart className="h-16 w-16" />
+                  <div className="ml-4">
+                    <div className="font-medium">Active Users Chart</div>
+                    <div className="text-sm">Line chart visualization would be rendered here</div>
                   </div>
-                  <Button variant="outline">
-                    <Download className="w-4 h-4 mr-2" />
-                    Export Data
-                  </Button>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">2,847</div>
-                        <div className="text-sm text-muted-foreground">Total Data Points</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">5 years</div>
-                        <div className="text-sm text-muted-foreground">Historical Range</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">Daily</div>
-                        <div className="text-sm text-muted-foreground">Update Frequency</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-              {/* 2-Year Cycle Data */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="w-5 h-5" />
-                    <h3 className="text-lg font-semibold">2-Year Cycle Indicator</h3>
-                  </div>
-                  <Button variant="outline">
-                    <Download className="w-4 h-4 mr-2" />
-                    Export Data
-                  </Button>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">1,423</div>
-                        <div className="text-sm text-muted-foreground">Cycle Points</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">3 cycles</div>
-                        <div className="text-sm text-muted-foreground">Complete Cycles</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">Weekly</div>
-                        <div className="text-sm text-muted-foreground">Update Frequency</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+        {/* Revenue Analytics Tab */}
+        <TabsContent value="revenue" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>MRR Growth</CardTitle>
+                <CardDescription>Monthly Recurring Revenue</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{formatCurrency(revenueAnalytics?.mrr || 0)}</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  ARR: {formatCurrency(revenueAnalytics?.arr || 0)}
+                </p>
+              </CardContent>
+            </Card>
 
-              {/* Forecast Data */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Activity className="w-5 h-5" />
-                    <h3 className="text-lg font-semibold">Cycle Forecaster</h3>
-                  </div>
-                  <Button variant="outline">
-                    <Download className="w-4 h-4 mr-2" />
-                    Export Data
-                  </Button>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">365</div>
-                        <div className="text-sm text-muted-foreground">Forecast Days</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">92.3%</div>
-                        <div className="text-sm text-muted-foreground">Accuracy Rate</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">Daily</div>
-                        <div className="text-sm text-muted-foreground">Update Frequency</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer LTV</CardTitle>
+                <CardDescription>Lifetime Value</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{formatCurrency(revenueAnalytics?.ltv || 0)}</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Average customer value
+                </p>
+              </CardContent>
+            </Card>
 
-      {/* Data Imports Tab */}
-      {selectedTab === "imports" && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Data Import History</CardTitle>
-                <p className="text-sm text-muted-foreground">Monitor data import jobs and their status</p>
-              </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Start Import
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Import Analytics Data</DialogTitle>
-                    <DialogDescription>
-                      Import historical data for analytics calculations
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Ticker Symbol</Label>
-                      <Input placeholder="BTC" />
+            <Card>
+              <CardHeader>
+                <CardTitle>Churn Rate</CardTitle>
+                <CardDescription>Monthly churn percentage</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{formatPercentage(metrics?.churnRate || 0)}</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Lower is better
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue by Tier</CardTitle>
+                <CardDescription>Revenue distribution across subscription tiers</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {revenueAnalytics?.revenueByTier?.map((tier) => (
+                    <div key={tier.tier} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={tier.tier === 'pro' ? 'default' : 'secondary'}>
+                          {tier.tier}
+                        </Badge>
+                        <span className="text-sm">{formatCurrency(tier.revenue)}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {formatPercentage(tier.percentage / 100)}
+                      </span>
                     </div>
-                    <div>
-                      <Label>Data Type</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select data type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="heatmap">200-Week Heatmap</SelectItem>
-                          <SelectItem value="cycle">2-Year Cycle</SelectItem>
-                          <SelectItem value="forecast">Forecast Data</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Data Source</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select source" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="binance">Binance</SelectItem>
-                          <SelectItem value="coinbase">Coinbase</SelectItem>
-                          <SelectItem value="manual">Manual Upload</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button>Start Import</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoadingImports ? (
-              <div className="space-y-2">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ticker</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Source</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Records</TableHead>
-                    <TableHead>Started</TableHead>
-                    <TableHead>Completed</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {imports?.slice(0, 10).map((importJob: DataImport) => (
-                    <TableRow key={importJob.id}>
-                      <TableCell className="font-medium">{importJob.ticker}</TableCell>
-                      <TableCell className="capitalize">{importJob.type}</TableCell>
-                      <TableCell>{importJob.source}</TableCell>
-                      <TableCell>{getStatusBadge(importJob.status)}</TableCell>
-                      <TableCell>{importJob.recordsImported.toLocaleString()}</TableCell>
-                      <TableCell>{new Date(importJob.createdAt).toLocaleString()}</TableCell>
-                      <TableCell>
-                        {importJob.completedAt ? 
-                          new Date(importJob.completedAt).toLocaleString() : 
-                          "-"
-                        }
-                      </TableCell>
-                    </TableRow>
                   ))}
-                  {(!imports || imports.length === 0) && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
-                        No data imports found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Revenue Trend</CardTitle>
+                <CardDescription>Revenue and subscription growth</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  <BarChart3 className="h-16 w-16" />
+                  <div className="ml-4">
+                    <div className="font-medium">Revenue Trend Chart</div>
+                    <div className="text-sm">Combined revenue and subscription chart</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Signal Analytics Tab */}
+        <TabsContent value="signals" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Signal Performance</CardTitle>
+                <CardDescription>Daily signal count and accuracy</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  <LineChart className="h-16 w-16" />
+                  <div className="ml-4">
+                    <div className="font-medium">Signal Performance Chart</div>
+                    <div className="text-sm">Signal count and accuracy over time</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Popular Trading Pairs</CardTitle>
+                <CardDescription>Most subscribed tickers</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {signalAnalytics?.popularTickers?.map((ticker, index) => (
+                    <div key={ticker.ticker} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline">#{index + 1}</Badge>
+                        <span className="font-medium">{ticker.ticker}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {ticker.subscriptions} subscriptions
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Signal Accuracy by Ticker</CardTitle>
+                <CardDescription>Performance breakdown by trading pair</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {signalAnalytics?.signalsByTicker?.map((ticker) => (
+                    <div key={ticker.ticker} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">{ticker.ticker}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {ticker.count} signals
+                        </span>
+                      </div>
+                      <Badge variant={ticker.accuracy > 0.9 ? 'default' : 'secondary'}>
+                        {formatPercentage(ticker.accuracy)}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Signal Accuracy Trend</CardTitle>
+                <CardDescription>Accuracy rate over time</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  <LineChart className="h-16 w-16" />
+                  <div className="ml-4">
+                    <div className="font-medium">Accuracy Trend Chart</div>
+                    <div className="text-sm">Signal accuracy percentage over time</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Performance Tab */}
+        <TabsContent value="performance" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Response Time</CardTitle>
+                <CardDescription>API response time trends</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  <LineChart className="h-16 w-16" />
+                  <div className="ml-4">
+                    <div className="font-medium">Response Time Chart</div>
+                    <div className="text-sm">Average response time over time</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Error Rate</CardTitle>
+                <CardDescription>System error tracking</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  <BarChart3 className="h-16 w-16" />
+                  <div className="ml-4">
+                    <div className="font-medium">Error Rate Chart</div>
+                    <div className="text-sm">Error percentage by endpoint</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Resource Usage</CardTitle>
+                <CardDescription>CPU and memory utilization</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  <Activity className="h-16 w-16" />
+                  <div className="ml-4">
+                    <div className="font-medium">Resource Usage Chart</div>
+                    <div className="text-sm">CPU and memory over time</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Database Performance</CardTitle>
+                <CardDescription>Query response times and connections</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center text-muted-foreground">
+                  <BarChart3 className="h-16 w-16" />
+                  <div className="ml-4">
+                    <div className="font-medium">Database Performance Chart</div>
+                    <div className="text-sm">Query performance metrics</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
