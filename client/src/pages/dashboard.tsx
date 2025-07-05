@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import Sidebar from "@/components/layout/Sidebar";
-import TradingViewChart from "@/components/charts/TradingViewChart";
+import TradingViewRealWidget from "@/components/charts/TradingViewRealWidget";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
 import TickerSelector from "@/components/ui/ticker-selector";
@@ -172,25 +172,14 @@ export default function Dashboard() {
               })}
             </div>
 
-            {/* Main Chart */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>BTC/USD - Real-time</CardTitle>
-                  <div className="flex space-x-2">
-                    <Button size="sm" variant="default">1D</Button>
-                    <Button size="sm" variant="outline">7D</Button>
-                    <Button size="sm" variant="outline">1M</Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <TradingViewChart 
-                  symbol="BTCUSDT"
-                  height={400}
-                />
-              </CardContent>
-            </Card>
+            {/* TradingView Professional Chart */}
+            <TradingViewRealWidget 
+              ticker="BTCUSDT"
+              onTrade={(action, price) => {
+                // Handle trading action
+                console.log(`${action} order at ${price}`);
+              }}
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* 200-Week Heatmap Widget */}
