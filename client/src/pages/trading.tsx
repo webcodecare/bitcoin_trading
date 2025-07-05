@@ -38,8 +38,8 @@ export default function TradingPage() {
     refetchInterval: 2000,
   });
 
-  const currentPrice = marketData?.price || 65755.0;
-  const priceChange = marketData?.change24h || 2.34;
+  const currentPrice = (marketData as any)?.price || 65755.0;
+  const priceChange = (marketData as any)?.change24h || 2.34;
 
   // Trigger price animation when price changes
   useEffect(() => {
@@ -227,7 +227,7 @@ export default function TradingPage() {
                       transition={{ duration: 0.8, ease: "easeOut" }}
                       className="h-full"
                     >
-                      <TradingViewRealWidget />
+                      <TradingViewRealWidget ticker={selectedTicker} />
                     </motion.div>
                   </CardContent>
                 </Card>
