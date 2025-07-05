@@ -189,6 +189,7 @@ Changelog:
 - July 05, 2025. FIXED: Resolved all chart functionality issues by replacing problematic TradingView integration with reliable canvas-based chart solution. Charts now display candlestick data with signal markers. Updated database schema with all missing forecasting columns.
 - July 05, 2025. ENHANCED: Optimized mobile responsiveness for buy/sell trading functionality. Added touch-friendly controls, responsive grid layouts, mobile-first design with proper breakpoints, and enhanced user experience on all devices. Implemented quick amount buttons and improved trading interface for mobile users.
 - July 05, 2025. ADVANCED FEATURES: Implemented comprehensive advanced feature suite including multi-channel alert system with price/technical/volume/news/whale alerts, professional portfolio management with rebalancing and risk analysis, and complete Supabase authentication migration guide with social login support. Added advanced navigation to sidebar.
+- July 05, 2025. CRITICAL FIXES: Resolved black screen issues across multiple pages by fixing TradingView chart component with custom canvas-based implementation and rebuilding AdvancedPortfolio component with proper dark theme support. Both dashboard and advanced-portfolio pages now display correctly with real-time data.
 ```
 
 ## User Preferences
