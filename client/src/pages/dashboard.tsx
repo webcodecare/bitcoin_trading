@@ -5,10 +5,12 @@ import Sidebar from "@/components/layout/Sidebar";
 import TradingViewChart from "@/components/charts/TradingViewChart";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
+import TickerSelector from "@/components/ui/ticker-selector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -16,7 +18,10 @@ import {
   Target, 
   Bell,
   ExternalLink,
-  Activity
+  Activity,
+  BarChart3,
+  LineChart,
+  PieChart
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -33,6 +38,17 @@ interface AlertSignal {
 export default function Dashboard() {
   const { user } = useAuth();
   const [recentSignals, setRecentSignals] = useState<AlertSignal[]>([]);
+  const [selectedTickers, setSelectedTickers] = useState<string[]>(["BTCUSDT", "ETHUSDT"]);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Handle ticker selection
+  const handleTickerToggle = (symbol: string) => {
+    setSelectedTickers(prev => 
+      prev.includes(symbol) 
+        ? prev.filter(s => s !== symbol)
+        : [...prev, symbol]
+    );
+  };
 
   // Fetch user's recent signals
   const { data: userSignals, isLoading: isLoadingSignals } = useQuery({

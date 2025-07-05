@@ -1,0 +1,350 @@
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import Sidebar from "@/components/layout/Sidebar";
+import TradingViewChart from "@/components/charts/TradingViewChart";
+import HeatmapChart from "@/components/charts/HeatmapChart";
+import CycleChart from "@/components/charts/CycleChart";
+import TickerSelector from "@/components/ui/ticker-selector";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  Activity,
+  Bell,
+  BarChart3,
+  LineChart,
+  PieChart,
+  Target,
+  Clock
+} from "lucide-react";
+
+interface AlertSignal {
+  id: string;
+  ticker: string;
+  signalType: "buy" | "sell";
+  price: string;
+  timestamp: string;
+  source: string;
+  note?: string;
+}
+
+export default function MultiTickerDashboard() {
+  const { user } = useAuth();
+  const [recentSignals, setRecentSignals] = useState<AlertSignal[]>([]);
+  const [selectedTickers, setSelectedTickers] = useState<string[]>(["BTCUSDT", "ETHUSDT"]);
+  const [selectedChart, setSelectedChart] = useState<string>("BTCUSDT");
+
+  // Handle ticker selection
+  const handleTickerToggle = (symbol: string) => {
+    setSelectedTickers(prev => 
+      prev.includes(symbol) 
+        ? prev.filter(s => s !== symbol)
+        : [...prev, symbol]
+    );
+  };
+
+  // Fetch user's recent signals
+  const { data: userSignals, isLoading: isLoadingSignals } = useQuery({
+    queryKey: ["/api/user/signals"],
+    queryFn: async () => {
+      const response = await fetch("/api/user/signals?limit=20", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch signals");
+      }
+      return await response.json();
+    },
+  });
+
+  // WebSocket for real-time updates
+  useWebSocket((message) => {
+    if (message.type === "new_signal" && message.signal) {
+      setRecentSignals(prev => [message.signal, ...prev.slice(0, 19)]);
+    }
+  });
+
+  useEffect(() => {
+    if (userSignals) {
+      setRecentSignals(userSignals);
+    }
+  }, [userSignals]);
+
+  const quickStats = [
+    {
+      title: "Signal Accuracy",
+      value: "87.5%",
+      icon: Target,
+      color: "text-emerald-400",
+    },
+    {
+      title: "Last Signal",
+      value: "2h ago",
+      icon: Clock,
+      color: "text-foreground",
+    },
+    {
+      title: "Portfolio",
+      value: "+24.5%",
+      icon: TrendingUp,
+      color: "text-emerald-400",
+    },
+    {
+      title: "Active Alerts",
+      value: selectedTickers.length.toString(),
+      icon: Bell,
+      color: "text-foreground",
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        <Sidebar />
+        
+        {/* Main Content */}
+        <div className="ml-64 flex-1">
+          {/* Top Bar */}
+          <header className="bg-card border-b border-border p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold">Multi-Ticker Dashboard</h1>
+                <p className="text-muted-foreground mt-1">
+                  Tracking {selectedTickers.length} cryptocurrencies - Welcome {user?.firstName || user?.email}
+                </p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <Badge variant="outline" className="px-3 py-1">
+                  <Activity className="mr-2 h-4 w-4" />
+                  Live Data
+                </Badge>
+                <Button variant="outline">
+                  <Bell className="mr-2 h-4 w-4" />
+                  Alerts ({recentSignals.length})
+                </Button>
+              </div>
+            </div>
+          </header>
+
+          {/* Dashboard Content */}
+          <div className="p-6 space-y-6">
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview" className="flex items-center space-x-2">
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Overview</span>
+                </TabsTrigger>
+                <TabsTrigger value="charts" className="flex items-center space-x-2">
+                  <LineChart className="h-4 w-4" />
+                  <span>Charts</span>
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="flex items-center space-x-2">
+                  <PieChart className="h-4 w-4" />
+                  <span>Analytics</span>
+                </TabsTrigger>
+                <TabsTrigger value="signals" className="flex items-center space-x-2">
+                  <Bell className="h-4 w-4" />
+                  <span>Signals</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-6">
+                {/* Quick Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {quickStats.map((stat, index) => (
+                    <Card key={index}>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">
+                              {stat.title}
+                            </p>
+                            <p className={`text-2xl font-bold ${stat.color}`}>
+                              {stat.value}
+                            </p>
+                          </div>
+                          <stat.icon className={`h-8 w-8 ${stat.color}`} />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Ticker Selector */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Your Cryptocurrency Watchlist</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <TickerSelector
+                      selectedTickers={selectedTickers}
+                      onTickerToggle={handleTickerToggle}
+                      maxTickers={10}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Recent Signals Overview */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Signals</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {isLoadingSignals ? (
+                        <div className="space-y-2">
+                          {[...Array(5)].map((_, i) => (
+                            <div key={i} className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                          ))}
+                        </div>
+                      ) : recentSignals.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">
+                          No signals yet. Your trading signals will appear here.
+                        </p>
+                      ) : (
+                        recentSignals.slice(0, 5).map((signal) => (
+                          <div key={signal.id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <Badge variant={signal.signalType === "buy" ? "default" : "destructive"}>
+                                {signal.signalType.toUpperCase()}
+                              </Badge>
+                              <div>
+                                <p className="font-medium">{signal.ticker}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  ${signal.price} • {new Date(signal.timestamp).toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm text-muted-foreground">{signal.source}</p>
+                              {signal.note && (
+                                <p className="text-xs text-muted-foreground">{signal.note}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="charts" className="space-y-6">
+                {/* Chart Selector */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Select Chart to Display</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTickers.map((ticker) => (
+                        <Button
+                          key={ticker}
+                          variant={selectedChart === ticker ? "default" : "outline"}
+                          onClick={() => setSelectedChart(ticker)}
+                        >
+                          {ticker.replace('USDT', '')}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Trading Chart */}
+                {selectedChart && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{selectedChart} Trading Chart</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <TradingViewChart symbol={selectedChart} />
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="analytics" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Heatmap */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>200-Week SMA Heatmap</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <HeatmapChart />
+                    </CardContent>
+                  </Card>
+
+                  {/* Cycle Analysis */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Cycle Analysis</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CycleChart />
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="signals" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>All Trading Signals</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {isLoadingSignals ? (
+                        <div className="space-y-2">
+                          {[...Array(10)].map((_, i) => (
+                            <div key={i} className="h-16 bg-gray-200 rounded animate-pulse"></div>
+                          ))}
+                        </div>
+                      ) : recentSignals.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">
+                          No signals yet. Your trading signals will appear here.
+                        </p>
+                      ) : (
+                        recentSignals.map((signal) => (
+                          <div key={signal.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div className="flex items-center space-x-4">
+                              <Badge variant={signal.signalType === "buy" ? "default" : "destructive"}>
+                                {signal.signalType.toUpperCase()}
+                              </Badge>
+                              <div>
+                                <p className="font-medium text-lg">{signal.ticker}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Price: ${signal.price}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium">{signal.source}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(signal.timestamp).toLocaleString()}
+                              </p>
+                              {signal.note && (
+                                <p className="text-xs text-muted-foreground mt-1">{signal.note}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

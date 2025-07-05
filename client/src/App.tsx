@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Auth from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
+import MultiTickerDashboard from "@/pages/multi-ticker-dashboard";
 import Admin from "@/pages/admin";
 import AdminUsers from "@/pages/admin/users";
 import AdminSignals from "@/pages/admin/signals";
@@ -42,6 +43,11 @@ function Router() {
       <Route path="/dashboard">
         <AuthGuard>
           <Dashboard />
+        </AuthGuard>
+      </Route>
+      <Route path="/multi-ticker">
+        <AuthGuard>
+          <MultiTickerDashboard />
         </AuthGuard>
       </Route>
       <Route path="/admin">
