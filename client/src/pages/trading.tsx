@@ -1,440 +1,267 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import Sidebar from "@/components/layout/Sidebar";
+import TradingViewRealWidget from "@/components/charts/TradingViewRealWidget";
+import OrderBook from "@/components/trading/OrderBook";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import Navigation from "@/components/layout/Navigation";
-import Footer from "@/components/layout/Footer";
-import TradingViewWidget from "@/components/charts/TradingViewWidget";
-import MarketOverview from "@/components/trading/MarketOverview";
-import TradingHeader from "@/components/trading/TradingHeader";
-import TradingTerminal from "@/components/trading/TradingTerminal";
-import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
 import { 
   TrendingUp, 
   TrendingDown, 
-  Activity, 
-  BarChart3,
+  Activity,
   DollarSign,
-  Target,
   Clock,
-  AlertTriangle
+  Target,
+  BarChart3
 } from "lucide-react";
 
-export default function Trading() {
-  const [selectedSymbol, setSelectedSymbol] = useState("BINANCE:BTCUSDT");
-  const [chartHeight, setChartHeight] = useState(700);
+export default function TradingPage() {
+  const { user } = useAuth();
+  const [selectedTicker, setSelectedTicker] = useState("BTCUSDT");
+  const [orderType, setOrderType] = useState("market");
+  const [orderAmount, setOrderAmount] = useState("");
+  const [limitPrice, setLimitPrice] = useState("");
 
-  useEffect(() => {
-    const updateChartHeight = () => {
-      if (window.innerWidth < 768) {
-        setChartHeight(500);
-      } else {
-        setChartHeight(700);
-      }
-    };
-
-    updateChartHeight();
-    window.addEventListener('resize', updateChartHeight);
-    return () => window.removeEventListener('resize', updateChartHeight);
-  }, []);
-  const { user, isAuthenticated } = useAuth();
-
-  const { data: tickers } = useQuery({
-    queryKey: ['/api/tickers/enabled'],
+  // Fetch market data
+  const { data: marketData } = useQuery({
+    queryKey: [`/api/market/price/${selectedTicker}`],
+    refetchInterval: 2000,
   });
 
-  const { data: portfolio } = useQuery({
-    queryKey: ['/api/user/portfolio'],
-    enabled: isAuthenticated,
-  });
-
-  const { data: recentTrades } = useQuery({
-    queryKey: ['/api/user/trades'],
-    enabled: isAuthenticated,
-  });
-
-  const { data: signals } = useQuery({
-    queryKey: ['/api/signals'],
-    enabled: isAuthenticated,
-    refetchInterval: 5000,
-  });
-
-  const symbols = [
-    { value: "BINANCE:BTCUSDT", label: "BTC/USDT", name: "Bitcoin" },
-    { value: "BINANCE:ETHUSDT", label: "ETH/USDT", name: "Ethereum" },
-    { value: "BINANCE:SOLUSDT", label: "SOL/USDT", name: "Solana" },
-    { value: "BINANCE:ADAUSDT", label: "ADA/USDT", name: "Cardano" },
-    { value: "BINANCE:DOTUSDT", label: "DOT/USDT", name: "Polkadot" },
-    { value: "BINANCE:LINKUSDT", label: "LINK/USDT", name: "Chainlink" },
-    { value: "BINANCE:AVAXUSDT", label: "AVAX/USDT", name: "Avalanche" },
-    { value: "BINANCE:MATICUSDT", label: "MATIC/USDT", name: "Polygon" },
+  // Mock portfolio data
+  const portfolio = [
+    { symbol: "BTC", amount: "0.5432", valueUSD: "36,890", change24h: "+2.34%" },
+    { symbol: "ETH", amount: "12.34", valueUSD: "43,200", change24h: "-1.23%" },
+    { symbol: "SOL", amount: "245.67", valueUSD: "24,567", change24h: "+5.67%" },
   ];
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navigation />
-        
-        <main className="flex-1 bg-gradient-to-b from-background to-secondary/20">
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-2xl mx-auto text-center">
-              <div className="mb-8">
-                <AlertTriangle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
-                <h1 className="text-3xl font-bold mb-4">Authentication Required</h1>
-                <p className="text-lg text-muted-foreground mb-6">
-                  Please log in to access the trading interface and execute trades.
-                </p>
-                <div className="space-x-4">
-                  <Button asChild size="lg">
-                    <a href="/login">Log In</a>
-                  </Button>
-                  <Button variant="outline" size="lg" asChild>
-                    <a href="/">Back to Home</a>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-        
-        <Footer />
-      </div>
-    );
-  }
+  // Mock recent trades
+  const recentTrades = [
+    { id: 1, side: "buy", symbol: "BTC", amount: "0.1", price: "67,500", time: "14:32:01" },
+    { id: 2, side: "sell", symbol: "ETH", amount: "2.5", price: "3,450", time: "14:28:45" },
+    { id: 3, side: "buy", symbol: "SOL", amount: "50", price: "98.50", time: "14:25:12" },
+  ];
+
+  const handleTrade = (side: 'buy' | 'sell') => {
+    console.log(`${side} order: ${orderAmount} ${selectedTicker} at ${orderType} ${limitPrice || 'market'}`);
+  };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navigation />
+    <div className="flex h-screen bg-background">
+      <Sidebar />
       
-      <main className="flex-1 bg-gradient-to-b from-background to-secondary/20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl lg:text-3xl font-bold mb-2">Professional Trading Terminal</h1>
-                <p className="text-muted-foreground text-sm lg:text-base">
-                  Advanced TradingView charts with integrated trading - Experience professional-grade tools like tradingview.com/chart
-                </p>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {symbols.map((symbol) => (
-                      <SelectItem key={symbol.value} value={symbol.value}>
-                        <span className="flex items-center justify-between w-full">
-                          <span>{symbol.label}</span>
-                          <span className="text-xs text-muted-foreground ml-2">{symbol.name}</span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                {user && (
-                  <Badge variant="outline" className="px-3 py-1 w-fit">
-                    <Activity className="h-4 w-4 mr-2" />
-                    {user.role === 'admin' ? 'Admin' : 'Trader'}
-                  </Badge>
-                )}
-              </div>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="bg-card border-b border-border p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Professional Trading Terminal</h1>
+              <p className="text-muted-foreground">Advanced trading with TradingView charts</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Select value={selectedTicker} onValueChange={setSelectedTicker}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BTCUSDT">BTC/USDT</SelectItem>
+                  <SelectItem value="ETHUSDT">ETH/USDT</SelectItem>
+                  <SelectItem value="SOLUSDT">SOL/USDT</SelectItem>
+                  <SelectItem value="ADAUSDT">ADA/USDT</SelectItem>
+                </SelectContent>
+              </Select>
+              <Badge variant="outline">Live Trading</Badge>
             </div>
           </div>
+        </header>
 
-          {/* Professional Trading Header */}
-          <TradingHeader symbol={selectedSymbol} />
-
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-            {/* Main Trading Chart */}
-            <div className="xl:col-span-3 order-1">
-              <Tabs defaultValue="terminal" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="terminal" className="text-xs sm:text-sm">Professional Terminal</TabsTrigger>
-                  <TabsTrigger value="trading" className="text-xs sm:text-sm">Trading Widget</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="terminal">
-                  <TradingTerminal
-                    symbol={selectedSymbol}
-                    height={chartHeight}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="trading">
-                  <TradingViewWidget
-                    symbol={selectedSymbol}
-                    height={chartHeight}
-                    enableTrading={true}
-                    showSignals={true}
-                    theme="dark"
-                  />
-                </TabsContent>
-              </Tabs>
+        {/* Main Trading Interface */}
+        <div className="flex-1 p-6 space-y-6 overflow-auto">
+          <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 h-full">
+            {/* Chart Area */}
+            <div className="xl:col-span-3">
+              <TradingViewRealWidget 
+                ticker={selectedTicker}
+                onTrade={(action, price) => {
+                  console.log(`Quick ${action} at ${price}`);
+                }}
+              />
             </div>
 
-            {/* Trading Panel */}
-            <div className="space-y-4 xl:space-y-6 order-2 xl:order-3">
-              {/* Market Overview */}
-              <MarketOverview />
-              {/* Portfolio Summary */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <BarChart3 className="h-5 w-5" />
-                    Portfolio
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {portfolio && portfolio.length > 0 ? (
-                    portfolio.slice(0, 5).map((position: any) => (
-                      <div key={position.ticker} className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{position.ticker}</span>
-                        <div className="text-right">
-                          <div>{position.quantity}</div>
-                          <div className={`text-xs ${parseFloat(position.totalPnl) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {parseFloat(position.totalPnl) >= 0 ? '+' : ''}${parseFloat(position.totalPnl).toFixed(2)}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No positions</p>
-                  )}
-                </CardContent>
-              </Card>
+            {/* Trading Sidebar */}
+            <div className="xl:col-span-2 space-y-6">
+              {/* Order Book */}
+              <OrderBook symbol={selectedTicker} />
 
-              {/* Recent Signals */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Target className="h-5 w-5" />
-                    Live Signals
-                  </CardTitle>
+              {/* Advanced Order Panel */}
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-lg">Advanced Trading</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {signals && signals.length > 0 ? (
-                    signals.slice(0, 5).map((signal: any) => (
-                      <div key={signal.id} className="flex items-center justify-between p-2 rounded bg-muted/50">
-                        <div className="flex items-center gap-2">
-                          {signal.type === 'buy' ? (
-                            <TrendingUp className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <TrendingDown className="h-4 w-4 text-red-600" />
-                          )}
-                          <div>
-                            <div className="font-medium text-sm">{signal.ticker}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(signal.timestamp).toLocaleTimeString()}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant={signal.type === 'buy' ? 'default' : 'destructive'} className="text-xs">
-                            {signal.type.toUpperCase()}
-                          </Badge>
-                          <div className="text-xs mt-1">${parseFloat(signal.price).toFixed(2)}</div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No active signals</p>
-                  )}
-                </CardContent>
-              </Card>
+                <CardContent className="space-y-4">
+                  {/* Order Type Selection */}
+                  <div>
+                    <Label className="text-sm font-medium">Order Type</Label>
+                    <div className="flex space-x-2 mt-2">
+                      <Button
+                        variant={orderType === 'market' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setOrderType('market')}
+                        className="flex-1"
+                      >
+                        Market
+                      </Button>
+                      <Button
+                        variant={orderType === 'limit' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setOrderType('limit')}
+                        className="flex-1"
+                      >
+                        Limit
+                      </Button>
+                      <Button
+                        variant={orderType === 'stop' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setOrderType('stop')}
+                        className="flex-1"
+                      >
+                        Stop
+                      </Button>
+                    </div>
+                  </div>
 
-              {/* Recent Trades */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Clock className="h-5 w-5" />
-                    Recent Trades
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {recentTrades && recentTrades.length > 0 ? (
-                    recentTrades.slice(0, 5).map((trade: any) => (
-                      <div key={trade.id} className="flex items-center justify-between text-sm">
-                        <div>
-                          <div className="font-medium">{trade.ticker}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(trade.timestamp).toLocaleTimeString()}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant={trade.type === 'buy' ? 'default' : 'destructive'} className="text-xs">
-                            {trade.type.toUpperCase()}
-                          </Badge>
-                          <div className="text-xs mt-1">{trade.amount} @ ${parseFloat(trade.price).toFixed(2)}</div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No recent trades</p>
-                  )}
-                </CardContent>
-              </Card>
+                  {/* Amount Input */}
+                  <div>
+                    <Label htmlFor="amount">Amount (USDT)</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      placeholder="0.00"
+                      value={orderAmount}
+                      onChange={(e) => setOrderAmount(e.target.value)}
+                      className="mt-1"
+                    />
+                    <div className="flex space-x-1 mt-2">
+                      {["25%", "50%", "75%", "Max"].map((pct) => (
+                        <Button
+                          key={pct}
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs flex-1"
+                          onClick={() => setOrderAmount((1000 * parseInt(pct) / 100).toString())}
+                        >
+                          {pct}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
 
-              {/* Quick Actions */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <DollarSign className="h-5 w-5" />
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button className="w-full" variant="outline" asChild>
-                    <a href="/dashboard">View Dashboard</a>
-                  </Button>
-                  <Button className="w-full" variant="outline" asChild>
-                    <a href="/multi-ticker">Multi-Ticker View</a>
-                  </Button>
-                  <Button className="w-full" variant="outline" asChild>
-                    <a href="/settings">Trading Settings</a>
-                  </Button>
+                  {/* Limit Price (if limit order) */}
+                  {orderType === 'limit' && (
+                    <div>
+                      <Label htmlFor="price">Limit Price</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        placeholder="0.00"
+                        value={limitPrice}
+                        onChange={(e) => setLimitPrice(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+
+                  {/* Buy/Sell Buttons */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      onClick={() => handleTrade('buy')}
+                      className="bg-green-600 hover:bg-green-700 text-white font-medium py-3"
+                    >
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      BUY
+                    </Button>
+                    <Button
+                      onClick={() => handleTrade('sell')}
+                      className="bg-red-600 hover:bg-red-700 text-white font-medium py-3"
+                    >
+                      <TrendingDown className="w-4 h-4 mr-2" />
+                      SELL
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
           </div>
 
-          {/* Additional Trading Tools */}
-          <div className="mt-8">
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="orderbook">Order Book</TabsTrigger>
-                <TabsTrigger value="trades">Trade History</TabsTrigger>
-                <TabsTrigger value="analysis">Analysis</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="overview" className="mt-6">
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Total Portfolio</p>
-                          <p className="text-2xl font-bold">
-                            ${portfolio?.reduce((acc: number, pos: any) => acc + parseFloat(pos.totalValue || 0), 0).toFixed(2) || '0.00'}
-                          </p>
-                        </div>
-                        <BarChart3 className="h-8 w-8 text-primary" />
+          {/* Bottom Panels */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Portfolio */}
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BarChart3 className="w-5 h-5 mr-2" />
+                  Portfolio
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {portfolio.map((asset, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div>
+                        <div className="font-medium">{asset.symbol}</div>
+                        <div className="text-sm text-muted-foreground">{asset.amount}</div>
                       </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Total P&L</p>
-                          <p className={`text-2xl font-bold ${portfolio?.reduce((acc: number, pos: any) => acc + parseFloat(pos.totalPnl || 0), 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {portfolio?.reduce((acc: number, pos: any) => acc + parseFloat(pos.totalPnl || 0), 0) >= 0 ? '+' : ''}
-                            ${portfolio?.reduce((acc: number, pos: any) => acc + parseFloat(pos.totalPnl || 0), 0).toFixed(2) || '0.00'}
-                          </p>
+                      <div className="text-right">
+                        <div className="font-medium">${asset.valueUSD}</div>
+                        <div className={`text-sm ${asset.change24h.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+                          {asset.change24h}
                         </div>
-                        <TrendingUp className="h-8 w-8 text-green-600" />
                       </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Active Positions</p>
-                          <p className="text-2xl font-bold">{portfolio?.length || 0}</p>
-                        </div>
-                        <Activity className="h-8 w-8 text-blue-600" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Today's Trades</p>
-                          <p className="text-2xl font-bold">
-                            {recentTrades?.filter((trade: any) => 
-                              new Date(trade.timestamp).toDateString() === new Date().toDateString()
-                            ).length || 0}
-                          </p>
-                        </div>
-                        <Clock className="h-8 w-8 text-orange-600" />
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  ))}
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="orderbook" className="mt-6">
-                <Card>
-                  <CardContent className="p-6">
-                    <p className="text-center text-muted-foreground">
-                      Order book functionality coming soon. Use the trading chart above for market orders and limit orders.
-                    </p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="trades" className="mt-6">
-                <Card>
-                  <CardContent className="p-6">
-                    {recentTrades && recentTrades.length > 0 ? (
-                      <div className="space-y-2">
-                        {recentTrades.map((trade: any) => (
-                          <div key={trade.id} className="flex items-center justify-between p-3 border rounded">
-                            <div className="flex items-center gap-3">
-                              {trade.type === 'buy' ? (
-                                <TrendingUp className="h-5 w-5 text-green-600" />
-                              ) : (
-                                <TrendingDown className="h-5 w-5 text-red-600" />
-                              )}
-                              <div>
-                                <div className="font-medium">{trade.ticker}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  {new Date(trade.timestamp).toLocaleString()}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-medium">{trade.amount} @ ${parseFloat(trade.price).toFixed(2)}</div>
-                              <div className="text-sm text-muted-foreground">
-                                Total: ${(parseFloat(trade.amount) * parseFloat(trade.price)).toFixed(2)}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+              </CardContent>
+            </Card>
+
+            {/* Recent Trades */}
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Activity className="w-5 h-5 mr-2" />
+                  Recent Trades
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {recentTrades.map((trade) => (
+                    <div key={trade.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center space-x-3">
+                        <Badge variant={trade.side === 'buy' ? 'default' : 'destructive'}>
+                          {trade.side.toUpperCase()}
+                        </Badge>
+                        <div>
+                          <div className="font-medium">{trade.symbol}</div>
+                          <div className="text-sm text-muted-foreground">{trade.time}</div>
+                        </div>
                       </div>
-                    ) : (
-                      <p className="text-center text-muted-foreground">No trade history available</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="analysis" className="mt-6">
-                <Card>
-                  <CardContent className="p-6">
-                    <p className="text-center text-muted-foreground">
-                      Advanced analysis tools coming soon. Currently available through the TradingView chart above.
-                    </p>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                      <div className="text-right">
+                        <div className="font-medium">{trade.amount}</div>
+                        <div className="text-sm text-muted-foreground">${trade.price}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </main>
-      
-      <Footer />
+      </div>
     </div>
   );
 }
