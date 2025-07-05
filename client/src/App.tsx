@@ -25,6 +25,7 @@ import About from "@/pages/about";
 import Contact from "@/pages/contact";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
+import Subscription from "@/pages/subscription";
 import AuthGuard from "@/components/auth/AuthGuard";
 
 function Router() {
@@ -86,6 +87,11 @@ function Router() {
       <Route path="/settings">
         <AuthGuard>
           <Settings />
+        </AuthGuard>
+      </Route>
+      <Route path="/subscription">
+        <AuthGuard>
+          <Subscription />
         </AuthGuard>
       </Route>
       <Route path="/members">
