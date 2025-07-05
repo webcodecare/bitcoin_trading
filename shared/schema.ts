@@ -23,11 +23,68 @@ export const users = pgTable("users", {
 export const userSettings = pgTable("user_settings", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id),
+  
+  // Notification Preferences
   notificationEmail: boolean("notification_email").notNull().default(true),
   notificationSms: boolean("notification_sms").notNull().default(false),
   notificationPush: boolean("notification_push").notNull().default(true),
-  theme: text("theme", { enum: ["light", "dark"] }).notNull().default("dark"),
+  emailSignalAlerts: boolean("email_signal_alerts").notNull().default(true),
+  smsSignalAlerts: boolean("sms_signal_alerts").notNull().default(false),
+  pushSignalAlerts: boolean("push_signal_alerts").notNull().default(true),
+  emailFrequency: text("email_frequency", { enum: ["realtime", "daily", "weekly", "never"] }).notNull().default("realtime"),
+  quietHoursStart: text("quiet_hours_start").default("22:00"), // 24h format
+  quietHoursEnd: text("quiet_hours_end").default("08:00"),
+  weekendNotifications: boolean("weekend_notifications").notNull().default(true),
+  
+  // Display Preferences
+  theme: text("theme", { enum: ["light", "dark", "auto"] }).notNull().default("dark"),
   language: text("language").notNull().default("en"),
+  timezone: text("timezone").notNull().default("UTC"),
+  currency: text("currency").notNull().default("USD"),
+  dateFormat: text("date_format", { enum: ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"] }).notNull().default("MM/DD/YYYY"),
+  timeFormat: text("time_format", { enum: ["12h", "24h"] }).notNull().default("12h"),
+  
+  // Chart Preferences
+  defaultChartType: text("default_chart_type", { enum: ["candlestick", "line", "area", "heikin_ashi"] }).notNull().default("candlestick"),
+  defaultTimeframe: text("default_timeframe", { enum: ["1m", "5m", "15m", "1h", "4h", "1d", "1w"] }).notNull().default("15m"),
+  chartTheme: text("chart_theme", { enum: ["dark", "light", "auto"] }).notNull().default("dark"),
+  showVolume: boolean("show_volume").notNull().default(true),
+  showIndicators: boolean("show_indicators").notNull().default(true),
+  autoRefreshCharts: boolean("auto_refresh_charts").notNull().default(true),
+  chartRefreshInterval: integer("chart_refresh_interval").notNull().default(30), // seconds
+  
+  // Trading Preferences
+  defaultOrderType: text("default_order_type", { enum: ["market", "limit", "stop_loss", "take_profit"] }).notNull().default("market"),
+  confirmTrades: boolean("confirm_trades").notNull().default(true),
+  enablePaperTrading: boolean("enable_paper_trading").notNull().default(true),
+  paperTradingBalance: decimal("paper_trading_balance", { precision: 15, scale: 2 }).default("10000.00"),
+  riskPercentage: decimal("risk_percentage", { precision: 5, scale: 2 }).default("2.00"), // 2% default risk
+  stopLossPercentage: decimal("stop_loss_percentage", { precision: 5, scale: 2 }).default("3.00"),
+  takeProfitPercentage: decimal("take_profit_percentage", { precision: 5, scale: 2 }).default("6.00"),
+  
+  // Dashboard Preferences
+  defaultDashboard: text("default_dashboard", { enum: ["overview", "trading", "analytics", "portfolio"] }).notNull().default("overview"),
+  showPriceAlerts: boolean("show_price_alerts").notNull().default(true),
+  showRecentTrades: boolean("show_recent_trades").notNull().default(true),
+  showPortfolioSummary: boolean("show_portfolio_summary").notNull().default(true),
+  showMarketOverview: boolean("show_market_overview").notNull().default(true),
+  maxDashboardItems: integer("max_dashboard_items").notNull().default(20),
+  compactView: boolean("compact_view").notNull().default(false),
+  
+  // Privacy & Security
+  profileVisibility: text("profile_visibility", { enum: ["public", "friends", "private"] }).notNull().default("private"),
+  shareTradeHistory: boolean("share_trade_history").notNull().default(false),
+  allowAnalytics: boolean("allow_analytics").notNull().default(true),
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+  sessionTimeout: integer("session_timeout").notNull().default(1440), // minutes (24 hours)
+  
+  // Advanced Features
+  enableBetaFeatures: boolean("enable_beta_features").notNull().default(false),
+  apiAccessEnabled: boolean("api_access_enabled").notNull().default(false),
+  webhookUrl: text("webhook_url"),
+  customCssEnabled: boolean("custom_css_enabled").notNull().default(false),
+  customCss: text("custom_css"),
+  
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
