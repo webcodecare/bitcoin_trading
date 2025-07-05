@@ -57,6 +57,19 @@ export default function TradingViewWidget({
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Get supported timeframes based on symbol
+  const getSupportedTimeframes = () => {
+    const ticker = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+    if (ticker === 'BTCUSDT' || ticker === 'BTCUSD') {
+      // Only show supported timeframes for BTCUSD
+      return ['1M', '1W', '1D', '12H', '4H', '1H', '30M'];
+    }
+    // Default timeframes for other symbols
+    return ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w'];
+  };
+
+  const supportedTimeframes = getSupportedTimeframes();
+
   // Extract ticker from symbol (BINANCE:BTCUSDT -> BTCUSDT)
   const ticker = symbol.includes(':') ? symbol.split(':')[1] : symbol;
 
