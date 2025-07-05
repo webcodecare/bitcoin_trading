@@ -9,6 +9,9 @@ import Home from "@/pages/home";
 import Auth from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
 import Admin from "@/pages/admin";
+import AdminUsers from "@/pages/admin/users";
+import AdminSignals from "@/pages/admin/signals";
+import AdminTickers from "@/pages/admin/tickers";
 import Alerts from "@/pages/alerts";
 import Settings from "@/pages/settings";
 import Pricing from "@/pages/pricing";
@@ -25,9 +28,24 @@ function Router() {
           <Dashboard />
         </AuthGuard>
       </Route>
-      <Route path="/admin" nest>
+      <Route path="/admin">
         <AuthGuard requiredRole="admin">
           <Admin />
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/users">
+        <AuthGuard requiredRole="admin">
+          <AdminUsers />
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/signals">
+        <AuthGuard requiredRole="admin">
+          <AdminSignals />
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/tickers">
+        <AuthGuard requiredRole="admin">
+          <AdminTickers />
         </AuthGuard>
       </Route>
       <Route path="/alerts">

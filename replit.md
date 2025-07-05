@@ -110,6 +110,9 @@ The application uses a comprehensive PostgreSQL schema managed by Drizzle ORM:
 ```
 Changelog:
 - July 05, 2025. Initial setup
+- July 05, 2025. Added PostgreSQL database with sample data
+- July 05, 2025. Created separate admin pages for user management, signal logs, and ticker management
+- July 05, 2025. Fixed component naming conflicts and added proper routing for admin sub-pages
 ```
 
 ## User Preferences
