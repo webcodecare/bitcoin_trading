@@ -8,9 +8,15 @@ import {
   Settings,
   Shield,
   BarChart3,
+  BarChart,
   Users,
   Coins,
   Activity,
+  CreditCard,
+  DollarSign,
+  MessageSquare,
+  FileText,
+  Edit,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -53,6 +59,16 @@ export default function Sidebar({ className }: SidebarProps) {
       icon: Users,
     },
     {
+      title: "Subscriptions",
+      href: "/admin/subscriptions",
+      icon: CreditCard,
+    },
+    {
+      title: "Payment Logs",
+      href: "/admin/payments",
+      icon: DollarSign,
+    },
+    {
       title: "Signal Logs",
       href: "/admin/signals",
       icon: Activity,
@@ -61,6 +77,41 @@ export default function Sidebar({ className }: SidebarProps) {
       title: "Ticker Management",
       href: "/admin/tickers",
       icon: Coins,
+    },
+    {
+      title: "Alerts Monitor",
+      href: "/admin/alerts",
+      icon: Bell,
+    },
+    {
+      title: "Notifications",
+      href: "/admin/notifications",
+      icon: MessageSquare,
+    },
+    {
+      title: "Access Logs",
+      href: "/admin/logs",
+      icon: FileText,
+    },
+    {
+      title: "Analytics",
+      href: "/admin/analytics",
+      icon: TrendingUp,
+    },
+    {
+      title: "Reports",
+      href: "/admin/reports",
+      icon: BarChart,
+    },
+    {
+      title: "API Integrations",
+      href: "/admin/integrations",
+      icon: Settings,
+    },
+    {
+      title: "Content Management",
+      href: "/admin/content",
+      icon: Edit,
     },
   ];
 
