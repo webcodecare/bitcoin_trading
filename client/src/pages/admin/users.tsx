@@ -73,6 +73,33 @@ export default function AdminUsers() {
     },
   });
 
+  const createUserMutation = useMutation({
+    mutationFn: async (userData: typeof newUser) => {
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(userData),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create user");
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "User created successfully" });
+      setIsCreateUserOpen(false);
+      setNewUser({ email: "", password: "", firstName: "", lastName: "", role: "user" });
+    },
+    onError: (error: Error) => {
+      toast({ title: error.message, variant: "destructive" });
+    },
+  });
+
   const updateUserMutation = useMutation({
     mutationFn: async ({ userId, updates }: { userId: string; updates: Partial<User> }) => {
       const response = await fetch(`/api/admin/users/${userId}`, {
@@ -92,6 +119,29 @@ export default function AdminUsers() {
     },
     onError: () => {
       toast({ title: "Failed to update user", variant: "destructive" });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete user");
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "User deactivated successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ title: error.message, variant: "destructive" });
     },
   });
 
@@ -115,10 +165,94 @@ export default function AdminUsers() {
                 <Users className="h-6 w-6" />
                 <h1 className="text-2xl font-bold">User Management</h1>
               </div>
-              <Button className="crypto-gradient text-white">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add User
-              </Button>
+              <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
+                <DialogTrigger asChild>
+                  <Button className="crypto-gradient text-white">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Add User
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New User</DialogTitle>
+                    <DialogDescription>
+                      Add a new user to the platform. They will receive login credentials via email.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                          id="firstName"
+                          value={newUser.firstName}
+                          onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
+                          placeholder="John"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          value={newUser.lastName}
+                          onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
+                          placeholder="Doe"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={newUser.email}
+                        onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                        placeholder="john@example.com"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={newUser.password}
+                        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                        placeholder="••••••••"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="role">Role</Label>
+                      <select
+                        id="role"
+                        value={newUser.role}
+                        onChange={(e) => setNewUser({ ...newUser, role: e.target.value as "admin" | "user" })}
+                        className="w-full p-2 border rounded-md bg-background"
+                      >
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsCreateUserOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => createUserMutation.mutate(newUser)}
+                      disabled={createUserMutation.isPending || !newUser.email || !newUser.password}
+                    >
+                      {createUserMutation.isPending ? "Creating..." : "Create User"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </header>
 
@@ -219,10 +353,20 @@ export default function AdminUsers() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" title="Edit User">
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              title="Delete User"
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to deactivate ${user.email}?`)) {
+                                  deleteUserMutation.mutate(user.id);
+                                }
+                              }}
+                              disabled={deleteUserMutation.isPending}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
