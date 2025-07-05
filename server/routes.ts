@@ -512,10 +512,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Apply Promotional Code
+  app.post("/api/apply-promo-code", async (req, res) => {
+    try {
+      const { promoCode, planTier } = req.body;
+      
+      // Mock promo codes - in production, these would be stored in database
+      const promoCodes = {
+        "WELCOME20": { discount: 0.2, type: "percentage", validTiers: ["basic", "premium", "pro"] },
+        "CRYPTO50": { discount: 0.5, type: "percentage", validTiers: ["premium", "pro"] },
+        "FIRST30": { discount: 30, type: "fixed", validTiers: ["basic"] },
+      };
+      
+      const promo = promoCodes[promoCode as keyof typeof promoCodes];
+      
+      if (!promo) {
+        return res.status(404).json({ message: "Invalid promotional code" });
+      }
+      
+      if (!promo.validTiers.includes(planTier)) {
+        return res.status(400).json({ message: "Promotional code not valid for this plan" });
+      }
+      
+      const plan = await storage.getSubscriptionPlan(planTier);
+      if (!plan) {
+        return res.status(404).json({ message: "Plan not found" });
+      }
+      
+      let discountedPrice = plan.monthlyPrice;
+      if (promo.type === "percentage") {
+        discountedPrice = Math.round(plan.monthlyPrice * (1 - promo.discount));
+      } else {
+        discountedPrice = Math.max(0, plan.monthlyPrice - (promo.discount * 100));
+      }
+      
+      res.json({
+        originalPrice: plan.monthlyPrice,
+        discountedPrice,
+        discount: promo.discount,
+        discountType: promo.type,
+        savings: plan.monthlyPrice - discountedPrice,
+      });
+    } catch (error: any) {
+      console.error("Error applying promo code:", error);
+      res.status(500).json({ message: "Failed to apply promotional code" });
+    }
+  });
+
   // Create Stripe Checkout Session for Subscription
   app.post("/api/create-subscription", async (req, res) => {
     try {
-      const { planTier, billingInterval = "monthly" } = req.body;
+      const { planTier, billingInterval = "monthly", promoCode } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {

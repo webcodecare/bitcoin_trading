@@ -25,6 +25,9 @@ interface SubscriptionPlan {
 export default function Pricing() {
   const [isYearly, setIsYearly] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
+  const [showPromoInput, setShowPromoInput] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -33,11 +36,43 @@ export default function Pricing() {
     queryKey: ["/api/subscription-plans"],
   });
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount / 100);
+  };
+
+  const applyPromoMutation = useMutation({
+    mutationFn: async ({ code, tier }: { code: string; tier: string }) => {
+      const response = await apiRequest("POST", "/api/apply-promo-code", {
+        promoCode: code,
+        planTier: tier,
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setAppliedPromo(data);
+      toast({
+        title: "Promo Code Applied!",
+        description: `You save ${formatCurrency(data.savings)} with this code.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Invalid Promo Code",
+        description: error.message || "This promotional code is not valid.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const createSubscriptionMutation = useMutation({
     mutationFn: async (planTier: string) => {
       const response = await apiRequest("POST", "/api/create-subscription", {
         planTier,
         billingInterval: isYearly ? "yearly" : "monthly",
+        promoCode: appliedPromo ? promoCode : undefined,
       });
       return response.json();
     },
@@ -83,8 +118,35 @@ export default function Pricing() {
     createSubscriptionMutation.mutate(planTier);
   };
 
+  const applyPromoCode = (planTier: string) => {
+    if (!promoCode.trim()) {
+      toast({
+        title: "Enter Promo Code",
+        description: "Please enter a promotional code.",
+        variant: "destructive",
+      });
+      return;
+    }
+    applyPromoMutation.mutate({ code: promoCode.toUpperCase(), tier: planTier });
+  };
+
   const formatPrice = (plan: SubscriptionPlan) => {
     if (plan.monthlyPrice === 0) return "Free";
+    
+    let price = isYearly ? (plan.yearlyPrice || plan.monthlyPrice * 12) : plan.monthlyPrice;
+    
+    // Apply promotional discount if applicable
+    if (appliedPromo && appliedPromo.discountedPrice && plan.tier !== "free") {
+      price = appliedPromo.discountedPrice;
+    }
+    
+    const amount = (price / 100).toFixed(2);
+    const period = isYearly ? "/year" : "/month";
+    return `$${amount}${period}`;
+  };
+
+  const getOriginalPrice = (plan: SubscriptionPlan) => {
+    if (plan.monthlyPrice === 0) return null;
     const price = isYearly ? (plan.yearlyPrice || plan.monthlyPrice * 12) : plan.monthlyPrice;
     const amount = (price / 100).toFixed(2);
     const period = isYearly ? "/year" : "/month";
@@ -144,6 +206,62 @@ export default function Pricing() {
                 Save up to 20%
               </Badge>
             )}
+          </div>
+
+          {/* Promotional Code Section */}
+          <div className="max-w-md mx-auto mb-8">
+            <div className="text-center mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPromoInput(!showPromoInput)}
+              >
+                Have a promo code?
+              </Button>
+            </div>
+            
+            {showPromoInput && (
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  placeholder="Enter promo code"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  className="flex-1 px-3 py-2 border border-border rounded-md text-sm"
+                />
+                <Button
+                  onClick={() => plans.length > 0 && applyPromoCode(plans[1].tier)}
+                  disabled={applyPromoMutation.isPending || !promoCode.trim()}
+                  size="sm"
+                >
+                  Apply
+                </Button>
+              </div>
+            )}
+            
+            {appliedPromo && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                <div className="text-sm text-green-800">
+                  🎉 Promo code applied! You save {formatCurrency(appliedPromo.savings)}
+                </div>
+              </div>
+            )}
+            
+            {/* Sample Promo Codes for Demo */}
+            <div className="mt-4 text-center">
+              <div className="text-xs text-muted-foreground mb-2">Try these demo codes:</div>
+              <div className="flex justify-center space-x-2 text-xs">
+                <Badge variant="outline" className="cursor-pointer" onClick={() => setPromoCode("WELCOME20")}>
+                  WELCOME20
+                </Badge>
+                <Badge variant="outline" className="cursor-pointer" onClick={() => setPromoCode("CRYPTO50")}>
+                  CRYPTO50
+                </Badge>
+                <Badge variant="outline" className="cursor-pointer" onClick={() => setPromoCode("FIRST30")}>
+                  FIRST30
+                </Badge>
+              </div>
+            </div>
           </div>
         </div>
 
