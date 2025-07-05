@@ -153,20 +153,188 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get comprehensive user settings
+  app.get('/api/user/settings', requireAuth, async (req: any, res) => {
+    try {
+      const settings = await storage.getUserSettings(req.user.id);
+      if (!settings) {
+        // Create default settings if none exist
+        const defaultSettings = await storage.createUserSettings({
+          userId: req.user.id,
+        });
+        res.json(defaultSettings);
+      } else {
+        res.json(settings);
+      }
+    } catch (error) {
+      console.error('Failed to get user settings:', error);
+      res.status(500).json({ message: 'Failed to get settings' });
+    }
+  });
+
+  // Update comprehensive user settings
   app.put('/api/user/settings', requireAuth, async (req: any, res) => {
     try {
       const updates = z.object({
+        // Notification Preferences
         notificationEmail: z.boolean().optional(),
         notificationSms: z.boolean().optional(),
         notificationPush: z.boolean().optional(),
-        theme: z.enum(['light', 'dark']).optional(),
+        emailSignalAlerts: z.boolean().optional(),
+        smsSignalAlerts: z.boolean().optional(),
+        pushSignalAlerts: z.boolean().optional(),
+        emailFrequency: z.enum(['realtime', 'daily', 'weekly', 'never']).optional(),
+        quietHoursStart: z.string().optional(),
+        quietHoursEnd: z.string().optional(),
+        weekendNotifications: z.boolean().optional(),
+        
+        // Display Preferences
+        theme: z.enum(['light', 'dark', 'auto']).optional(),
         language: z.string().optional(),
+        timezone: z.string().optional(),
+        currency: z.string().optional(),
+        dateFormat: z.enum(['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD']).optional(),
+        timeFormat: z.enum(['12h', '24h']).optional(),
+        
+        // Chart Preferences
+        defaultChartType: z.enum(['candlestick', 'line', 'area', 'heikin_ashi']).optional(),
+        defaultTimeframe: z.enum(['1m', '5m', '15m', '1h', '4h', '1d', '1w']).optional(),
+        chartTheme: z.enum(['dark', 'light', 'auto']).optional(),
+        showVolume: z.boolean().optional(),
+        showIndicators: z.boolean().optional(),
+        autoRefreshCharts: z.boolean().optional(),
+        chartRefreshInterval: z.number().min(5).max(300).optional(),
+        
+        // Trading Preferences
+        defaultOrderType: z.enum(['market', 'limit', 'stop_loss', 'take_profit']).optional(),
+        confirmTrades: z.boolean().optional(),
+        enablePaperTrading: z.boolean().optional(),
+        paperTradingBalance: z.string().optional(),
+        riskPercentage: z.string().optional(),
+        stopLossPercentage: z.string().optional(),
+        takeProfitPercentage: z.string().optional(),
+        
+        // Dashboard Preferences
+        defaultDashboard: z.enum(['overview', 'trading', 'analytics', 'portfolio']).optional(),
+        showPriceAlerts: z.boolean().optional(),
+        showRecentTrades: z.boolean().optional(),
+        showPortfolioSummary: z.boolean().optional(),
+        showMarketOverview: z.boolean().optional(),
+        maxDashboardItems: z.number().min(5).max(50).optional(),
+        compactView: z.boolean().optional(),
+        
+        // Privacy & Security
+        profileVisibility: z.enum(['public', 'friends', 'private']).optional(),
+        shareTradeHistory: z.boolean().optional(),
+        allowAnalytics: z.boolean().optional(),
+        twoFactorEnabled: z.boolean().optional(),
+        sessionTimeout: z.number().min(15).max(10080).optional(),
+        
+        // Advanced Features
+        enableBetaFeatures: z.boolean().optional(),
+        apiAccessEnabled: z.boolean().optional(),
+        webhookUrl: z.string().url().optional().or(z.literal('')),
+        customCssEnabled: z.boolean().optional(),
+        customCss: z.string().optional(),
       }).parse(req.body);
 
       const settings = await storage.updateUserSettings(req.user.id, updates);
       res.json(settings);
+    } catch (error: any) {
+      console.error('Failed to update user settings:', error);
+      if (error.issues) {
+        res.status(400).json({ 
+          message: 'Validation error', 
+          details: error.issues.map((issue: any) => ({
+            field: issue.path.join('.'),
+            message: issue.message
+          }))
+        });
+      } else {
+        res.status(400).json({ message: 'Failed to update settings' });
+      }
+    }
+  });
+
+  // Partial update for single preference changes
+  app.patch('/api/user/settings', requireAuth, async (req: any, res) => {
+    try {
+      // Allow any single preference update without strict validation
+      const updates = req.body;
+      const settings = await storage.updateUserSettings(req.user.id, updates);
+      res.json(settings);
     } catch (error) {
+      console.error('Failed to patch user settings:', error);
       res.status(400).json({ message: 'Failed to update settings' });
+    }
+  });
+
+  // Reset settings to defaults
+  app.post('/api/user/settings/reset', requireAuth, async (req: any, res) => {
+    try {
+      // Get current settings
+      const currentSettings = await storage.getUserSettings(req.user.id);
+      if (!currentSettings) {
+        return res.status(404).json({ message: 'Settings not found' });
+      }
+
+      // Reset to defaults by creating new settings
+      const defaultSettings = await storage.createUserSettings({
+        userId: req.user.id,
+      });
+
+      res.json(defaultSettings);
+    } catch (error) {
+      console.error('Failed to reset user settings:', error);
+      res.status(500).json({ message: 'Failed to reset settings' });
+    }
+  });
+
+  // Export settings
+  app.get('/api/user/settings/export', requireAuth, async (req: any, res) => {
+    try {
+      const settings = await storage.getUserSettings(req.user.id);
+      if (!settings) {
+        return res.status(404).json({ message: 'Settings not found' });
+      }
+
+      // Remove internal fields
+      const exportData = {
+        ...settings,
+        id: undefined,
+        userId: undefined,
+        createdAt: undefined,
+        updatedAt: undefined,
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename="preferences.json"');
+      res.json(exportData);
+    } catch (error) {
+      console.error('Failed to export settings:', error);
+      res.status(500).json({ message: 'Failed to export settings' });
+    }
+  });
+
+  // Import settings
+  app.post('/api/user/settings/import', requireAuth, async (req: any, res) => {
+    try {
+      const importData = req.body;
+      
+      // Validate and clean import data
+      const cleanData = Object.keys(importData).reduce((acc: any, key) => {
+        // Skip internal fields
+        if (!['id', 'userId', 'createdAt', 'updatedAt'].includes(key)) {
+          acc[key] = importData[key];
+        }
+        return acc;
+      }, {});
+
+      const settings = await storage.updateUserSettings(req.user.id, cleanData);
+      res.json(settings);
+    } catch (error) {
+      console.error('Failed to import settings:', error);
+      res.status(400).json({ message: 'Failed to import settings' });
     }
   });
 

@@ -6,6 +6,7 @@ import {
   TrendingUp,
   Bell,
   Settings,
+  SlidersHorizontal,
   Shield,
   BarChart3,
   BarChart,
@@ -53,6 +54,11 @@ export default function Sidebar({ className }: SidebarProps) {
       title: "Settings",
       href: "/settings",
       icon: Settings,
+    },
+    {
+      title: "Preferences",
+      href: "/preferences",
+      icon: SlidersHorizontal,
     },
   ];
 

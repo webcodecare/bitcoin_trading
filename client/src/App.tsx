@@ -26,6 +26,7 @@ import AdminIntegrations from "@/pages/admin/integrations";
 import AdminContent from "@/pages/admin/content";
 import Alerts from "@/pages/alerts";
 import Settings from "@/pages/settings";
+import Preferences from "@/pages/preferences";
 import Pricing from "@/pages/pricing";
 import Members from "@/pages/members";
 import MarketData from "@/pages/market-data";
@@ -127,6 +128,11 @@ function Router() {
       <Route path="/settings">
         <AuthGuard>
           <Settings />
+        </AuthGuard>
+      </Route>
+      <Route path="/preferences">
+        <AuthGuard>
+          <Preferences />
         </AuthGuard>
       </Route>
       <Route path="/subscription">
