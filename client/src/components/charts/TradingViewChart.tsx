@@ -191,7 +191,11 @@ export default function TradingViewChart({
           text: `${signal.signalType.toUpperCase()} @ $${signal.price}`,
         }));
 
-        candleSeries.setMarkers(markers);
+        try {
+          candleSeries.setMarkers(markers);
+        } catch (error) {
+          console.warn("Failed to set markers:", error);
+        }
       }
 
       chartRef.current = chart;
