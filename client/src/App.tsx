@@ -12,6 +12,10 @@ import Admin from "@/pages/admin";
 import AdminUsers from "@/pages/admin/users";
 import AdminSignals from "@/pages/admin/signals";
 import AdminTickers from "@/pages/admin/tickers";
+import AdminAlerts from "@/pages/admin/alerts";
+import AdminNotifications from "@/pages/admin/notifications";
+import AdminLogs from "@/pages/admin/logs";
+import AdminAnalytics from "@/pages/admin/analytics";
 import Alerts from "@/pages/alerts";
 import Settings from "@/pages/settings";
 import Pricing from "@/pages/pricing";
@@ -52,6 +56,26 @@ function Router() {
       <Route path="/admin/tickers">
         <AuthGuard requiredRole="admin">
           <AdminTickers />
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/alerts">
+        <AuthGuard requiredRole="admin">
+          <AdminAlerts />
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/notifications">
+        <AuthGuard requiredRole="admin">
+          <AdminNotifications />
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/logs">
+        <AuthGuard requiredRole="admin">
+          <AdminLogs />
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/analytics">
+        <AuthGuard requiredRole="admin">
+          <AdminAnalytics />
         </AuthGuard>
       </Route>
       <Route path="/alerts">

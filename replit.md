@@ -105,6 +105,44 @@ The application uses a comprehensive PostgreSQL schema managed by Drizzle ORM:
 - Tailwind CSS configured with custom design tokens
 - PostCSS with autoprefixer for browser compatibility
 
+## Current Authentication System
+
+**Note**: The project documents mention Supabase authentication, but the current implementation uses:
+- JWT-based authentication with bcrypt password hashing
+- Role-based access control (admin/user roles)
+- Session storage in PostgreSQL with connect-pg-simple
+- Manual user registration and login system
+
+**Supabase Integration**: To implement Supabase authentication as mentioned in the project documents, we would need to:
+1. Replace the current JWT auth system with Supabase Auth
+2. Update the user schema to match Supabase user structure  
+3. Implement row-level security (RLS) policies
+4. Update all auth-related frontend components
+
+## Complete Admin Module System
+
+Based on the attached project documents, the platform now includes all required admin modules:
+
+### Core Admin Modules
+- **User Management** (`/admin/users`) - CRUD operations for users, role management
+- **Ticker Management** (`/admin/tickers`) - Enable/disable trading pairs, control chart availability
+- **Signal Logs** (`/admin/signals`) - View all trading signals, manual signal injection
+
+### Alert & Notification System  
+- **Alert System** (`/admin/alerts`) - Webhook configurations, TradingView integration, delivery queue
+- **Notification Management** (`/admin/notifications`) - Email/SMS/Push configuration, template management
+- **Activity Logs** (`/admin/logs`) - Complete audit trail of admin actions
+
+### Analytics Management
+- **Analytics** (`/admin/analytics`) - 200-week heatmap, cycle indicators, forecast data management
+
+### Buy/Sell Signal System
+The platform supports manual signal injection through the admin interface:
+- Manual buy/sell signal creation with price, ticker, and notes
+- Real-time WebSocket broadcasting to all connected users
+- Integration with TradingView webhook alerts
+- Signal history and analytics tracking
+
 ## Changelog
 
 ```
@@ -115,6 +153,8 @@ Changelog:
 - July 05, 2025. Fixed component naming conflicts and added proper routing for admin sub-pages
 - July 05, 2025. Added complete frontend page structure: Members, Market Data, About, Contact, Privacy, Terms
 - July 05, 2025. Updated navigation menus with all required pages and added footer component
+- July 05, 2025. Added comprehensive admin module system: alerts, notifications, logs, analytics management
+- July 05, 2025. Implemented buy/sell signal injection system and TradingView webhook integration support
 ```
 
 ## User Preferences
