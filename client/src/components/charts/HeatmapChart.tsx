@@ -48,20 +48,21 @@ export default function HeatmapChart({
 
     chartContainerRef.current.appendChild(canvas);
 
-    // Generate heatmap grid
+    // Professional heatmap grid
     const weeks = 52;
     const years = 4;
-    const cellWidth = (canvas.width - 40) / weeks;
-    const cellHeight = (canvas.height - 80) / years;
+    const cellWidth = (canvas.width - 80) / weeks;
+    const cellHeight = (canvas.height - 120) / years;
 
-    // Color function based on deviation percentage
+    // Professional color palette based on deviation percentage
     const getColor = (deviation: number) => {
-      if (deviation < -50) return '#dc2626'; // Deep red - oversold
-      if (deviation < -25) return '#ef4444'; // Red
-      if (deviation < 0) return '#f97316'; // Orange
-      if (deviation < 25) return '#22c55e'; // Green  
-      if (deviation < 50) return '#3b82f6'; // Blue
-      return '#8b5cf6'; // Purple - overbought
+      if (deviation < -50) return '#7f1d1d'; // Dark red - deep oversold
+      if (deviation < -25) return '#dc2626'; // Red - oversold
+      if (deviation < -10) return '#f97316'; // Orange - moderately oversold
+      if (deviation < 10) return '#374151'; // Gray - neutral zone
+      if (deviation < 25) return '#059669'; // Green - moderately overbought
+      if (deviation < 50) return '#2563eb'; // Blue - overbought
+      return '#7c3aed'; // Purple - extremely overbought
     };
 
     // Draw heatmap grid

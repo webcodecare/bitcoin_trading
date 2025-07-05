@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import Sidebar from "@/components/layout/Sidebar";
-import TradingViewChart from "@/components/charts/TradingViewChart";
+import ProfessionalTradingChart from "@/components/charts/ProfessionalTradingChart";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
 import AdvancedForecastChart from "@/components/charts/AdvancedForecastChart";
@@ -358,16 +358,13 @@ export default function MultiTickerDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* Trading Chart */}
+                {/* Professional Trading Chart with Buy/Sell Signals */}
                 {selectedChart && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>{selectedChart} Trading Chart</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <TradingViewChart symbol={selectedChart} />
-                    </CardContent>
-                  </Card>
+                  <ProfessionalTradingChart 
+                    symbol={selectedChart} 
+                    height={500}
+                    showSignals={true}
+                  />
                 )}
               </TabsContent>
 
