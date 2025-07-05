@@ -109,6 +109,18 @@ export const cycleIndicatorData = pgTable("cycle_indicator_data", {
   date: timestamp("date").notNull(),
   ma2y: decimal("ma_2y", { precision: 10, scale: 2 }).notNull(),
   deviation: decimal("deviation", { precision: 5, scale: 2 }).notNull(),
+  // Advanced cycle analysis fields
+  harmonicCycle: decimal("harmonic_cycle", { precision: 8, scale: 4 }),
+  fibonacciLevel: decimal("fibonacci_level", { precision: 8, scale: 4 }),
+  cycleMomentum: decimal("cycle_momentum", { precision: 8, scale: 4 }),
+  seasonalWeight: decimal("seasonal_weight", { precision: 8, scale: 4 }),
+  volatilityIndex: decimal("volatility_index", { precision: 8, scale: 4 }),
+  fractalDimension: decimal("fractal_dimension", { precision: 8, scale: 6 }),
+  entropyScore: decimal("entropy_score", { precision: 8, scale: 4 }),
+  elliottWaveCount: integer("elliott_wave_count"),
+  gannAngle: decimal("gann_angle", { precision: 8, scale: 4 }),
+  cyclePhase: text("cycle_phase"), // "accumulation", "markup", "distribution", "markdown"
+  strengthScore: decimal("strength_score", { precision: 5, scale: 2 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -119,6 +131,34 @@ export const forecastData = pgTable("forecast_data", {
   predictedPrice: decimal("predicted_price", { precision: 10, scale: 2 }).notNull(),
   confidenceLow: decimal("confidence_low", { precision: 10, scale: 2 }).notNull(),
   confidenceHigh: decimal("confidence_high", { precision: 10, scale: 2 }).notNull(),
+  // Enhanced forecasting fields
+  modelType: text("model_type"), // "fourier", "elliott_wave", "gann", "harmonic", "ensemble"
+  algorithmWeights: jsonb("algorithm_weights"), // Ensemble method weights
+  marketRegime: text("market_regime"), // "bull", "bear", "sideways", "volatile"
+  cyclePhase: text("cycle_phase"), // Current cycle phase prediction
+  supportLevels: jsonb("support_levels"), // Dynamic support levels
+  resistanceLevels: jsonb("resistance_levels"), // Dynamic resistance levels
+  volatilityForecast: decimal("volatility_forecast", { precision: 8, scale: 4 }),
+  trendStrength: decimal("trend_strength", { precision: 5, scale: 4 }),
+  harmonicTarget: decimal("harmonic_target", { precision: 10, scale: 2 }),
+  fibonacciTarget: decimal("fibonacci_target", { precision: 10, scale: 2 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Advanced forecasting models table
+export const cycleForecastModels = pgTable("cycle_forecast_models", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ticker: text("ticker").notNull(),
+  modelName: text("model_name").notNull(), // "fourier", "elliott_wave", "gann", "harmonic", "fractal"
+  modelType: text("model_type").notNull(), // "short_term", "medium_term", "long_term"
+  confidence: decimal("confidence", { precision: 5, scale: 4 }).notNull(),
+  accuracy: decimal("accuracy", { precision: 5, scale: 4 }),
+  isActive: boolean("is_active").notNull().default(true),
+  parameters: jsonb("parameters"), // Model-specific parameters
+  calibrationData: jsonb("calibration_data"), // Historical calibration
+  performanceMetrics: jsonb("performance_metrics"), // Tracking accuracy over time
+  lastCalibration: timestamp("last_calibration"),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
