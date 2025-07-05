@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -16,7 +17,8 @@ import {
   DollarSign,
   Clock,
   Target,
-  BarChart3
+  BarChart3,
+  Loader2
 } from "lucide-react";
 
 export default function TradingPage() {
@@ -27,6 +29,8 @@ export default function TradingPage() {
   const [limitPrice, setLimitPrice] = useState("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [chartLoaded, setChartLoaded] = useState(false);
+  const [priceAnimationKey, setPriceAnimationKey] = useState(0);
 
   // Fetch market data
   const { data: marketData } = useQuery({
@@ -36,6 +40,17 @@ export default function TradingPage() {
 
   const currentPrice = marketData?.price || 65755.0;
   const priceChange = marketData?.change24h || 2.34;
+
+  // Trigger price animation when price changes
+  useEffect(() => {
+    setPriceAnimationKey(prev => prev + 1);
+  }, [currentPrice]);
+
+  // Chart loading simulation
+  useEffect(() => {
+    const timer = setTimeout(() => setChartLoaded(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Auto-fill current price when switching to limit orders
   useEffect(() => {
@@ -134,14 +149,33 @@ export default function TradingPage() {
               <div className="flex items-center gap-6">
                 <div>
                   <p className="text-sm text-muted-foreground">Last Price</p>
-                  <p className="text-2xl font-bold">${currentPrice.toLocaleString()}</p>
+                  <motion.div
+                    key={priceAnimationKey}
+                    initial={{ scale: 0.95, opacity: 0.8 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className="text-2xl font-bold"
+                  >
+                    ${currentPrice.toLocaleString()}
+                  </motion.div>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">24h Change</p>
-                  <div className={`flex items-center gap-1 ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {priceChange >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                  <motion.div 
+                    key={`change-${priceAnimationKey}`}
+                    initial={{ x: -10, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className={`flex items-center gap-1 ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}
+                  >
+                    <motion.div
+                      animate={{ rotate: priceChange >= 0 ? 0 : 180 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {priceChange >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                    </motion.div>
                     <span className="font-medium">{priceChange > 0 ? '+' : ''}{priceChange.toFixed(2)}%</span>
-                  </div>
+                  </motion.div>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">24h High</p>
@@ -165,16 +199,49 @@ export default function TradingPage() {
           {/* Chart Area */}
           <div className="flex-1 flex flex-col">
             <div className="flex-1 p-4">
-              <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50">
-                <CardContent className="p-0 h-full">
-                  <TradingViewRealWidget />
-                </CardContent>
-              </Card>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50 relative overflow-hidden">
+                  <CardContent className="p-0 h-full relative">
+                    <AnimatePresence>
+                      {!chartLoaded && (
+                        <motion.div
+                          initial={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.5 }}
+                          className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-sm"
+                        >
+                          <div className="flex flex-col items-center gap-4">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <div className="text-sm text-muted-foreground">Loading TradingView Chart...</div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    <motion.div
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={{ scale: 1, opacity: chartLoaded ? 1 : 0.5 }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      className="h-full"
+                    >
+                      <TradingViewRealWidget />
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
           </div>
 
           {/* Right Sidebar - Order Book & Trading */}
-          <div className="w-96 flex flex-col border-l bg-card/30 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+            className="w-96 flex flex-col border-l bg-card/30 backdrop-blur-sm"
+          >
             {/* Order Book */}
             <div className="flex-1 p-4">
               <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50">
@@ -192,11 +259,23 @@ export default function TradingPage() {
                   {/* Asks (Sell Orders) */}
                   <div className="space-y-0.5">
                     {orderBook.asks.slice(0, 5).reverse().map((ask, index) => (
-                      <div key={index} className="grid grid-cols-3 gap-2 text-xs hover:bg-red-500/5 p-1 rounded">
-                        <div className="text-red-400 font-mono">{ask.price.toLocaleString()}</div>
+                      <motion.div 
+                        key={index}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className="grid grid-cols-3 gap-2 text-xs hover:bg-red-500/5 p-1 rounded transition-colors duration-200"
+                      >
+                        <motion.div 
+                          className="text-red-400 font-mono"
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ duration: 0.1 }}
+                        >
+                          {ask.price.toLocaleString()}
+                        </motion.div>
                         <div className="text-right font-mono">{ask.amount.toFixed(3)}</div>
                         <div className="text-right font-mono">{ask.total.toFixed(0)}</div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                   
@@ -209,11 +288,23 @@ export default function TradingPage() {
                   {/* Bids (Buy Orders) */}
                   <div className="space-y-0.5">
                     {orderBook.bids.slice(0, 5).map((bid, index) => (
-                      <div key={index} className="grid grid-cols-3 gap-2 text-xs hover:bg-green-500/5 p-1 rounded">
-                        <div className="text-green-400 font-mono">{bid.price.toLocaleString()}</div>
+                      <motion.div 
+                        key={index}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: (index + 5) * 0.05 }}
+                        className="grid grid-cols-3 gap-2 text-xs hover:bg-green-500/5 p-1 rounded transition-colors duration-200"
+                      >
+                        <motion.div 
+                          className="text-green-400 font-mono"
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ duration: 0.1 }}
+                        >
+                          {bid.price.toLocaleString()}
+                        </motion.div>
                         <div className="text-right font-mono">{bid.amount.toFixed(3)}</div>
                         <div className="text-right font-mono">{bid.total.toFixed(0)}</div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                   
@@ -328,13 +419,51 @@ export default function TradingPage() {
                           </div>
                         </div>
                         
-                        <Button 
-                          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
-                          onClick={() => handleOrder('buy')}
-                          disabled={isPlacingOrder}
+                        <motion.div
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          transition={{ duration: 0.1 }}
                         >
-                          {isPlacingOrder ? "Placing Order..." : orderSuccess ? "✓ Order Placed!" : "Buy BTC"}
-                        </Button>
+                          <Button 
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-medium transition-all duration-200"
+                            onClick={() => handleOrder('buy')}
+                            disabled={isPlacingOrder}
+                          >
+                            <AnimatePresence mode="wait">
+                              {isPlacingOrder ? (
+                                <motion.div
+                                  key="placing"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Placing Order...
+                                </motion.div>
+                              ) : orderSuccess ? (
+                                <motion.div
+                                  key="success"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  exit={{ scale: 0 }}
+                                  className="flex items-center gap-2"
+                                >
+                                  ✓ Order Placed!
+                                </motion.div>
+                              ) : (
+                                <motion.div
+                                  key="default"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                >
+                                  Buy BTC
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </Button>
+                        </motion.div>
                       </div>
                     </TabsContent>
                     
@@ -401,13 +530,51 @@ export default function TradingPage() {
                           </div>
                         </div>
                         
-                        <Button 
-                          className="w-full bg-red-600 hover:bg-red-700 text-white font-medium"
-                          onClick={() => handleOrder('sell')}
-                          disabled={isPlacingOrder}
+                        <motion.div
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          transition={{ duration: 0.1 }}
                         >
-                          {isPlacingOrder ? "Placing Order..." : orderSuccess ? "✓ Order Placed!" : "Sell BTC"}
-                        </Button>
+                          <Button 
+                            className="w-full bg-red-600 hover:bg-red-700 text-white font-medium transition-all duration-200"
+                            onClick={() => handleOrder('sell')}
+                            disabled={isPlacingOrder}
+                          >
+                            <AnimatePresence mode="wait">
+                              {isPlacingOrder ? (
+                                <motion.div
+                                  key="placing"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Placing Order...
+                                </motion.div>
+                              ) : orderSuccess ? (
+                                <motion.div
+                                  key="success"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  exit={{ scale: 0 }}
+                                  className="flex items-center gap-2"
+                                >
+                                  ✓ Order Placed!
+                                </motion.div>
+                              ) : (
+                                <motion.div
+                                  key="default"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                >
+                                  Sell BTC
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </Button>
+                        </motion.div>
                       </div>
                     </TabsContent>
                   </Tabs>
@@ -440,7 +607,7 @@ export default function TradingPage() {
                 </CardContent>
               </Card>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
