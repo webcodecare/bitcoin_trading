@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -26,12 +25,31 @@ export default function TradingPage() {
   const [orderType, setOrderType] = useState("limit");
   const [orderAmount, setOrderAmount] = useState("");
   const [limitPrice, setLimitPrice] = useState("");
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
 
   // Fetch market data
   const { data: marketData } = useQuery({
     queryKey: [`/api/market/price/${selectedTicker}`],
     refetchInterval: 2000,
   });
+
+  const currentPrice = marketData?.price || 65755.0;
+  const priceChange = marketData?.change24h || 2.34;
+
+  // Auto-fill current price when switching to limit orders
+  useEffect(() => {
+    if (orderType === 'limit' && !limitPrice) {
+      setLimitPrice(currentPrice.toString());
+    }
+  }, [orderType, currentPrice, limitPrice]);
+
+  // Quick amount buttons
+  const setQuickAmount = (percentage: number) => {
+    const maxAmount = 10000 / (parseFloat(limitPrice) || currentPrice);
+    const amount = (maxAmount * percentage / 100).toFixed(6);
+    setOrderAmount(amount);
+  };
 
   // Mock order book data matching reference design
   const orderBook = {
@@ -41,11 +59,6 @@ export default function TradingPage() {
       { price: 65730.0, amount: 0.731, total: 48038.63 },
       { price: 65720.0, amount: 0.702, total: 45935.44 },
       { price: 65710.0, amount: 0.801, total: 52623.71 },
-      { price: 65700.0, amount: 0.527, total: 34623.90 },
-      { price: 65690.0, amount: 0.034, total: 2233.46 },
-      { price: 65680.0, amount: 0.153, total: 10049.04 },
-      { price: 65670.0, amount: 0.731, total: 48014.77 },
-      { price: 65660.0, amount: 0.366, total: 24031.56 },
     ],
     asks: [
       { price: 65760.0, amount: 0.142, total: 9337.92 },
@@ -53,33 +66,50 @@ export default function TradingPage() {
       { price: 65780.0, amount: 0.157, total: 10327.46 },
       { price: 65790.0, amount: 0.702, total: 46184.58 },
       { price: 65800.0, amount: 0.801, total: 52665.80 },
-      { price: 65810.0, amount: 0.527, total: 34681.87 },
-      { price: 65820.0, amount: 0.034, total: 2237.88 },
-      { price: 65830.0, amount: 0.153, total: 10072.00 },
-      { price: 65840.0, amount: 0.731, total: 48119.04 },
-      { price: 65850.0, amount: 0.366, total: 24101.10 },
     ]
   };
 
   // Mock market trades
   const marketTrades = [
-    { id: 1, side: "buy", price: 65755.0, amount: 0.125, time: "14:32:01", total: 8219.38 },
-    { id: 2, side: "sell", price: 65750.0, amount: 0.203, time: "14:31:58", total: 13347.25 },
-    { id: 3, side: "buy", price: 65760.0, amount: 0.085, time: "14:31:55", total: 5589.60 },
-    { id: 4, side: "sell", price: 65745.0, amount: 0.156, time: "14:31:52", total: 10256.22 },
-    { id: 5, side: "buy", price: 65755.0, amount: 0.298, time: "14:31:49", total: 19594.99 },
+    { id: 1, side: "buy", price: 65755.0, amount: 0.125, time: "14:32:01" },
+    { id: 2, side: "sell", price: 65750.0, amount: 0.203, time: "14:31:58" },
+    { id: 3, side: "buy", price: 65760.0, amount: 0.085, time: "14:31:55" },
+    { id: 4, side: "sell", price: 65745.0, amount: 0.156, time: "14:31:52" },
+    { id: 5, side: "buy", price: 65755.0, amount: 0.298, time: "14:31:49" },
   ];
 
-  const currentPrice = marketData?.price || 65755.0;
-  const priceChange = marketData?.change24h || 2.34;
+  const handleOrder = async (side: 'buy' | 'sell') => {
+    if (!orderAmount || (!limitPrice && orderType === 'limit')) {
+      alert('Please fill in all required fields');
+      return;
+    }
 
-  const handleOrder = () => {
-    console.log("Order placed:", {
-      ticker: selectedTicker,
-      type: orderType,
-      amount: orderAmount,
-      price: limitPrice
-    });
+    setIsPlacingOrder(true);
+    
+    try {
+      // Simulate order placement
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log("Order placed:", {
+        side,
+        ticker: selectedTicker,
+        type: orderType,
+        amount: orderAmount,
+        price: orderType === 'limit' ? limitPrice : currentPrice
+      });
+      
+      setOrderSuccess(true);
+      setOrderAmount("");
+      setLimitPrice("");
+      
+      // Reset success state after 3 seconds
+      setTimeout(() => setOrderSuccess(false), 3000);
+      
+    } catch (error) {
+      console.error('Order failed:', error);
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
 
   return (
@@ -137,24 +167,7 @@ export default function TradingPage() {
             <div className="flex-1 p-4">
               <Card className="h-full bg-card/50 backdrop-blur-sm border-border/50">
                 <CardContent className="p-0 h-full">
-                  <TradingViewRealWidget 
-                    symbol={selectedTicker}
-                    theme="dark"
-                    height="100%"
-                    width="100%"
-                    interval="1D"
-                    timezone="Etc/UTC"
-                    style="1"
-                    locale="en"
-                    toolbar_bg="rgba(15, 23, 42, 1)"
-                    enable_publishing={false}
-                    backgroundColor="rgba(15, 23, 42, 1)"
-                    gridColor="rgba(42, 46, 57, 0.5)"
-                    hide_top_toolbar={false}
-                    hide_legend={false}
-                    save_image={false}
-                    container_id="tradingview_chart"
-                  />
+                  <TradingViewRealWidget />
                 </CardContent>
               </Card>
             </div>
@@ -265,6 +278,7 @@ export default function TradingPage() {
                             onChange={(e) => setLimitPrice(e.target.value)}
                             placeholder={currentPrice.toString()}
                             className="bg-background/50 border-border/50 text-sm"
+                            disabled={orderType === 'market'}
                           />
                         </div>
                         
@@ -280,6 +294,12 @@ export default function TradingPage() {
                             placeholder="0.00"
                             className="bg-background/50 border-border/50 text-sm"
                           />
+                          <div className="flex gap-1">
+                            <Button variant="outline" size="sm" onClick={() => setQuickAmount(25)} className="flex-1 text-xs">25%</Button>
+                            <Button variant="outline" size="sm" onClick={() => setQuickAmount(50)} className="flex-1 text-xs">50%</Button>
+                            <Button variant="outline" size="sm" onClick={() => setQuickAmount(75)} className="flex-1 text-xs">75%</Button>
+                            <Button variant="outline" size="sm" onClick={() => setQuickAmount(100)} className="flex-1 text-xs">Max</Button>
+                          </div>
                         </div>
                         
                         <div className="space-y-2">
@@ -310,9 +330,10 @@ export default function TradingPage() {
                         
                         <Button 
                           className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
-                          onClick={handleOrder}
+                          onClick={() => handleOrder('buy')}
+                          disabled={isPlacingOrder}
                         >
-                          Buy BTC
+                          {isPlacingOrder ? "Placing Order..." : orderSuccess ? "✓ Order Placed!" : "Buy BTC"}
                         </Button>
                       </div>
                     </TabsContent>
@@ -330,6 +351,7 @@ export default function TradingPage() {
                             onChange={(e) => setLimitPrice(e.target.value)}
                             placeholder={currentPrice.toString()}
                             className="bg-background/50 border-border/50 text-sm"
+                            disabled={orderType === 'market'}
                           />
                         </div>
                         
@@ -345,6 +367,12 @@ export default function TradingPage() {
                             placeholder="0.00"
                             className="bg-background/50 border-border/50 text-sm"
                           />
+                          <div className="flex gap-1">
+                            <Button variant="outline" size="sm" onClick={() => setQuickAmount(25)} className="flex-1 text-xs">25%</Button>
+                            <Button variant="outline" size="sm" onClick={() => setQuickAmount(50)} className="flex-1 text-xs">50%</Button>
+                            <Button variant="outline" size="sm" onClick={() => setQuickAmount(75)} className="flex-1 text-xs">75%</Button>
+                            <Button variant="outline" size="sm" onClick={() => setQuickAmount(100)} className="flex-1 text-xs">Max</Button>
+                          </div>
                         </div>
                         
                         <div className="space-y-2">
@@ -375,9 +403,10 @@ export default function TradingPage() {
                         
                         <Button 
                           className="w-full bg-red-600 hover:bg-red-700 text-white font-medium"
-                          onClick={handleOrder}
+                          onClick={() => handleOrder('sell')}
+                          disabled={isPlacingOrder}
                         >
-                          Sell BTC
+                          {isPlacingOrder ? "Placing Order..." : orderSuccess ? "✓ Order Placed!" : "Sell BTC"}
                         </Button>
                       </div>
                     </TabsContent>
