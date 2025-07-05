@@ -667,5 +667,220 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Analytics Endpoints
+  app.get("/api/admin/analytics/metrics", async (req, res) => {
+    try {
+      const timeRange = req.query.timeRange as string || "7d";
+      
+      const users = await storage.getAllUsers();
+      const signals = await storage.getSignals(1000);
+      
+      // Calculate metrics based on time range
+      const now = new Date();
+      const daysBack = timeRange === "24h" ? 1 : timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90;
+      const startDate = new Date(now.getTime() - (daysBack * 24 * 60 * 60 * 1000));
+      
+      const recentUsers = users.filter(u => new Date(u.createdAt) >= startDate);
+      const activeUsers = users.filter(u => u.lastLoginAt && new Date(u.lastLoginAt) >= startDate);
+      const recentSignals = signals.filter(s => new Date(s.createdAt) >= startDate);
+      
+      // Calculate revenue from subscription tiers
+      const paidUsers = users.filter(u => u.subscriptionTier !== "free");
+      const totalRevenue = paidUsers.reduce((sum, user) => {
+        const tierPrices = { basic: 2900, premium: 7900, pro: 19900 };
+        return sum + (tierPrices[user.subscriptionTier as keyof typeof tierPrices] || 0);
+      }, 0);
+      
+      const monthlyRevenue = totalRevenue; // Simplified for demo
+      
+      const metrics = {
+        totalUsers: users.length,
+        activeUsers: activeUsers.length,
+        totalRevenue,
+        monthlyRevenue,
+        totalSignals: signals.length,
+        dailySignals: Math.floor(recentSignals.length / daysBack),
+        conversionRate: users.length > 0 ? paidUsers.length / users.length : 0,
+        churnRate: 0.05, // 5% churn rate
+      };
+      
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching analytics metrics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics metrics" });
+    }
+  });
+
+  app.get("/api/admin/analytics/users", async (req, res) => {
+    try {
+      const timeRange = req.query.timeRange as string || "7d";
+      const users = await storage.getAllUsers();
+      
+      // Group users by tier
+      const usersByTier = users.reduce((acc, user) => {
+        const tier = user.subscriptionTier || "free";
+        acc[tier] = (acc[tier] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const totalUsers = users.length;
+      const tierData = Object.entries(usersByTier).map(([tier, count]) => ({
+        tier,
+        count,
+        percentage: (count / totalUsers) * 100,
+      }));
+      
+      // Mock time series data for demo
+      const generateTimeSeries = (days: number, baseValue: number) => {
+        return Array.from({ length: days }, (_, i) => ({
+          date: new Date(Date.now() - (days - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          count: Math.floor(baseValue + Math.random() * 10),
+        }));
+      };
+      
+      const analytics = {
+        newUsers: generateTimeSeries(7, 5),
+        activeUsers: generateTimeSeries(7, 15),
+        usersByTier: tierData,
+        retentionRate: [
+          { period: "1 Day", rate: 85 },
+          { period: "7 Days", rate: 65 },
+          { period: "30 Days", rate: 45 },
+          { period: "90 Days", rate: 25 },
+        ],
+      };
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching user analytics:", error);
+      res.status(500).json({ message: "Failed to fetch user analytics" });
+    }
+  });
+
+  app.get("/api/admin/analytics/revenue", async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const paidUsers = users.filter(u => u.subscriptionTier !== "free");
+      
+      // Calculate revenue by tier
+      const revenueByTier = paidUsers.reduce((acc, user) => {
+        const tier = user.subscriptionTier;
+        const tierPrices = { basic: 2900, premium: 7900, pro: 19900 };
+        const revenue = tierPrices[tier as keyof typeof tierPrices] || 0;
+        
+        if (!acc[tier]) acc[tier] = 0;
+        acc[tier] += revenue;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const totalRevenue = Object.values(revenueByTier).reduce((sum, rev) => sum + rev, 0);
+      
+      const tierData = Object.entries(revenueByTier).map(([tier, revenue]) => ({
+        tier,
+        revenue,
+        percentage: (revenue / totalRevenue) * 100,
+      }));
+      
+      // Mock monthly revenue data
+      const monthlyRevenue = Array.from({ length: 12 }, (_, i) => {
+        const month = new Date(2024, i).toLocaleString('default', { month: 'short' });
+        return {
+          month,
+          revenue: Math.floor(totalRevenue * (0.7 + Math.random() * 0.6)),
+          subscriptions: Math.floor(paidUsers.length * (0.8 + Math.random() * 0.4)),
+        };
+      });
+      
+      const analytics = {
+        monthlyRevenue,
+        revenueByTier: tierData,
+        mrr: totalRevenue, // Monthly Recurring Revenue
+        arr: totalRevenue * 12, // Annual Recurring Revenue
+        ltv: totalRevenue / paidUsers.length * 24, // Lifetime Value (24 months avg)
+      };
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching revenue analytics:", error);
+      res.status(500).json({ message: "Failed to fetch revenue analytics" });
+    }
+  });
+
+  app.get("/api/admin/analytics/signals", async (req, res) => {
+    try {
+      const signals = await storage.getSignals(1000);
+      const tickers = await storage.getAllTickers();
+      
+      // Group signals by ticker
+      const signalsByTicker = signals.reduce((acc, signal) => {
+        const ticker = signal.ticker;
+        if (!acc[ticker]) {
+          acc[ticker] = { count: 0, accuracySum: 0 };
+        }
+        acc[ticker].count += 1;
+        acc[ticker].accuracySum += Math.random() * 0.3 + 0.7; // Mock accuracy 70-100%
+        return acc;
+      }, {} as Record<string, { count: number; accuracySum: number }>);
+      
+      const tickerData = Object.entries(signalsByTicker)
+        .map(([ticker, data]) => ({
+          ticker,
+          count: data.count,
+          accuracy: data.accuracySum / data.count,
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+      
+      // Mock popular tickers data
+      const popularTickers = tickers.slice(0, 10).map(ticker => ({
+        ticker: ticker.symbol,
+        subscriptions: Math.floor(Math.random() * 100) + 20,
+      }));
+      
+      // Mock time series data
+      const signalsPerDay = Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(Date.now() - (7 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        count: Math.floor(Math.random() * 50) + 30,
+        accuracy: Math.random() * 0.2 + 0.8,
+      }));
+      
+      const signalAccuracy = Array.from({ length: 30 }, (_, i) => ({
+        date: new Date(Date.now() - (30 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        accuracy: Math.random() * 0.15 + 0.85,
+      }));
+      
+      const analytics = {
+        signalsPerDay,
+        signalsByTicker: tickerData,
+        signalAccuracy,
+        popularTickers,
+      };
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching signal analytics:", error);
+      res.status(500).json({ message: "Failed to fetch signal analytics" });
+    }
+  });
+
+  app.get("/api/admin/analytics/system", async (req, res) => {
+    try {
+      // Mock system metrics - in production these would come from monitoring services
+      const metrics = {
+        cpuUsage: Math.floor(Math.random() * 40) + 20, // 20-60%
+        memoryUsage: Math.floor(Math.random() * 30) + 40, // 40-70%
+        activeConnections: Math.floor(Math.random() * 100) + 50,
+        responseTime: Math.floor(Math.random() * 100) + 150, // 150-250ms
+        errorRate: Math.random() * 0.02, // 0-2%
+        uptime: "99.9%",
+      };
+      
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching system metrics:", error);
+      res.status(500).json({ message: "Failed to fetch system metrics" });
+    }
+  });
+
   return httpServer;
 }
