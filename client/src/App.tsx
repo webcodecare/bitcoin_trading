@@ -15,6 +15,12 @@ import AdminTickers from "@/pages/admin/tickers";
 import Alerts from "@/pages/alerts";
 import Settings from "@/pages/settings";
 import Pricing from "@/pages/pricing";
+import Members from "@/pages/members";
+import MarketData from "@/pages/market-data";
+import About from "@/pages/about";
+import Contact from "@/pages/contact";
+import Privacy from "@/pages/privacy";
+import Terms from "@/pages/terms";
 import AuthGuard from "@/components/auth/AuthGuard";
 
 function Router() {
@@ -58,6 +64,16 @@ function Router() {
           <Settings />
         </AuthGuard>
       </Route>
+      <Route path="/members">
+        <AuthGuard>
+          <Members />
+        </AuthGuard>
+      </Route>
+      <Route path="/market-data" component={MarketData} />
+      <Route path="/about" component={About} />
+      <Route path="/contact" component={Contact} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/terms" component={Terms} />
       <Route component={NotFound} />
     </Switch>
   );

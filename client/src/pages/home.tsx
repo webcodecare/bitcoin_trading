@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/layout/Navigation";
+import Footer from "@/components/layout/Footer";
 import TradingViewChart from "@/components/charts/TradingViewChart";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
@@ -403,6 +404,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      <Footer />
     </div>
   );
 }
