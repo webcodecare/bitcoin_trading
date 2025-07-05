@@ -58,8 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const token = authHeader.substring(7);
-      // In a real app, you'd verify JWT token here
-      // For simplicity, we'll use the token as user ID
+      // For demo purposes, the token is the user ID
       const user = await storage.getUser(token);
       if (!user) {
         return res.status(401).json({ message: 'Invalid token' });

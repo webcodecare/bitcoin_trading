@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
-import TradingViewChart from "@/components/charts/TradingViewChart";
+import TradingViewWidget from "@/components/charts/TradingViewWidget";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
 import MarketWidget from "@/components/widgets/MarketWidget";
@@ -167,11 +167,12 @@ export default function Home() {
             
             {/* Live BTC Chart Preview */}
             <div className="lg:ml-8">
-              <TradingViewChart 
-                symbol="BTCUSDT"
+              <TradingViewWidget 
+                symbol="BINANCE:BTCUSDT"
                 height={350}
-                showSignals={false}
-                className="border-2 border-primary/20"
+                enableTrading={true}
+                showSignals={true}
+                theme="dark"
               />
             </div>
           </div>
@@ -210,11 +211,12 @@ export default function Home() {
 
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             {/* Advanced BTC Chart with Buy/Sell Signals */}
-            <TradingViewChart 
-              symbol="BTCUSDT"
+            <TradingViewWidget 
+              symbol="BINANCE:BTCUSDT"
               height={400}
+              enableTrading={true}
               showSignals={true}
-              className="border border-border"
+              theme="dark"
             />
 
             {/* 200-Week Heatmap */}
