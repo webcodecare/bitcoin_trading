@@ -7,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
 import TradingViewWidget from "@/components/charts/TradingViewWidget";
+import MarketOverview from "@/components/trading/MarketOverview";
+import TradingHeader from "@/components/trading/TradingHeader";
+import TradingTerminal from "@/components/trading/TradingTerminal";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -96,9 +99,9 @@ export default function Trading() {
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Professional Trading</h1>
+                <h1 className="text-3xl font-bold mb-2">Professional Trading Terminal</h1>
                 <p className="text-muted-foreground">
-                  Advanced charting with real-time buy/sell execution
+                  Advanced TradingView charts with integrated trading - Experience professional-grade tools like tradingview.com/chart
                 </p>
               </div>
               
@@ -126,20 +129,41 @@ export default function Trading() {
             </div>
           </div>
 
+          {/* Professional Trading Header */}
+          <TradingHeader symbol={selectedSymbol} />
+
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Main Trading Chart */}
             <div className="lg:col-span-3">
-              <TradingViewWidget
-                symbol={selectedSymbol}
-                height={700}
-                enableTrading={true}
-                showSignals={true}
-                theme="dark"
-              />
+              <Tabs defaultValue="terminal" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="terminal">Professional Terminal</TabsTrigger>
+                  <TabsTrigger value="trading">Trading Widget</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="terminal">
+                  <TradingTerminal
+                    symbol={selectedSymbol}
+                    height={700}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="trading">
+                  <TradingViewWidget
+                    symbol={selectedSymbol}
+                    height={700}
+                    enableTrading={true}
+                    showSignals={true}
+                    theme="dark"
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
 
             {/* Trading Panel */}
             <div className="space-y-6">
+              {/* Market Overview */}
+              <MarketOverview />
               {/* Portfolio Summary */}
               <Card>
                 <CardHeader className="pb-3">
