@@ -44,7 +44,7 @@ export default function TradingViewRealWidget({ ticker, onTrade }: TradingViewRe
                              ticker === 'ADAUSDT' ? 'BINANCE:ADAUSDT' :
                              `BINANCE:${ticker}`;
 
-    // TradingView widget configuration matching tradingview.com
+    // Advanced TradingView widget configuration with professional features
     const widgetConfig = {
       "autosize": true,
       "symbol": tradingViewSymbol,
@@ -53,39 +53,79 @@ export default function TradingViewRealWidget({ ticker, onTrade }: TradingViewRe
       "theme": "dark",
       "style": "1",
       "locale": "en",
-      "toolbar_bg": "#f1f3f6",
+      "toolbar_bg": "#131722",
       "enable_publishing": false,
       "allow_symbol_change": true,
       "container_id": "tradingview_widget",
       "hide_top_toolbar": false,
       "hide_legend": false,
-      "save_image": false,
+      "save_image": true,
       "hide_volume": false,
       "support_host": "https://www.tradingview.com",
       "studies": [
         "RSI@tv-basicstudies",
-        "MASimple@tv-basicstudies"
+        "MASimple@tv-basicstudies",
+        "MACD@tv-basicstudies",
+        "BB@tv-basicstudies",
+        "StochasticRSI@tv-basicstudies",
+        "Volume@tv-basicstudies"
       ],
       "show_popup_button": true,
-      "popup_width": "1000",
-      "popup_height": "650",
+      "popup_width": "1200",
+      "popup_height": "800",
       "overrides": {
         "paneProperties.background": "#131722",
-        "paneProperties.vertGridProperties.color": "#363c4e",
-        "paneProperties.horzGridProperties.color": "#363c4e",
+        "paneProperties.backgroundType": "solid",
+        "paneProperties.vertGridProperties.color": "#2a2e39",
+        "paneProperties.horzGridProperties.color": "#2a2e39", 
+        "paneProperties.vertGridProperties.style": 0,
+        "paneProperties.horzGridProperties.style": 0,
         "symbolWatermarkProperties.transparency": 90,
-        "scalesProperties.textColor": "#AAA",
-        "mainSeriesProperties.candleStyle.wickUpColor": "#26a69a",
-        "mainSeriesProperties.candleStyle.wickDownColor": "#ef5350"
+        "scalesProperties.textColor": "#787b86",
+        "scalesProperties.backgroundColor": "#131722",
+        "mainSeriesProperties.candleStyle.upColor": "#089981",
+        "mainSeriesProperties.candleStyle.downColor": "#f23645",
+        "mainSeriesProperties.candleStyle.wickUpColor": "#089981",
+        "mainSeriesProperties.candleStyle.wickDownColor": "#f23645",
+        "mainSeriesProperties.candleStyle.borderUpColor": "#089981",
+        "mainSeriesProperties.candleStyle.borderDownColor": "#f23645",
+        "volumePaneSize": "medium"
       },
       "enabled_features": [
         "study_templates",
-        "create_volume_indicator_by_default"
+        "create_volume_indicator_by_default",
+        "header_symbol_search",
+        "header_resolutions",
+        "header_chart_type",
+        "header_settings",
+        "header_indicators",
+        "header_compare",
+        "header_undo_redo",
+        "header_screenshot",
+        "header_fullscreen_button",
+        "use_localstorage_for_settings",
+        "drawing_templates",
+        "left_toolbar",
+        "control_bar",
+        "timeframes_toolbar",
+        "edit_buttons_in_legend",
+        "context_menus",
+        "border_around_the_chart",
+        "remove_library_container_border"
       ],
       "disabled_features": [
-        "use_localstorage_for_settings",
-        "volume_force_overlay"
-      ]
+        "header_saveload",
+        "go_to_date"
+      ],
+      "favorites": {
+        "intervals": ["1", "5", "15", "30", "60", "240", "1D", "1W"],
+        "chartTypes": ["Area", "Candles", "Line"]
+      },
+      "custom_css_url": "",
+      "loading_screen": {
+        "backgroundColor": "#131722",
+        "foregroundColor": "#2962ff"
+      }
     };
 
     script.innerHTML = JSON.stringify(widgetConfig);
@@ -181,40 +221,122 @@ export default function TradingViewRealWidget({ ticker, onTrade }: TradingViewRe
         </CardContent>
       </Card>
 
-      {/* Chart Features Info */}
-      <Card className="bg-gray-900 border-gray-700">
-        <CardContent className="p-4">
-          <div className="text-sm text-gray-300">
-            <h4 className="font-semibold text-white mb-2">Professional TradingView Features:</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Advanced Trading Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Order Panel */}
+        <Card className="bg-gray-900 border-gray-700">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-white mb-4">Advanced Order Panel</h4>
+            <div className="space-y-4">
+              {/* Order Type */}
               <div>
-                ✓ Real-time data
+                <label className="text-sm text-gray-300 mb-2 block">Order Type</label>
+                <div className="flex space-x-2">
+                  <Button variant="outline" size="sm" className="flex-1">Market</Button>
+                  <Button variant="ghost" size="sm" className="flex-1">Limit</Button>
+                  <Button variant="ghost" size="sm" className="flex-1">Stop</Button>
+                </div>
               </div>
+
+              {/* Amount */}
               <div>
-                ✓ Technical indicators
+                <label className="text-sm text-gray-300 mb-2 block">Amount (USDT)</label>
+                <div className="flex space-x-2">
+                  <input 
+                    type="number" 
+                    placeholder="0.00"
+                    className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white"
+                  />
+                </div>
+                <div className="flex space-x-1 mt-2">
+                  <Button variant="ghost" size="sm" className="text-xs">25%</Button>
+                  <Button variant="ghost" size="sm" className="text-xs">50%</Button>
+                  <Button variant="ghost" size="sm" className="text-xs">75%</Button>
+                  <Button variant="ghost" size="sm" className="text-xs">Max</Button>
+                </div>
               </div>
-              <div>
-                ✓ Drawing tools
-              </div>
-              <div>
-                ✓ Multiple timeframes
-              </div>
-              <div>
-                ✓ Volume analysis
-              </div>
-              <div>
-                ✓ Price alerts
-              </div>
-              <div>
-                ✓ Chart patterns
-              </div>
-              <div>
-                ✓ Symbol search
+
+              {/* Buy/Sell Buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  onClick={() => handleQuickTrade('buy')}
+                  className="bg-green-600 hover:bg-green-700 text-white font-medium py-3"
+                >
+                  BUY {ticker.replace('USDT', '')}
+                </Button>
+                <Button 
+                  onClick={() => handleQuickTrade('sell')}
+                  className="bg-red-600 hover:bg-red-700 text-white font-medium py-3"
+                >
+                  SELL {ticker.replace('USDT', '')}
+                </Button>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Professional Features */}
+        <Card className="bg-gray-900 border-gray-700">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-white mb-4">Professional Features</h4>
+            <div className="space-y-3 text-sm text-gray-300">
+              <div className="flex justify-between">
+                <span>✓ RSI & MACD Indicators</span>
+                <Badge variant="outline" className="text-xs">Active</Badge>
+              </div>
+              <div className="flex justify-between">
+                <span>✓ Bollinger Bands</span>
+                <Badge variant="outline" className="text-xs">Active</Badge>
+              </div>
+              <div className="flex justify-between">
+                <span>✓ Volume Analysis</span>
+                <Badge variant="outline" className="text-xs">Active</Badge>
+              </div>
+              <div className="flex justify-between">
+                <span>✓ Drawing Tools</span>
+                <Badge variant="secondary" className="text-xs">Available</Badge>
+              </div>
+              <div className="flex justify-between">
+                <span>✓ Price Alerts</span>
+                <Badge variant="secondary" className="text-xs">Available</Badge>
+              </div>
+              <div className="flex justify-between">
+                <span>✓ Chart Patterns</span>
+                <Badge variant="secondary" className="text-xs">Available</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Market Info */}
+        <Card className="bg-gray-900 border-gray-700">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-white mb-4">Market Information</h4>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-300">24h Volume:</span>
+                <span className="text-white font-medium">$2.4B</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-300">24h High:</span>
+                <span className="text-green-400 font-medium">$71,200</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-300">24h Low:</span>
+                <span className="text-red-400 font-medium">$65,800</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-300">Market Cap:</span>
+                <span className="text-white font-medium">$1.37T</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-300">Fear & Greed:</span>
+                <Badge variant="outline" className="text-yellow-400">Neutral 52</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

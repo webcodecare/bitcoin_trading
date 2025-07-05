@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import Sidebar from "@/components/layout/Sidebar";
 import TradingViewRealWidget from "@/components/charts/TradingViewRealWidget";
+import OrderBook from "@/components/trading/OrderBook";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
 import TickerSelector from "@/components/ui/ticker-selector";
@@ -172,14 +173,26 @@ export default function Dashboard() {
               })}
             </div>
 
-            {/* TradingView Professional Chart */}
-            <TradingViewRealWidget 
-              ticker="BTCUSDT"
-              onTrade={(action, price) => {
-                // Handle trading action
-                console.log(`${action} order at ${price}`);
-              }}
-            />
+            {/* Professional Trading Interface */}
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+              {/* Main TradingView Chart */}
+              <div className="xl:col-span-3">
+                <TradingViewRealWidget 
+                  ticker="BTCUSDT"
+                  onTrade={(action, price) => {
+                    // Handle trading action
+                    console.log(`${action} order at ${price}`);
+                  }}
+                />
+              </div>
+              
+              {/* Order Book Sidebar */}
+              <div className="xl:col-span-1">
+                <div className="sticky top-6">
+                  <OrderBook symbol="BTCUSDT" />
+                </div>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* 200-Week Heatmap Widget */}
