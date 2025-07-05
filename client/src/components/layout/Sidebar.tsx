@@ -51,6 +51,16 @@ export default function Sidebar({ className }: SidebarProps) {
       icon: Bell,
     },
     {
+      title: "Advanced Alerts",
+      href: "/advanced-alerts",
+      icon: AlertTriangle,
+    },
+    {
+      title: "Portfolio Pro",
+      href: "/advanced-portfolio",
+      icon: PieChart,
+    },
+    {
       title: "Settings",
       href: "/settings",
       icon: Settings,
