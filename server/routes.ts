@@ -1367,5 +1367,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Trading API endpoints
+  app.get('/api/trading/portfolio', requireAuth, async (req: any, res) => {
+    try {
+      const portfolio = await storage.getUserPortfolio(req.user.id);
+      res.json(portfolio);
+    } catch (error) {
+      console.error("Error fetching portfolio:", error);
+      res.status(500).json({ message: 'Failed to fetch portfolio' });
+    }
+  });
+
+  app.get('/api/trading/trades', requireAuth, async (req: any, res) => {
+    try {
+      const { limit } = req.query;
+      const trades = await storage.getUserTrades(req.user.id, limit ? parseInt(limit) : undefined);
+      res.json(trades);
+    } catch (error) {
+      console.error("Error fetching trades:", error);
+      res.status(500).json({ message: 'Failed to fetch trades' });
+    }
+  });
+
+  app.post('/api/trading/trade', requireAuth, async (req: any, res) => {
+    try {
+      const tradeData = {
+        userId: req.user.id,
+        ticker: req.body.ticker,
+        type: req.body.type,
+        amount: req.body.amount,
+        price: req.body.price,
+        mode: req.body.mode || 'paper',
+        status: 'EXECUTED',
+        signalId: req.body.signalId || null,
+      };
+
+      const trade = await storage.createTrade(tradeData);
+
+      // Update portfolio based on the trade
+      const portfolio = await storage.getUserPortfolio(req.user.id);
+      const existingPosition = portfolio.find(p => p.ticker === req.body.ticker);
+
+      const tradeAmount = parseFloat(req.body.amount);
+      const tradePrice = parseFloat(req.body.price);
+      const tradeValue = tradeAmount * tradePrice;
+
+      if (req.body.type === 'BUY') {
+        if (existingPosition) {
+          const currentQuantity = parseFloat(existingPosition.quantity);
+          const currentValue = parseFloat(existingPosition.currentValue);
+          const newQuantity = currentQuantity + tradeAmount;
+          const newAveragePrice = (currentValue + tradeValue) / newQuantity;
+
+          await storage.updatePortfolio(req.user.id, req.body.ticker, {
+            quantity: newQuantity.toString(),
+            averagePrice: newAveragePrice.toString(),
+            currentValue: (newQuantity * tradePrice).toString(),
+          });
+        } else {
+          await storage.updatePortfolio(req.user.id, req.body.ticker, {
+            quantity: tradeAmount.toString(),
+            averagePrice: tradePrice.toString(),
+            currentValue: tradeValue.toString(),
+          });
+        }
+      } else if (req.body.type === 'SELL') {
+        if (existingPosition) {
+          const currentQuantity = parseFloat(existingPosition.quantity);
+          const newQuantity = Math.max(0, currentQuantity - tradeAmount);
+          
+          await storage.updatePortfolio(req.user.id, req.body.ticker, {
+            quantity: newQuantity.toString(),
+            currentValue: (newQuantity * tradePrice).toString(),
+          });
+        }
+      }
+
+      // Broadcast trade to WebSocket clients
+      broadcast({
+        type: 'trade_executed',
+        data: trade
+      });
+
+      res.json(trade);
+    } catch (error) {
+      console.error("Error executing trade:", error);
+      res.status(500).json({ message: 'Failed to execute trade' });
+    }
+  });
+
+  app.get('/api/trading/settings', requireAuth, async (req: any, res) => {
+    try {
+      const settings = await storage.getTradingSettings(req.user.id);
+      if (!settings) {
+        // Return default settings if none exist
+        const defaultSettings = {
+          riskLevel: 'moderate',
+          maxTradeAmount: '1000',
+          autoTrading: false,
+          stopLoss: '5',
+          takeProfit: '10',
+        };
+        res.json(defaultSettings);
+      } else {
+        res.json(settings);
+      }
+    } catch (error) {
+      console.error("Error fetching trading settings:", error);
+      res.status(500).json({ message: 'Failed to fetch trading settings' });
+    }
+  });
+
+  app.put('/api/trading/settings', requireAuth, async (req: any, res) => {
+    try {
+      const settings = await storage.updateTradingSettings(req.user.id, req.body);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating trading settings:", error);
+      res.status(500).json({ message: 'Failed to update trading settings' });
+    }
+  });
+
   return httpServer;
 }

@@ -32,6 +32,7 @@ import Contact from "@/pages/contact";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import Subscription from "@/pages/subscription";
+import Trading from "@/pages/trading";
 import AuthGuard from "@/components/auth/AuthGuard";
 
 function Router() {
@@ -128,6 +129,11 @@ function Router() {
       <Route path="/subscription">
         <AuthGuard>
           <Subscription />
+        </AuthGuard>
+      </Route>
+      <Route path="/trading">
+        <AuthGuard>
+          <Trading />
         </AuthGuard>
       </Route>
       <Route path="/members">

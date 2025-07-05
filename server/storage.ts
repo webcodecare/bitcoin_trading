@@ -25,6 +25,12 @@ import type {
   InsertSubscriptionPlan,
   UserSubscription,
   InsertUserSubscription,
+  UserTrade,
+  InsertUserTrade,
+  UserPortfolio,
+  InsertUserPortfolio,
+  TradingSettings,
+  InsertTradingSettings,
 } from "@shared/schema";
 
 // Initialize database connection if URL is provided
@@ -87,6 +93,14 @@ export interface IStorage {
   
   // User Subscriptions
   updateUserSubscription(userId: string, updates: Partial<User>): Promise<User | undefined>;
+  
+  // Trading System
+  getUserTrades(userId: string, limit?: number): Promise<UserTrade[]>;
+  createTrade(trade: InsertUserTrade): Promise<UserTrade>;
+  getUserPortfolio(userId: string): Promise<UserPortfolio[]>;
+  updatePortfolio(userId: string, ticker: string, updates: Partial<UserPortfolio>): Promise<UserPortfolio | undefined>;
+  getTradingSettings(userId: string): Promise<TradingSettings | undefined>;
+  updateTradingSettings(userId: string, settings: Partial<TradingSettings>): Promise<TradingSettings>;
 }
 
 export class MemoryStorage implements IStorage {
@@ -506,6 +520,94 @@ export class MemoryStorage implements IStorage {
     this.users[userIndex] = { ...this.users[userIndex], ...updates, updatedAt: new Date() };
     return this.users[userIndex];
   }
+
+  // Trading System implementation
+  private trades: UserTrade[] = [];
+  private portfolios: UserPortfolio[] = [];
+  private tradingSettings: TradingSettings[] = [];
+
+  async getUserTrades(userId: string, limit = 100): Promise<UserTrade[]> {
+    return this.trades
+      .filter(trade => trade.userId === userId)
+      .sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime())
+      .slice(0, limit);
+  }
+
+  async createTrade(trade: InsertUserTrade): Promise<UserTrade> {
+    const newTrade: UserTrade = {
+      id: `trade_${Date.now()}`,
+      timestamp: new Date(),
+      createdAt: new Date(),
+      ...trade
+    };
+    this.trades.push(newTrade);
+    return newTrade;
+  }
+
+  async getUserPortfolio(userId: string): Promise<UserPortfolio[]> {
+    return this.portfolios.filter(portfolio => portfolio.userId === userId);
+  }
+
+  async updatePortfolio(userId: string, ticker: string, updates: Partial<UserPortfolio>): Promise<UserPortfolio | undefined> {
+    const portfolioIndex = this.portfolios.findIndex(p => p.userId === userId && p.ticker === ticker);
+    if (portfolioIndex !== -1) {
+      this.portfolios[portfolioIndex] = { 
+        ...this.portfolios[portfolioIndex], 
+        ...updates,
+        updatedAt: new Date()
+      };
+      return this.portfolios[portfolioIndex];
+    }
+    
+    // Create new portfolio entry if it doesn't exist
+    const newPortfolio: UserPortfolio = {
+      id: `portfolio_${Date.now()}`,
+      userId,
+      ticker,
+      quantity: "0",
+      averagePrice: "0",
+      currentValue: "0",
+      pnl: "0",
+      pnlPercentage: "0",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...updates
+    };
+    this.portfolios.push(newPortfolio);
+    return newPortfolio;
+  }
+
+  async getTradingSettings(userId: string): Promise<TradingSettings | undefined> {
+    return this.tradingSettings.find(settings => settings.userId === userId);
+  }
+
+  async updateTradingSettings(userId: string, settingsUpdate: Partial<TradingSettings>): Promise<TradingSettings> {
+    const settingsIndex = this.tradingSettings.findIndex(s => s.userId === userId);
+    if (settingsIndex !== -1) {
+      this.tradingSettings[settingsIndex] = {
+        ...this.tradingSettings[settingsIndex],
+        ...settingsUpdate,
+        updatedAt: new Date()
+      };
+      return this.tradingSettings[settingsIndex];
+    }
+    
+    // Create new settings if they don't exist
+    const newSettings: TradingSettings = {
+      id: `settings_${Date.now()}`,
+      userId,
+      riskLevel: "moderate",
+      maxTradeAmount: "1000",
+      autoTrading: false,
+      stopLoss: "5",
+      takeProfit: "10",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...settingsUpdate
+    };
+    this.tradingSettings.push(newSettings);
+    return newSettings;
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -690,6 +792,88 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schema.users.id, userId))
       .returning();
     return updatedUser;
+  }
+
+  // Trading System implementation
+  async getUserTrades(userId: string, limit = 100): Promise<UserTrade[]> {
+    return await db.select()
+      .from(schema.userTrades)
+      .where(eq(schema.userTrades.userId, userId))
+      .orderBy(desc(schema.userTrades.timestamp))
+      .limit(limit);
+  }
+
+  async createTrade(trade: InsertUserTrade): Promise<UserTrade> {
+    const [newTrade] = await db
+      .insert(schema.userTrades)
+      .values(trade)
+      .returning();
+    return newTrade;
+  }
+
+  async getUserPortfolio(userId: string): Promise<UserPortfolio[]> {
+    return await db.select()
+      .from(schema.userPortfolio)
+      .where(eq(schema.userPortfolio.userId, userId));
+  }
+
+  async updatePortfolio(userId: string, ticker: string, updates: Partial<UserPortfolio>): Promise<UserPortfolio | undefined> {
+    const [updated] = await db
+      .update(schema.userPortfolio)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(
+        eq(schema.userPortfolio.userId, userId),
+        eq(schema.userPortfolio.ticker, ticker)
+      ))
+      .returning();
+    
+    if (!updated) {
+      // Create new portfolio entry if it doesn't exist
+      const [newPortfolio] = await db
+        .insert(schema.userPortfolio)
+        .values({
+          userId,
+          ticker,
+          quantity: "0",
+          averagePrice: "0",
+          currentValue: "0",
+          ...updates
+        })
+        .returning();
+      return newPortfolio;
+    }
+    
+    return updated;
+  }
+
+  async getTradingSettings(userId: string): Promise<TradingSettings | undefined> {
+    const [settings] = await db.select()
+      .from(schema.tradingSettings)
+      .where(eq(schema.tradingSettings.userId, userId))
+      .limit(1);
+    return settings;
+  }
+
+  async updateTradingSettings(userId: string, settingsUpdate: Partial<TradingSettings>): Promise<TradingSettings> {
+    const [updated] = await db
+      .update(schema.tradingSettings)
+      .set({ ...settingsUpdate, updatedAt: new Date() })
+      .where(eq(schema.tradingSettings.userId, userId))
+      .returning();
+    
+    if (!updated) {
+      // Create new settings if they don't exist
+      const [newSettings] = await db
+        .insert(schema.tradingSettings)
+        .values({
+          userId,
+          ...settingsUpdate
+        })
+        .returning();
+      return newSettings;
+    }
+    
+    return updated;
   }
 }
 

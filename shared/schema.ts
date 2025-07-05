@@ -182,6 +182,47 @@ export const userRoles = pgTable("user_roles", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Trading system tables
+export const userTrades = pgTable("user_trades", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  ticker: text("ticker").notNull(),
+  type: text("type").notNull(), // "BUY" or "SELL"
+  amount: decimal("amount", { precision: 20, scale: 8 }).notNull(),
+  price: decimal("price", { precision: 20, scale: 8 }).notNull(),
+  timestamp: timestamp("timestamp").defaultNow(),
+  status: text("status").default("EXECUTED"), // "EXECUTED", "PENDING", "CANCELLED"
+  mode: text("mode").default("paper"), // "paper" or "live"
+  signalId: uuid("signal_id").references(() => alertSignals.id),
+  pnl: decimal("pnl", { precision: 20, scale: 8 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userPortfolio = pgTable("user_portfolio", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  ticker: text("ticker").notNull(),
+  quantity: decimal("quantity", { precision: 20, scale: 8 }).notNull(),
+  averagePrice: decimal("average_price", { precision: 20, scale: 8 }).notNull(),
+  currentValue: decimal("current_value", { precision: 20, scale: 8 }).notNull(),
+  pnl: decimal("pnl", { precision: 20, scale: 8 }).default("0"),
+  pnlPercentage: decimal("pnl_percentage", { precision: 10, scale: 4 }).default("0"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const tradingSettings = pgTable("trading_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  riskLevel: text("risk_level").default("moderate"), // "conservative", "moderate", "aggressive"
+  maxTradeAmount: decimal("max_trade_amount", { precision: 20, scale: 2 }).default("1000"),
+  autoTrading: boolean("auto_trading").default(false),
+  stopLoss: decimal("stop_loss", { precision: 5, scale: 2 }).default("5"),
+  takeProfit: decimal("take_profit", { precision: 5, scale: 2 }).default("10"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -269,3 +310,11 @@ export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
 export type UserSubscription = typeof userSubscriptions.$inferSelect;
 export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
+
+// Trading types
+export type UserTrade = typeof userTrades.$inferSelect;
+export type InsertUserTrade = typeof userTrades.$inferInsert;
+export type UserPortfolio = typeof userPortfolio.$inferSelect;
+export type InsertUserPortfolio = typeof userPortfolio.$inferInsert;
+export type TradingSettings = typeof tradingSettings.$inferSelect;
+export type InsertTradingSettings = typeof tradingSettings.$inferInsert;
