@@ -6,6 +6,7 @@ import Stripe from "stripe";
 import { storage } from "./storage";
 import { insertUserSchema, insertSignalSchema, insertTickerSchema } from "@shared/schema";
 import { cycleForecastingService } from "./services/cycleForecasting";
+import { notificationService } from "./services/notificationService";
 import { z } from "zod";
 
 // Initialize Stripe
@@ -489,6 +490,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         signal,
       });
 
+      // Send notifications to all users
+      await notificationService.broadcastSignalToAllUsers({
+        ticker: signal.ticker,
+        signalType: signal.signalType as 'buy' | 'sell',
+        price: parseFloat(signal.price),
+        confidence: 85, // Default confidence for webhook signals
+      });
+
       res.json({ success: true, signal });
     } catch (error) {
       res.status(400).json({ message: 'Invalid webhook payload', error: error instanceof Error ? error.message : 'Unknown error' });
@@ -522,6 +531,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcast({
         type: 'new_signal',
         signal,
+      });
+
+      // Send notifications to all users for manual signals
+      await notificationService.broadcastSignalToAllUsers({
+        ticker: signal.ticker,
+        signalType: signal.signalType as 'buy' | 'sell',
+        price: parseFloat(signal.price),
+        confidence: 90, // Higher confidence for manual admin signals
       });
 
       res.json(signal);
