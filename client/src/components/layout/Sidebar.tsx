@@ -18,6 +18,8 @@ import {
   MessageSquare,
   FileText,
   Edit,
+  AlertTriangle,
+  PieChart,
 } from "lucide-react";
 
 interface SidebarProps {

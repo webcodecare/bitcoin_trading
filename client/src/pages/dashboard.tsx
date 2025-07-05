@@ -117,7 +117,7 @@ export default function Dashboard() {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="ml-64 flex-1">
+        <div className="ml-64 flex-1 bg-background">
           {/* Top Bar */}
           <header className="bg-card border-b border-border p-6">
             <div className="flex items-center justify-between">
@@ -188,7 +188,6 @@ export default function Dashboard() {
                 <TradingViewChart 
                   symbol="BTCUSDT"
                   height={400}
-                  showSignals={true}
                 />
               </CardContent>
             </Card>
