@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Auth from "@/pages/auth";
@@ -154,6 +155,39 @@ function Router() {
 }
 
 function App() {
+  // Global error handling for unhandled promise rejections
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      
+      // Prevent default behavior for specific known issues
+      if (event.reason && event.reason.message) {
+        const message = event.reason.message.toLowerCase();
+        if (message.includes('tradingview') || 
+            message.includes('chart') || 
+            message.includes('widget')) {
+          event.preventDefault();
+          console.warn('Chart-related error handled gracefully');
+          return;
+        }
+      }
+      
+      // For other errors, let them be handled by default error boundaries
+    };
+
+    const handleError = (event: ErrorEvent) => {
+      console.error('Global error:', event.error);
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

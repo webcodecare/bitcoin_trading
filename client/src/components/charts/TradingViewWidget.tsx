@@ -138,60 +138,137 @@ export default function TradingViewWidget({
     };
   }, []);
 
-  // Initialize TradingView widget
+  // Initialize TradingView widget with comprehensive error handling
   useEffect(() => {
-    if (isLoaded && containerRef.current && window.TradingView) {
-      // Clear existing widget
-      if (widgetRef.current) {
-        widgetRef.current.remove();
+    let isMounted = true;
+    
+    const initializeWidget = async () => {
+      if (!isLoaded || !containerRef.current || !window.TradingView || !isMounted) {
+        return;
       }
 
       try {
-        widgetRef.current = new window.TradingView.widget({
-          width: '100%',
-          height: typeof window !== 'undefined' && window.innerWidth < 768 
-            ? Math.max(300, height - 200) 
-            : height - 150,
-          symbol: symbol,
-          interval: '15',
-          timezone: 'Etc/UTC',
-          theme: theme,
-          style: '1',
-          locale: 'en',
-          toolbar_bg: theme === 'dark' ? '#1a1a1a' : '#ffffff',
-          enable_publishing: false,
-          hide_top_toolbar: false,
-          hide_legend: false,
-          save_image: false,
-          container_id: containerRef.current.id,
-        studies: [
-          'Volume@tv-basicstudies',
-          'RSI@tv-basicstudies',
-        ],
-        overrides: {
-          'paneProperties.background': theme === 'dark' ? '#0a0a0a' : '#ffffff',
-          'paneProperties.vertGridProperties.color': theme === 'dark' ? '#2a2a2a' : '#e0e0e0',
-          'paneProperties.horzGridProperties.color': theme === 'dark' ? '#2a2a2a' : '#e0e0e0',
-          'symbolWatermarkProperties.transparency': 90,
-          'scalesProperties.textColor': theme === 'dark' ? '#d1d5db' : '#374151',
-        },
-        loading_screen: {
-          backgroundColor: theme === 'dark' ? '#0a0a0a' : '#ffffff',
-          foregroundColor: theme === 'dark' ? '#ffffff' : '#000000'
-        },
-        disabled_features: [
-          'use_localstorage_for_settings',
-          'save_chart_properties_to_local_storage'
-        ],
-        enabled_features: [
-          'study_templates',
-          'side_toolbar_in_fullscreen_mode'
-        ]
+        // Clear existing widget safely
+        if (widgetRef.current) {
+          try {
+            widgetRef.current.remove();
+          } catch (removeError) {
+            console.warn('Widget removal error (non-critical):', removeError);
+          }
+          widgetRef.current = null;
+        }
+
+        // Add promise rejection handler specifically for TradingView
+        const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+          if (event.reason && event.reason.message && 
+              event.reason.message.includes('TradingView')) {
+            event.preventDefault();
+            console.warn('TradingView promise rejection handled:', event.reason);
+          }
+        };
+        
+        window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+        // Initialize widget with timeout
+        const widgetPromise = new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('TradingView widget initialization timeout'));
+          }, 10000);
+
+          try {
+            const widget = new window.TradingView.widget({
+              width: '100%',
+              height: typeof window !== 'undefined' && window.innerWidth < 768 
+                ? Math.max(300, height - 200) 
+                : height - 150,
+              symbol: symbol,
+              interval: '15',
+              timezone: 'Etc/UTC',
+              theme: theme,
+              style: '1',
+              locale: 'en',
+              toolbar_bg: theme === 'dark' ? '#1a1a1a' : '#ffffff',
+              enable_publishing: false,
+              hide_top_toolbar: false,
+              hide_legend: false,
+              save_image: false,
+              container_id: containerRef.current!.id,
+              studies: [
+                'Volume@tv-basicstudies',
+                'RSI@tv-basicstudies',
+              ],
+              overrides: {
+                'paneProperties.background': theme === 'dark' ? '#0a0a0a' : '#ffffff',
+                'paneProperties.vertGridProperties.color': theme === 'dark' ? '#2a2a2a' : '#e0e0e0',
+                'paneProperties.horzGridProperties.color': theme === 'dark' ? '#2a2a2a' : '#e0e0e0',
+                'symbolWatermarkProperties.transparency': 90,
+                'scalesProperties.textColor': theme === 'dark' ? '#d1d5db' : '#374151',
+              },
+              loading_screen: {
+                backgroundColor: theme === 'dark' ? '#0a0a0a' : '#ffffff',
+                foregroundColor: theme === 'dark' ? '#ffffff' : '#000000'
+              },
+              disabled_features: [
+                'use_localstorage_for_settings',
+                'save_chart_properties_to_local_storage'
+              ],
+              enabled_features: [
+                'study_templates',
+                'side_toolbar_in_fullscreen_mode'
+              ],
+              onChartReady: () => {
+                clearTimeout(timeout);
+                resolve(widget);
+              }
+            });
+
+            if (isMounted) {
+              widgetRef.current = widget;
+            }
+          } catch (error) {
+            clearTimeout(timeout);
+            reject(error);
+          }
         });
+
+        await widgetPromise;
+        
+        // Remove the event listener after successful initialization
+        setTimeout(() => {
+          window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+        }, 1000);
+
       } catch (error) {
         console.error('TradingView widget initialization error:', error);
+        // Fallback: show a simple message instead of crashing
+        if (containerRef.current && isMounted) {
+          containerRef.current.innerHTML = `
+            <div class="flex items-center justify-center h-full bg-background border rounded-lg">
+              <div class="text-center p-4">
+                <p class="text-muted-foreground">Chart loading...</p>
+                <p class="text-xs text-muted-foreground mt-2">Symbol: ${symbol}</p>
+              </div>
+            </div>
+          `;
+        }
       }
-    }
+    };
+
+    // Add delay to ensure proper mounting
+    const timeoutId = setTimeout(initializeWidget, 100);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+      if (widgetRef.current) {
+        try {
+          widgetRef.current.remove();
+        } catch (error) {
+          console.warn('Widget cleanup error (non-critical):', error);
+        }
+        widgetRef.current = null;
+      }
+    };
   }, [isLoaded, symbol, theme, height]);
 
   const handleTrade = async (type: 'buy' | 'sell') => {
