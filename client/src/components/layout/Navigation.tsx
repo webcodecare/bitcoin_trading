@@ -31,8 +31,17 @@ export default function Navigation() {
           <div className="hidden md:flex space-x-6">
             {!isAuthenticated && (
               <>
+                <Link href="/market-data" className={`text-muted-foreground hover:text-foreground transition-colors ${isActive('/market-data') ? 'text-foreground font-semibold' : ''}`}>
+                  Market Data
+                </Link>
                 <Link href="/pricing" className={`text-muted-foreground hover:text-foreground transition-colors ${isActive('/pricing') ? 'text-foreground font-semibold' : ''}`}>
                   Pricing
+                </Link>
+                <Link href="/about" className={`text-muted-foreground hover:text-foreground transition-colors ${isActive('/about') ? 'text-foreground font-semibold' : ''}`}>
+                  About
+                </Link>
+                <Link href="/contact" className={`text-muted-foreground hover:text-foreground transition-colors ${isActive('/contact') ? 'text-foreground font-semibold' : ''}`}>
+                  Contact
                 </Link>
               </>
             )}
@@ -41,6 +50,9 @@ export default function Navigation() {
               <>
                 <Link href="/dashboard" className={`text-muted-foreground hover:text-foreground transition-colors ${isActive('/dashboard') ? 'text-foreground font-semibold' : ''}`}>
                   Dashboard
+                </Link>
+                <Link href="/members" className={`text-muted-foreground hover:text-foreground transition-colors ${isActive('/members') ? 'text-foreground font-semibold' : ''}`}>
+                  Members
                 </Link>
                 <Link href="/alerts" className={`text-muted-foreground hover:text-foreground transition-colors ${isActive('/alerts') ? 'text-foreground font-semibold' : ''}`}>
                   Alerts
