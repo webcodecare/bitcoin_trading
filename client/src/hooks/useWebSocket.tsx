@@ -6,6 +6,11 @@ export function useWebSocket(onMessage?: WebSocketMessageHandler) {
   handlerRef.current = onMessage;
 
   useEffect(() => {
+    // Skip WebSocket connection in development to avoid conflicts with Vite HMR
+    if (import.meta.env.DEV) {
+      return;
+    }
+
     const messageHandler: WebSocketMessageHandler = (message) => {
       if (handlerRef.current) {
         handlerRef.current(message);
