@@ -764,12 +764,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create new user (admin only)
+  app.post('/api/admin/users', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const userData = z.object({
+        email: z.string().email(),
+        password: z.string().min(6),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
+        role: z.enum(['admin', 'user']).default('user'),
+      }).parse(req.body);
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(userData.email);
+      if (existingUser) {
+        return res.status(400).json({ message: 'User with this email already exists' });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+      // Create user
+      const user = await storage.createUser({
+        email: userData.email,
+        hashedPassword,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        role: userData.role,
+        isActive: true,
+      });
+
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: 'CREATE_USER',
+        targetTable: 'users',
+        targetId: user.id,
+        notes: `Created user: ${user.email} with role: ${user.role}`,
+      });
+
+      res.json({ ...user, hashedPassword: undefined });
+    } catch (error) {
+      res.status(400).json({ message: 'Failed to create user' });
+    }
+  });
+
   app.put('/api/admin/users/:id', requireAuth, requireAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       const updates = z.object({
         isActive: z.boolean().optional(),
         role: z.enum(['admin', 'user']).optional(),
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
       }).parse(req.body);
 
       const user = await storage.updateUser(id, updates);
@@ -788,6 +834,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ ...user, hashedPassword: undefined });
     } catch (error) {
       res.status(400).json({ message: 'Failed to update user' });
+    }
+  });
+
+  // Delete user (admin only)
+  app.delete('/api/admin/users/:id', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Prevent admin from deleting themselves
+      if (id === req.user.id) {
+        return res.status(400).json({ message: 'Cannot delete your own account' });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Instead of hard delete, deactivate the user for safety
+      const deactivatedUser = await storage.updateUser(id, { isActive: false });
+
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: 'DELETE_USER',
+        targetTable: 'users',
+        targetId: id,
+        notes: `Deactivated user: ${user.email}`,
+      });
+
+      res.json({ success: true, message: 'User deactivated successfully' });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to delete user' });
     }
   });
 
