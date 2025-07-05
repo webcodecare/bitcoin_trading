@@ -7,6 +7,11 @@ export interface User {
   lastName?: string;
   role: "admin" | "user";
   isActive: boolean;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  subscriptionTier: "free" | "basic" | "premium" | "pro";
+  subscriptionStatus?: "active" | "canceled" | "past_due" | "trialing" | "incomplete";
+  subscriptionEndsAt?: string;
   lastLoginAt?: string;
   createdAt: string;
 }

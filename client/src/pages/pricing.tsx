@@ -1,367 +1,311 @@
-import { Link } from "wouter";
+import { useState } from "react";
+import { Check, CreditCard, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import Navigation from "@/components/layout/Navigation";
-import { 
-  CheckCircle, 
-  Bitcoin,
-  TrendingUp,
-  Shield,
-  Zap,
-  BarChart3,
-  Bell,
-  Smartphone,
-  Users,
-  Crown,
-  Star,
-  ArrowRight
-} from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
+
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  tier: "free" | "basic" | "premium" | "pro";
+  stripePriceId: string;
+  monthlyPrice: number;
+  yearlyPrice: number | null;
+  features: string[] | null;
+  maxSignals: number | null;
+  maxTickers: number | null;
+  isActive: boolean;
+}
 
 export default function Pricing() {
-  const plans = [
-    {
-      name: "Starter",
-      price: 29,
-      period: "month",
-      description: "Perfect for beginners",
-      features: [
-        "Basic trading signals",
-        "Email alerts",
-        "Basic charts",
-        "Mobile access",
-        "Community support",
-        "Weekly market insights",
-      ],
-      buttonText: "Get Started",
-      popular: false,
-      icon: TrendingUp,
-      color: "text-blue-500",
-    },
-    {
-      name: "Pro",
-      price: 79,
-      period: "month",
-      description: "For serious traders",
-      features: [
-        "Advanced trading signals",
-        "Email + SMS alerts",
-        "All chart types",
-        "200-week heatmap",
-        "Cycle forecaster",
-        "API access",
-        "Priority support",
-        "Daily market analysis",
-        "Custom indicators",
-        "Portfolio tracking",
-      ],
-      buttonText: "Upgrade to Pro",
-      popular: true,
-      icon: BarChart3,
-      color: "text-primary",
-    },
-    {
-      name: "Enterprise",
-      price: 199,
-      period: "month",
-      description: "For institutions",
-      features: [
-        "Everything in Pro",
-        "Custom indicators",
-        "Priority support",
-        "White-label options",
-        "Dedicated account manager",
-        "Custom integrations",
-        "Advanced analytics",
-        "Team collaboration",
-        "SLA guarantee",
-        "Custom training",
-      ],
-      buttonText: "Contact Sales",
-      popular: false,
-      icon: Crown,
-      color: "text-emerald-500",
-    },
-  ];
+  const [isYearly, setIsYearly] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
-  const features = [
-    {
-      icon: <TrendingUp className="h-6 w-6" />,
-      title: "Real-time Signals",
-      description: "Get instant buy/sell alerts powered by advanced algorithms",
-    },
-    {
-      icon: <BarChart3 className="h-6 w-6" />,
-      title: "Advanced Analytics",
-      description: "200-week heatmaps and cycle forecasting tools",
-    },
-    {
-      icon: <Shield className="h-6 w-6" />,
-      title: "Enterprise Security",
-      description: "Bank-level security with encrypted data transmission",
-    },
-    {
-      icon: <Zap className="h-6 w-6" />,
-      title: "Lightning Fast",
-      description: "Real-time data processing with sub-second latency",
-    },
-  ];
+  const { data: plans = [], isLoading } = useQuery<SubscriptionPlan[]>({
+    queryKey: ["/api/subscription-plans"],
+  });
 
-  const faqs = [
-    {
-      question: "How accurate are the trading signals?",
-      answer: "Our signals have maintained an 87% accuracy rate over the past 12 months, based on historical performance data.",
+  const createSubscriptionMutation = useMutation({
+    mutationFn: async (planTier: string) => {
+      const response = await apiRequest("POST", "/api/create-subscription", {
+        planTier,
+        billingInterval: isYearly ? "yearly" : "monthly",
+      });
+      return response.json();
     },
-    {
-      question: "Can I cancel my subscription anytime?",
-      answer: "Yes, you can cancel your subscription at any time. There are no long-term commitments or cancellation fees.",
+    onSuccess: (data) => {
+      if (data.clientSecret) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.checkoutUrl;
+      } else {
+        toast({
+          title: "Subscription Updated",
+          description: "Your subscription has been updated successfully.",
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      }
     },
-    {
-      question: "Do you offer a free trial?",
-      answer: "Yes, all plans come with a 14-day free trial. No credit card required to start.",
+    onError: (error: any) => {
+      toast({
+        title: "Payment Failed",
+        description: error.message || "Failed to process subscription. Please try again.",
+        variant: "destructive",
+      });
     },
-    {
-      question: "What payment methods do you accept?",
-      answer: "We accept all major credit cards, PayPal, and cryptocurrency payments including Bitcoin and Ethereum.",
+    onSettled: () => {
+      setLoadingPlan(null);
     },
-    {
-      question: "Is there customer support available?",
-      answer: "Yes, we provide 24/7 customer support via email, chat, and phone for Pro and Enterprise customers.",
-    },
-    {
-      question: "Can I upgrade or downgrade my plan?",
-      answer: "Absolutely! You can change your plan at any time from your account settings. Changes take effect immediately.",
-    },
-  ];
+  });
+
+  const handleSelectPlan = async (planTier: string) => {
+    if (!isAuthenticated) {
+      setLocation("/auth");
+      return;
+    }
+
+    if (user?.subscriptionTier === planTier) {
+      toast({
+        title: "Already Subscribed",
+        description: `You are already on the ${planTier} plan.`,
+      });
+      return;
+    }
+
+    setLoadingPlan(planTier);
+    createSubscriptionMutation.mutate(planTier);
+  };
+
+  const formatPrice = (plan: SubscriptionPlan) => {
+    if (plan.monthlyPrice === 0) return "Free";
+    const price = isYearly ? (plan.yearlyPrice || plan.monthlyPrice * 12) : plan.monthlyPrice;
+    const amount = (price / 100).toFixed(2);
+    const period = isYearly ? "/year" : "/month";
+    return `$${amount}${period}`;
+  };
+
+  const getSavings = (plan: SubscriptionPlan) => {
+    if (!plan.yearlyPrice || plan.monthlyPrice === 0) return null;
+    const yearlyMonthly = plan.yearlyPrice / 12;
+    const monthlySavings = plan.monthlyPrice - yearlyMonthly;
+    const percentSavings = Math.round((monthlySavings / plan.monthlyPrice) * 100);
+    return percentSavings;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-b from-muted/50 to-background">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h1 className="text-5xl font-bold mb-6">
-              Choose Your <span className="text-primary">Trading</span> Plan
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8">
-              Professional cryptocurrency analytics and trading signals for every level of trader. Start with a 14-day free trial.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-              <div className="flex items-center space-x-2 text-emerald-400">
-                <CheckCircle className="h-5 w-5" />
-                <span>14-day free trial</span>
-              </div>
-              <div className="flex items-center space-x-2 text-emerald-400">
-                <CheckCircle className="h-5 w-5" />
-                <span>No setup fees</span>
-              </div>
-              <div className="flex items-center space-x-2 text-emerald-400">
-                <CheckCircle className="h-5 w-5" />
-                <span>Cancel anytime</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Plans */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            {plans.map((plan, index) => {
-              const IconComponent = plan.icon;
-              return (
-                <Card 
-                  key={index} 
-                  className={`relative hover:border-primary/50 transition-all duration-300 ${
-                    plan.popular ? 'border-primary shadow-lg scale-105 bg-card/80 backdrop-blur' : ''
-                  }`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                      <Badge className="crypto-gradient text-white px-6 py-2 text-sm font-semibold">
-                        <Star className="w-3 h-3 mr-1" />
-                        Most Popular
-                      </Badge>
-                    </div>
-                  )}
-                  <CardHeader className="text-center pb-4">
-                    <div className={`mx-auto mb-4 p-3 rounded-full bg-muted ${plan.color}`}>
-                      <IconComponent className="h-6 w-6" />
-                    </div>
-                    <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
-                    <div className="text-4xl font-bold text-primary mb-2">
-                      ${plan.price}
-                      <span className="text-base text-muted-foreground font-normal">/{plan.period}</span>
-                    </div>
-                    <p className="text-muted-foreground">{plan.description}</p>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <ul className="space-y-3 mb-8">
-                      {plan.features.map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-emerald-400 mr-3 flex-shrink-0" />
-                          <span className="text-sm">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button 
-                      className={`w-full ${plan.popular ? 'crypto-gradient text-white' : ''}`}
-                      variant={plan.popular ? "default" : "outline"}
-                      size="lg"
-                      asChild
-                    >
-                      <Link href="/auth?mode=register">
-                        {plan.buttonText}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-16 bg-muted/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Why Choose CryptoStrategy Pro?</h2>
-            <p className="text-xl text-muted-foreground">Professional tools trusted by thousands of traders worldwide</p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="text-center hover:border-primary/50 transition-colors">
-                <CardContent className="p-6">
-                  <div className="text-primary mb-4 flex justify-center">{feature.icon}</div>
-                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Social Proof */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Trusted by Traders Worldwide</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-primary mb-2">12,847</div>
-                <div className="text-muted-foreground">Active Traders</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-emerald-400 mb-2">87%</div>
-                <div className="text-muted-foreground">Signal Accuracy</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-emerald-400 mb-2">+234%</div>
-                <div className="text-muted-foreground">Average ROI</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-16 bg-muted/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
-            <p className="text-xl text-muted-foreground">Everything you need to know about our platform</p>
-          </div>
-          
-          <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-8">
-              {faqs.map((faq, index) => (
-                <Card key={index}>
-                  <CardContent className="p-6">
-                    <h3 className="font-semibold mb-3">{faq.question}</h3>
-                    <p className="text-muted-foreground text-sm">{faq.answer}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 crypto-gradient">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-4 text-white">Ready to Start Trading Smarter?</h2>
-          <p className="text-xl mb-8 text-white/90">
-            Join thousands of successful traders using our professional analytics platform
+      <div className="container mx-auto px-4 py-16">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            Choose Your Trading Strategy Plan
+          </h1>
+          <p className="text-xl text-muted-foreground mb-8">
+            Unlock advanced crypto trading insights with real-time signals and analytics
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Button size="lg" variant="secondary" asChild>
-              <Link href="/auth?mode=register">
-                Start Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="text-white border-white hover:bg-white hover:text-primary"
+          
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center space-x-4 mb-8">
+            <span className={`text-sm ${!isYearly ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+              Monthly
+            </span>
+            <button
+              onClick={() => setIsYearly(!isYearly)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                isYearly ? 'bg-primary' : 'bg-muted'
+              }`}
             >
-              Schedule Demo
-            </Button>
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  isYearly ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className={`text-sm ${isYearly ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+              Yearly
+            </span>
+            {isYearly && (
+              <Badge variant="secondary" className="ml-2">
+                Save up to 20%
+              </Badge>
+            )}
           </div>
-          <p className="text-sm text-white/70 mt-4">
-            No credit card required • 14-day free trial • Cancel anytime
-          </p>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="bg-card border-t border-border py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 text-2xl font-bold text-primary mb-4">
-                <Bitcoin className="h-8 w-8" />
-                <span>CryptoStrategy Pro</span>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                Professional cryptocurrency trading signals and analytics for serious traders.
-              </p>
+        {/* Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+          {plans.map((plan) => {
+            const isCurrentPlan = user?.subscriptionTier === plan.tier;
+            const isPopular = plan.tier === "premium";
+            const savings = getSavings(plan);
+            
+            return (
+              <Card key={plan.id} className={`relative ${isPopular ? 'border-primary shadow-lg scale-105' : ''}`}>
+                {isPopular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+                  </div>
+                )}
+                
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <CardDescription className="capitalize">{plan.tier} tier</CardDescription>
+                  <div className="mt-4">
+                    <span className="text-4xl font-bold">{formatPrice(plan)}</span>
+                    {isYearly && savings && plan.monthlyPrice > 0 && (
+                      <div className="text-sm text-green-600 mt-1">
+                        Save {savings}% annually
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+
+                <CardContent>
+                  <ul className="space-y-3">
+                    {plan.features?.map((feature, index) => (
+                      <li key={index} className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                    
+                    {plan.maxSignals && plan.maxSignals > 0 && (
+                      <li className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        <span className="text-sm">
+                          {plan.maxSignals === -1 ? "Unlimited" : plan.maxSignals} signals per month
+                        </span>
+                      </li>
+                    )}
+                    
+                    {plan.maxTickers && plan.maxTickers > 0 && (
+                      <li className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        <span className="text-sm">
+                          {plan.maxTickers === -1 ? "Unlimited" : plan.maxTickers} trading pairs
+                        </span>
+                      </li>
+                    )}
+                  </ul>
+                </CardContent>
+
+                <CardFooter>
+                  <Button
+                    className="w-full"
+                    variant={isCurrentPlan ? "secondary" : isPopular ? "default" : "outline"}
+                    disabled={isCurrentPlan || loadingPlan === plan.tier}
+                    onClick={() => handleSelectPlan(plan.tier)}
+                  >
+                    {loadingPlan === plan.tier ? (
+                      <Loader className="h-4 w-4 animate-spin mr-2" />
+                    ) : isCurrentPlan ? (
+                      "Current Plan"
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        {plan.monthlyPrice === 0 ? "Get Started" : "Subscribe"}
+                      </>
+                    )}
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Features Comparison */}
+        <div className="mt-20">
+          <h2 className="text-3xl font-bold text-center mb-12">Feature Comparison</h2>
+          <div className="max-w-4xl mx-auto">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-4 px-6">Features</th>
+                    <th className="text-center py-4 px-6">Free</th>
+                    <th className="text-center py-4 px-6">Basic</th>
+                    <th className="text-center py-4 px-6 bg-primary/5">Premium</th>
+                    <th className="text-center py-4 px-6">Pro</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b">
+                    <td className="py-4 px-6">Trading Signals</td>
+                    <td className="text-center py-4 px-6">10/month</td>
+                    <td className="text-center py-4 px-6">100/month</td>
+                    <td className="text-center py-4 px-6 bg-primary/5">500/month</td>
+                    <td className="text-center py-4 px-6">Unlimited</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-4 px-6">Trading Pairs</td>
+                    <td className="text-center py-4 px-6">3</td>
+                    <td className="text-center py-4 px-6">10</td>
+                    <td className="text-center py-4 px-6 bg-primary/5">25</td>
+                    <td className="text-center py-4 px-6">Unlimited</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-4 px-6">Real-time Charts</td>
+                    <td className="text-center py-4 px-6">Basic</td>
+                    <td className="text-center py-4 px-6">✓</td>
+                    <td className="text-center py-4 px-6 bg-primary/5">✓</td>
+                    <td className="text-center py-4 px-6">✓</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-4 px-6">Email Alerts</td>
+                    <td className="text-center py-4 px-6">-</td>
+                    <td className="text-center py-4 px-6">✓</td>
+                    <td className="text-center py-4 px-6 bg-primary/5">✓</td>
+                    <td className="text-center py-4 px-6">✓</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-4 px-6">SMS Alerts</td>
+                    <td className="text-center py-4 px-6">-</td>
+                    <td className="text-center py-4 px-6">-</td>
+                    <td className="text-center py-4 px-6 bg-primary/5">✓</td>
+                    <td className="text-center py-4 px-6">✓</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-4 px-6">Heatmap Analysis</td>
+                    <td className="text-center py-4 px-6">-</td>
+                    <td className="text-center py-4 px-6">-</td>
+                    <td className="text-center py-4 px-6 bg-primary/5">✓</td>
+                    <td className="text-center py-4 px-6">✓</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-4 px-6">Forecasting</td>
+                    <td className="text-center py-4 px-6">-</td>
+                    <td className="text-center py-4 px-6">-</td>
+                    <td className="text-center py-4 px-6 bg-primary/5">-</td>
+                    <td className="text-center py-4 px-6">✓</td>
+                  </tr>
+                  <tr>
+                    <td className="py-4 px-6">API Access</td>
+                    <td className="text-center py-4 px-6">-</td>
+                    <td className="text-center py-4 px-6">-</td>
+                    <td className="text-center py-4 px-6 bg-primary/5">-</td>
+                    <td className="text-center py-4 px-6">✓</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link></li>
-                <li><Link href="/auth" className="hover:text-foreground transition-colors">Sign Up</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Contact Us</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Terms of Service</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2025 CryptoStrategy Pro. All rights reserved.</p>
           </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }

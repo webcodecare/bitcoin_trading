@@ -10,6 +10,11 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   isActive: boolean("is_active").notNull().default(true),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  subscriptionTier: text("subscription_tier", { enum: ["free", "basic", "premium", "pro"] }).notNull().default("free"),
+  subscriptionStatus: text("subscription_status", { enum: ["active", "canceled", "past_due", "trialing", "incomplete"] }),
+  subscriptionEndsAt: timestamp("subscription_ends_at"),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -36,11 +41,26 @@ export const availableTickers = pgTable("available_tickers", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const subscriptions = pgTable("subscriptions", {
+export const userSubscriptions = pgTable("user_subscriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id),
   tickerSymbol: text("ticker_symbol").notNull().references(() => availableTickers.symbol),
   subscribedAt: timestamp("subscribed_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  tier: text("tier", { enum: ["free", "basic", "premium", "pro"] }).notNull().unique(),
+  stripePriceId: text("stripe_price_id").notNull(),
+  monthlyPrice: integer("monthly_price").notNull(), // in cents
+  yearlyPrice: integer("yearly_price"), // in cents
+  features: text("features").array(),
+  maxSignals: integer("max_signals"),
+  maxTickers: integer("max_tickers"),
+  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -172,6 +192,18 @@ export const insertAdminLogSchema = createInsertSchema(adminActivityLog).omit({
   createdAt: true,
 });
 
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -191,3 +223,7 @@ export type ForecastData = typeof forecastData.$inferSelect;
 export type InsertForecast = z.infer<typeof insertForecastSchema>;
 export type AdminLog = typeof adminActivityLog.$inferSelect;
 export type InsertAdminLog = z.infer<typeof insertAdminLogSchema>;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;

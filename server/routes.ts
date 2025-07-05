@@ -2,9 +2,18 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import bcrypt from "bcryptjs";
+import Stripe from "stripe";
 import { storage } from "./storage";
 import { insertUserSchema, insertSignalSchema, insertTickerSchema } from "@shared/schema";
 import { z } from "zod";
+
+// Initialize Stripe
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2024-11-20.acacia",
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -489,6 +498,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(transformedData);
     } catch (error) {
       res.status(500).json({ message: 'Failed to get market data' });
+    }
+  });
+
+  // Subscription Management Routes
+  app.get("/api/subscription-plans", async (req, res) => {
+    try {
+      const plans = await storage.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching subscription plans:", error);
+      res.status(500).json({ message: "Failed to fetch subscription plans" });
+    }
+  });
+
+  // Create Stripe Checkout Session for Subscription
+  app.post("/api/create-subscription", async (req, res) => {
+    try {
+      const { planTier, billingInterval = "monthly" } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      // Get the subscription plan
+      const plan = await storage.getSubscriptionPlan(planTier);
+      if (!plan) {
+        return res.status(404).json({ message: "Subscription plan not found" });
+      }
+
+      // Handle free plan
+      if (plan.monthlyPrice === 0) {
+        await storage.updateUserSubscription(userId, {
+          subscriptionTier: "free",
+          subscriptionStatus: "active",
+        });
+        return res.json({ success: true });
+      }
+
+      // Get or create Stripe customer
+      const user = await storage.getUser(userId);
+      let customerId = user?.stripeCustomerId;
+
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user?.email,
+          metadata: { userId },
+        });
+        customerId = customer.id;
+
+        await storage.updateUserSubscription(userId, {
+          stripeCustomerId: customerId,
+        });
+      }
+
+      // Determine price based on billing interval
+      const priceAmount = billingInterval === "yearly" && plan.yearlyPrice ? plan.yearlyPrice : plan.monthlyPrice;
+
+      // Create Stripe Checkout session
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        mode: "subscription",
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: plan.name,
+                description: `${plan.tier} subscription plan`,
+              },
+              unit_amount: priceAmount,
+              recurring: {
+                interval: billingInterval === "yearly" ? "year" : "month",
+              },
+            },
+            quantity: 1,
+          },
+        ],
+        success_url: `${req.protocol}://${req.get("host")}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.protocol}://${req.get("host")}/pricing`,
+        metadata: {
+          userId,
+          planTier,
+          billingInterval,
+        },
+      });
+
+      res.json({
+        checkoutUrl: session.url,
+        sessionId: session.id,
+      });
+    } catch (error: any) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: error.message || "Failed to create subscription" });
+    }
+  });
+
+  // Stripe Webhook Handler
+  app.post("/api/stripe-webhook", async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+    let event;
+
+    try {
+      // In production, you'd need to set STRIPE_WEBHOOK_SECRET
+      event = stripe.webhooks.constructEvent(req.body, sig as string, process.env.STRIPE_WEBHOOK_SECRET || "");
+    } catch (err: any) {
+      console.error("Webhook signature verification failed:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Handle the event
+    switch (event.type) {
+      case "checkout.session.completed":
+        const session = event.data.object as any;
+        const { userId, planTier } = session.metadata;
+
+        if (userId && planTier) {
+          await storage.updateUserSubscription(userId, {
+            subscriptionTier: planTier,
+            subscriptionStatus: "active",
+            stripeSubscriptionId: session.subscription,
+          });
+        }
+        break;
+
+      case "invoice.payment_succeeded":
+        // Handle successful payment
+        break;
+
+      case "invoice.payment_failed":
+        // Handle failed payment
+        const failedInvoice = event.data.object as any;
+        const failedUserId = failedInvoice.customer_email; // You'd need to map this to userId
+        // Update user subscription status to past_due
+        break;
+
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+
+    res.json({ received: true });
+  });
+
+  // Customer Portal (for managing subscriptions)
+  app.post("/api/customer-portal", async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user?.stripeCustomerId) {
+        return res.status(400).json({ message: "No subscription found" });
+      }
+
+      const session = await stripe.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url: `${req.protocol}://${req.get("host")}/settings`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("Error creating customer portal session:", error);
+      res.status(500).json({ message: error.message || "Failed to create portal session" });
     }
   });
 
