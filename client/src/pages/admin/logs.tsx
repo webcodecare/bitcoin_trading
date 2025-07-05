@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Sidebar from "@/components/layout/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,20 +161,28 @@ export default function AdminLogs() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Admin Activity Logs</h1>
-          <p className="text-muted-foreground">Monitor administrator actions and system events</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={exportLogs}>
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        <Sidebar />
+        
+        {/* Main Content */}
+        <div className="ml-64 flex-1">
+          {/* Top Bar */}
+          <header className="bg-card border-b border-border p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Activity className="h-6 w-6" />
+                <h1 className="text-2xl font-bold">Admin Activity Logs</h1>
+              </div>
+              <Button variant="outline" onClick={exportLogs}>
+                <Download className="w-4 h-4 mr-2" />
+                Export CSV
+              </Button>
+            </div>
+          </header>
+
+          {/* Content */}
+          <div className="p-6 space-y-6">
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -415,6 +424,9 @@ export default function AdminLogs() {
           )}
         </CardContent>
       </Card>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
