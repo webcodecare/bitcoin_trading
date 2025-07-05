@@ -3,26 +3,47 @@ import { db } from './db';
 import { storage } from './storage';
 
 const popularTickers = [
-  { symbol: "BTCUSDT", description: "Bitcoin / Tether USD" },
-  { symbol: "ETHUSDT", description: "Ethereum / Tether USD" },
-  { symbol: "BNBUSDT", description: "Binance Coin / Tether USD" },
-  { symbol: "ADAUSDT", description: "Cardano / Tether USD" },
-  { symbol: "SOLUSDT", description: "Solana / Tether USD" },
-  { symbol: "XRPUSDT", description: "Ripple / Tether USD" },
-  { symbol: "DOTUSDT", description: "Polkadot / Tether USD" },
-  { symbol: "MATICUSDT", description: "Polygon / Tether USD" },
-  { symbol: "LINKUSDT", description: "Chainlink / Tether USD" },
-  { symbol: "AVAXUSDT", description: "Avalanche / Tether USD" },
-  { symbol: "LTCUSDT", description: "Litecoin / Tether USD" },
-  { symbol: "UNIUSDT", description: "Uniswap / Tether USD" },
-  { symbol: "ATOMUSDT", description: "Cosmos / Tether USD" },
-  { symbol: "VETUSDT", description: "VeChain / Tether USD" },
-  { symbol: "FILUSDT", description: "Filecoin / Tether USD" },
-  { symbol: "TRXUSDT", description: "TRON / Tether USD" },
-  { symbol: "ETCUSDT", description: "Ethereum Classic / Tether USD" },
-  { symbol: "XLMUSDT", description: "Stellar / Tether USD" },
-  { symbol: "AAVEUSDT", description: "Aave / Tether USD" },
-  { symbol: "EOSUSDT", description: "EOS / Tether USD" },
+  // Major Cryptocurrencies
+  { symbol: "BTCUSDT", description: "Bitcoin / Tether USD", category: "major", marketCap: 1 },
+  { symbol: "ETHUSDT", description: "Ethereum / Tether USD", category: "major", marketCap: 2 },
+  { symbol: "BNBUSDT", description: "Binance Coin / Tether USD", category: "major", marketCap: 4 },
+  { symbol: "SOLUSDT", description: "Solana / Tether USD", category: "major", marketCap: 5 },
+  { symbol: "XRPUSDT", description: "Ripple / Tether USD", category: "major", marketCap: 6 },
+  
+  // Layer 1 Blockchain Tokens
+  { symbol: "ADAUSDT", description: "Cardano / Tether USD", category: "layer1", marketCap: 8 },
+  { symbol: "DOTUSDT", description: "Polkadot / Tether USD", category: "layer1", marketCap: 12 },
+  { symbol: "MATICUSDT", description: "Polygon / Tether USD", category: "layer1", marketCap: 15 },
+  { symbol: "AVAXUSDT", description: "Avalanche / Tether USD", category: "layer1", marketCap: 11 },
+  { symbol: "ATOMUSDT", description: "Cosmos / Tether USD", category: "layer1", marketCap: 20 },
+  { symbol: "NEARUSDT", description: "NEAR Protocol / Tether USD", category: "layer1", marketCap: 25 },
+  
+  // DeFi Tokens
+  { symbol: "LINKUSDT", description: "Chainlink / Tether USD", category: "defi", marketCap: 14 },
+  { symbol: "UNIUSDT", description: "Uniswap / Tether USD", category: "defi", marketCap: 18 },
+  { symbol: "AAVEUSDT", description: "Aave / Tether USD", category: "defi", marketCap: 22 },
+  { symbol: "CRVUSDT", description: "Curve / Tether USD", category: "defi", marketCap: 35 },
+  { symbol: "COMPUSDT", description: "Compound / Tether USD", category: "defi", marketCap: 45 },
+  
+  // Legacy & Established
+  { symbol: "LTCUSDT", description: "Litecoin / Tether USD", category: "legacy", marketCap: 16 },
+  { symbol: "ETCUSDT", description: "Ethereum Classic / Tether USD", category: "legacy", marketCap: 28 },
+  { symbol: "XLMUSDT", description: "Stellar / Tether USD", category: "legacy", marketCap: 30 },
+  
+  // Utility & Infrastructure
+  { symbol: "VETUSDT", description: "VeChain / Tether USD", category: "utility", marketCap: 32 },
+  { symbol: "FILUSDT", description: "Filecoin / Tether USD", category: "utility", marketCap: 26 },
+  { symbol: "TRXUSDT", description: "TRON / Tether USD", category: "utility", marketCap: 17 },
+  
+  // Emerging & Growth
+  { symbol: "FTMUSDT", description: "Fantom / Tether USD", category: "emerging", marketCap: 38 },
+  { symbol: "ALGOUSDT", description: "Algorand / Tether USD", category: "emerging", marketCap: 42 },
+  { symbol: "ICPUSDT", description: "Internet Computer / Tether USD", category: "emerging", marketCap: 33 },
+  
+  // Additional Popular Tokens
+  { symbol: "EOSUSDT", description: "EOS / Tether USD", category: "legacy", marketCap: 48 },
+  { symbol: "HBARUSDT", description: "Hedera / Tether USD", category: "utility", marketCap: 40 },
+  { symbol: "XTZUSDT", description: "Tezos / Tether USD", category: "layer1", marketCap: 44 },
 ];
 
 async function initializeTickers() {
@@ -40,6 +61,8 @@ async function initializeTickers() {
         await storage.createTicker({
           symbol: ticker.symbol,
           description: ticker.description,
+          category: ticker.category,
+          marketCap: ticker.marketCap,
           isEnabled: true,
         });
         console.log(`Added: ${ticker.symbol} - ${ticker.description}`);

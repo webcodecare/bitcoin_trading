@@ -7,6 +7,7 @@ import TradingViewChart from "@/components/charts/TradingViewChart";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
 import TickerSelector from "@/components/ui/ticker-selector";
+import CategoryFilter from "@/components/ui/category-filter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -136,7 +137,7 @@ export default function MultiTickerDashboard() {
           {/* Dashboard Content */}
           <div className="p-6 space-y-6">
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview" className="flex items-center space-x-2">
                   <BarChart3 className="h-4 w-4" />
                   <span>Overview</span>
@@ -148,6 +149,10 @@ export default function MultiTickerDashboard() {
                 <TabsTrigger value="analytics" className="flex items-center space-x-2">
                   <PieChart className="h-4 w-4" />
                   <span>Analytics</span>
+                </TabsTrigger>
+                <TabsTrigger value="categories" className="flex items-center space-x-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Categories</span>
                 </TabsTrigger>
                 <TabsTrigger value="signals" className="flex items-center space-x-2">
                   <Bell className="h-4 w-4" />
@@ -234,6 +239,101 @@ export default function MultiTickerDashboard() {
                     </div>
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="categories" className="space-y-6">
+                {/* Enhanced Multi-Ticker Category Management */}
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-2xl font-bold mb-2">Cryptocurrency Categories</h2>
+                    <p className="text-muted-foreground">
+                      Explore beyond Bitcoin with 25+ cryptocurrencies organized by category
+                    </p>
+                  </div>
+
+                  {/* Available Tickers Query */}
+                  {(() => {
+                    const { data: availableTickers = [], isLoading: isLoadingTickers } = useQuery({
+                      queryKey: ["/api/tickers/enabled"],
+                    });
+
+                    if (isLoadingTickers) {
+                      return (
+                        <div className="flex items-center justify-center h-64">
+                          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <CategoryFilter
+                        tickers={availableTickers}
+                        selectedTickers={selectedTickers}
+                        onTickerToggle={handleTickerToggle}
+                        maxTickers={10}
+                      />
+                    );
+                  })()}
+
+                  {/* Current Selection Summary */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Target className="h-5 w-5" />
+                        Current Watchlist ({selectedTickers.length}/10)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                          {selectedTickers.map((ticker) => (
+                            <Badge 
+                              key={ticker} 
+                              variant="default" 
+                              className="flex items-center gap-2 px-3 py-1"
+                            >
+                              <span>{ticker.replace('USDT', '')}</span>
+                              <button
+                                onClick={() => handleTickerToggle(ticker)}
+                                className="hover:bg-white/20 rounded-full p-0.5"
+                              >
+                                ✕
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                        
+                        {selectedTickers.length === 0 && (
+                          <p className="text-muted-foreground text-center py-8">
+                            Select cryptocurrencies from the categories above to start tracking
+                          </p>
+                        )}
+                        
+                        {selectedTickers.length > 0 && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                            {/* Mock market data display for selected tickers */}
+                            {selectedTickers.slice(0, 6).map((ticker, index) => (
+                              <Card key={ticker} className="p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="font-bold">{ticker.replace('USDT', '')}</span>
+                                  <Badge variant={index % 2 === 0 ? "default" : "destructive"}>
+                                    {index % 2 === 0 ? '+' : '-'}{(Math.random() * 10).toFixed(2)}%
+                                  </Badge>
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  ${(Math.random() * 100000).toLocaleString(undefined, {minimumFractionDigits: 2})}
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Vol: ${(Math.random() * 1000000000).toLocaleString(undefined, {notation: 'compact'})}
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
 
               <TabsContent value="charts" className="space-y-6">
