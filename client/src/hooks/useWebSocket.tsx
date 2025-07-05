@@ -12,9 +12,9 @@ export function useWebSocket(onMessage?: WebSocketMessageHandler) {
       }
     };
 
-    // Connect to WebSocket
+    // Connect to WebSocket with graceful error handling
     webSocketManager.connect().catch(error => {
-      console.error("Failed to connect to WebSocket:", error);
+      console.warn("WebSocket connection unavailable, real-time features disabled");
     });
 
     // Add message handler

@@ -17,8 +17,10 @@ export class WebSocketManager {
   private isConnecting = false;
 
   constructor() {
+    // Only initialize WebSocket in production or when explicitly needed
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    this.url = `${protocol}//${window.location.host}/ws`;
+    const port = window.location.port || (protocol === "wss:" ? "443" : "80");
+    this.url = `${protocol}//${window.location.hostname}:${port}/ws`;
   }
 
   connect(): Promise<void> {
@@ -31,6 +33,14 @@ export class WebSocketManager {
       this.isConnecting = true;
 
       try {
+        // Validate WebSocket URL before creating connection
+        if (!this.url || this.url.includes('undefined')) {
+          console.warn("Invalid WebSocket URL, skipping connection");
+          this.isConnecting = false;
+          resolve(); // Resolve gracefully instead of rejecting
+          return;
+        }
+
         this.ws = new WebSocket(this.url);
 
         this.ws.onopen = () => {
@@ -52,17 +62,22 @@ export class WebSocketManager {
         this.ws.onclose = (event) => {
           console.log("WebSocket disconnected:", event.code, event.reason);
           this.isConnecting = false;
-          this.scheduleReconnect();
+          // Only attempt to reconnect if it wasn't a intentional close
+          if (event.code !== 1000) {
+            this.scheduleReconnect();
+          }
         };
 
         this.ws.onerror = (error) => {
-          console.error("WebSocket error:", error);
+          console.warn("WebSocket connection failed, continuing without real-time features");
           this.isConnecting = false;
-          reject(error);
+          // Resolve instead of reject to prevent unhandled promise rejection
+          resolve();
         };
       } catch (error) {
+        console.warn("WebSocket initialization failed, continuing without real-time features");
         this.isConnecting = false;
-        reject(error);
+        resolve(); // Resolve gracefully
       }
     });
   }
