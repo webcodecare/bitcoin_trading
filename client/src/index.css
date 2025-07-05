@@ -119,6 +119,56 @@
   border-radius: 12px;
 }
 
+/* Mobile-first responsive improvements */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Touch-friendly buttons */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improved input sizes for mobile */
+  input, select, textarea {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Better spacing for small screens */
+  .space-y-6 > * + * {
+    margin-top: 1rem;
+  }
+  
+  .space-y-4 > * + * {
+    margin-top: 0.75rem;
+  }
+}
+
+/* Trading interface specific mobile styles */
+@media (max-width: 640px) {
+  .trading-widget {
+    padding: 0.5rem;
+  }
+  
+  .trading-controls {
+    gap: 0.5rem;
+  }
+  
+  .buy-sell-buttons {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  
+  .quick-amount-buttons {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
+  }
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;

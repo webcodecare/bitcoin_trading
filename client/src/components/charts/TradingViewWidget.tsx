@@ -253,18 +253,18 @@ export default function TradingViewWidget({
         {enableTrading && (
           <Tabs defaultValue="trade" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="trade">Trade</TabsTrigger>
-              <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-              <TabsTrigger value="signals">Signals</TabsTrigger>
+              <TabsTrigger value="trade" className="text-xs sm:text-sm">Trade</TabsTrigger>
+              <TabsTrigger value="portfolio" className="text-xs sm:text-sm">Portfolio</TabsTrigger>
+              <TabsTrigger value="signals" className="text-xs sm:text-sm">Signals</TabsTrigger>
             </TabsList>
             
             <TabsContent value="trade" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="trade-mode">Order Type</Label>
+                    <Label htmlFor="trade-mode" className="text-sm font-medium">Order Type</Label>
                     <Select value={tradeMode} onValueChange={(value: 'market' | 'limit') => setTradeMode(value)}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-10">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -275,7 +275,7 @@ export default function TradingViewWidget({
                   </div>
                   
                   <div>
-                    <Label htmlFor="trade-amount">Amount</Label>
+                    <Label htmlFor="trade-amount" className="text-sm font-medium">Amount</Label>
                     <Input
                       id="trade-amount"
                       type="number"
@@ -284,12 +284,13 @@ export default function TradingViewWidget({
                       onChange={(e) => setTradeAmount(e.target.value)}
                       min="0"
                       step="0.01"
+                      className="h-10 text-base"
                     />
                   </div>
                   
                   {tradeMode === 'limit' && (
                     <div>
-                      <Label htmlFor="limit-price">Limit Price</Label>
+                      <Label htmlFor="limit-price" className="text-sm font-medium">Limit Price</Label>
                       <Input
                         id="limit-price"
                         type="number"
@@ -298,44 +299,97 @@ export default function TradingViewWidget({
                         onChange={(e) => setLimitPrice(e.target.value)}
                         min="0"
                         step="0.01"
+                        className="h-10 text-base"
                       />
                     </div>
                   )}
+                  
+                  {/* Quick Amount Buttons */}
+                  <div className="quick-amount-buttons grid grid-cols-4 gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setTradeAmount('0.01')}
+                      className="text-xs h-8 min-h-[44px] sm:min-h-[32px]"
+                    >
+                      0.01
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setTradeAmount('0.1')}
+                      className="text-xs h-8 min-h-[44px] sm:min-h-[32px]"
+                    >
+                      0.1
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setTradeAmount('1')}
+                      className="text-xs h-8 min-h-[44px] sm:min-h-[32px]"
+                    >
+                      1.0
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setTradeAmount('10')}
+                      className="text-xs h-8 min-h-[44px] sm:min-h-[32px]"
+                    >
+                      10
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="buy-sell-buttons grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Button
                       onClick={() => handleTrade('buy')}
                       disabled={!isAuthenticated || executeTradeMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 h-12 text-base font-semibold min-h-[48px]"
+                      size="lg"
                     >
-                      <TrendingUp className="h-4 w-4 mr-2" />
+                      <TrendingUp className="h-5 w-5 mr-2" />
                       {executeTradeMutation.isPending ? 'Processing...' : 'BUY'}
                     </Button>
                     <Button
                       onClick={() => handleTrade('sell')}
                       disabled={!isAuthenticated || executeTradeMutation.isPending}
                       variant="destructive"
+                      className="h-12 text-base font-semibold min-h-[48px]"
+                      size="lg"
                     >
-                      <TrendingDown className="h-4 w-4 mr-2" />
+                      <TrendingDown className="h-5 w-5 mr-2" />
                       {executeTradeMutation.isPending ? 'Processing...' : 'SELL'}
                     </Button>
                   </div>
                   
                   {!isAuthenticated && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      <a href="/login" className="text-primary hover:underline">
-                        Log in
-                      </a> to execute trades
-                    </p>
+                    <div className="bg-muted border border-border p-4 rounded-lg text-center">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Authentication required to trade
+                      </p>
+                      <Button variant="outline" size="sm" asChild>
+                        <a href="/login">Log In</a>
+                      </Button>
+                    </div>
                   )}
                   
                   {tradeAmount && currentPrice && (
-                    <div className="bg-muted p-3 rounded-lg text-sm">
-                      <p>Estimated Total: ${(parseFloat(tradeAmount) * currentPrice).toFixed(2)}</p>
+                    <div className="bg-muted p-4 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-muted-foreground">Estimated Total:</span>
+                        <span className="font-semibold text-lg">
+                          ${(parseFloat(tradeAmount) * currentPrice).toFixed(2)}
+                        </span>
+                      </div>
                       {tradeMode === 'market' && (
-                        <p className="text-muted-foreground">Market price execution</p>
+                        <p className="text-xs text-muted-foreground">Market price execution</p>
+                      )}
+                      {tradeMode === 'limit' && limitPrice && (
+                        <p className="text-xs text-muted-foreground">
+                          Limit order at ${parseFloat(limitPrice).toFixed(2)}
+                        </p>
                       )}
                     </div>
                   )}

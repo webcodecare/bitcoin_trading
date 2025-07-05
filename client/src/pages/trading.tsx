@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,21 @@ import {
 
 export default function Trading() {
   const [selectedSymbol, setSelectedSymbol] = useState("BINANCE:BTCUSDT");
+  const [chartHeight, setChartHeight] = useState(700);
+
+  useEffect(() => {
+    const updateChartHeight = () => {
+      if (window.innerWidth < 768) {
+        setChartHeight(500);
+      } else {
+        setChartHeight(700);
+      }
+    };
+
+    updateChartHeight();
+    window.addEventListener('resize', updateChartHeight);
+    return () => window.removeEventListener('resize', updateChartHeight);
+  }, []);
   const { user, isAuthenticated } = useAuth();
 
   const { data: tickers } = useQuery({
@@ -97,30 +112,33 @@ export default function Trading() {
       <main className="flex-1 bg-gradient-to-b from-background to-secondary/20">
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Professional Trading Terminal</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-2xl lg:text-3xl font-bold mb-2">Professional Trading Terminal</h1>
+                <p className="text-muted-foreground text-sm lg:text-base">
                   Advanced TradingView charts with integrated trading - Experience professional-grade tools like tradingview.com/chart
                 </p>
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-full sm:w-48">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {symbols.map((symbol) => (
                       <SelectItem key={symbol.value} value={symbol.value}>
-                        {symbol.label} - {symbol.name}
+                        <span className="flex items-center justify-between w-full">
+                          <span>{symbol.label}</span>
+                          <span className="text-xs text-muted-foreground ml-2">{symbol.name}</span>
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 
                 {user && (
-                  <Badge variant="outline" className="px-3 py-1">
+                  <Badge variant="outline" className="px-3 py-1 w-fit">
                     <Activity className="h-4 w-4 mr-2" />
                     {user.role === 'admin' ? 'Admin' : 'Trader'}
                   </Badge>
@@ -132,26 +150,26 @@ export default function Trading() {
           {/* Professional Trading Header */}
           <TradingHeader symbol={selectedSymbol} />
 
-          <div className="grid lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
             {/* Main Trading Chart */}
-            <div className="lg:col-span-3">
+            <div className="xl:col-span-3 order-1">
               <Tabs defaultValue="terminal" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="terminal">Professional Terminal</TabsTrigger>
-                  <TabsTrigger value="trading">Trading Widget</TabsTrigger>
+                  <TabsTrigger value="terminal" className="text-xs sm:text-sm">Professional Terminal</TabsTrigger>
+                  <TabsTrigger value="trading" className="text-xs sm:text-sm">Trading Widget</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="terminal">
                   <TradingTerminal
                     symbol={selectedSymbol}
-                    height={700}
+                    height={chartHeight}
                   />
                 </TabsContent>
                 
                 <TabsContent value="trading">
                   <TradingViewWidget
                     symbol={selectedSymbol}
-                    height={700}
+                    height={chartHeight}
                     enableTrading={true}
                     showSignals={true}
                     theme="dark"
@@ -161,7 +179,7 @@ export default function Trading() {
             </div>
 
             {/* Trading Panel */}
-            <div className="space-y-6">
+            <div className="space-y-4 xl:space-y-6 order-2 xl:order-3">
               {/* Market Overview */}
               <MarketOverview />
               {/* Portfolio Summary */}
