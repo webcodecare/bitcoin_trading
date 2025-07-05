@@ -146,6 +146,53 @@
   .space-y-4 > * + * {
     margin-top: 0.75rem;
   }
+  
+  /* Trading widget mobile adjustments */
+  .tradingview-widget-container {
+    min-height: 350px !important;
+  }
+  
+  /* Better tab layout on mobile */
+  .tabs-list {
+    @apply grid grid-cols-4 gap-1;
+  }
+  
+  .tabs-trigger {
+    @apply text-xs px-2 py-2;
+    min-height: 40px;
+  }
+  
+  /* Chart container mobile styles */
+  .chart-container {
+    min-height: 300px;
+    max-height: 400px;
+  }
+}
+
+/* Mobile buy/sell controls */
+.quick-amount-buttons button {
+  @apply text-xs py-2 px-3 font-medium;
+  min-height: 36px;
+}
+
+@media (max-width: 640px) {
+  .quick-amount-buttons {
+    @apply grid-cols-2 gap-2;
+  }
+  
+  .quick-amount-buttons button {
+    @apply text-sm py-3 px-4;
+    min-height: 44px;
+  }
+  
+  /* Compact trading controls */
+  .trading-controls {
+    @apply space-y-3;
+  }
+  
+  .trading-controls label {
+    @apply text-sm;
+  }
 }
 
 /* Trading interface specific mobile styles */

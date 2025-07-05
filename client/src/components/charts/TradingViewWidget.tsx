@@ -51,6 +51,20 @@ export default function TradingViewWidget({
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
 
+  // Handle unhandled promise rejections
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      event.preventDefault(); // Prevent default browser behavior
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+
   // Get current price and signals
   const { data: priceData } = useQuery({
     queryKey: [`/api/market/price/${symbol.split(':')[1] || 'BTCUSDT'}`],
@@ -132,21 +146,24 @@ export default function TradingViewWidget({
         widgetRef.current.remove();
       }
 
-      widgetRef.current = new window.TradingView.widget({
-        width: '100%',
-        height: height - 150, // Leave space for trading controls
-        symbol: symbol,
-        interval: '15',
-        timezone: 'Etc/UTC',
-        theme: theme,
-        style: '1',
-        locale: 'en',
-        toolbar_bg: theme === 'dark' ? '#1a1a1a' : '#ffffff',
-        enable_publishing: false,
-        hide_top_toolbar: false,
-        hide_legend: false,
-        save_image: false,
-        container_id: containerRef.current.id,
+      try {
+        widgetRef.current = new window.TradingView.widget({
+          width: '100%',
+          height: typeof window !== 'undefined' && window.innerWidth < 768 
+            ? Math.max(300, height - 200) 
+            : height - 150,
+          symbol: symbol,
+          interval: '15',
+          timezone: 'Etc/UTC',
+          theme: theme,
+          style: '1',
+          locale: 'en',
+          toolbar_bg: theme === 'dark' ? '#1a1a1a' : '#ffffff',
+          enable_publishing: false,
+          hide_top_toolbar: false,
+          hide_legend: false,
+          save_image: false,
+          container_id: containerRef.current.id,
         studies: [
           'Volume@tv-basicstudies',
           'RSI@tv-basicstudies',
@@ -170,7 +187,10 @@ export default function TradingViewWidget({
           'study_templates',
           'side_toolbar_in_fullscreen_mode'
         ]
-      });
+        });
+      } catch (error) {
+        console.error('TradingView widget initialization error:', error);
+      }
     }
   }, [isLoaded, symbol, theme, height]);
 
@@ -246,8 +266,12 @@ export default function TradingViewWidget({
         <div 
           ref={containerRef}
           id={`tradingview-widget-${symbol.replace(':', '-')}`}
-          className="w-full bg-background border rounded-lg"
-          style={{ height: height - 150 }}
+          className="w-full bg-background border rounded-lg min-h-[300px] sm:min-h-[400px] tradingview-widget-container chart-container"
+          style={{ 
+            height: typeof window !== 'undefined' && window.innerWidth < 768 
+              ? Math.max(300, height - 200) 
+              : height - 150 
+          }}
         >
           {!isLoaded && (
             <div className="flex items-center justify-center h-full">
@@ -259,19 +283,19 @@ export default function TradingViewWidget({
         {/* Trading Controls */}
         {enableTrading && (
           <Tabs defaultValue="trade" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="trade" className="text-xs sm:text-sm">Trade</TabsTrigger>
-              <TabsTrigger value="portfolio" className="text-xs sm:text-sm">Portfolio</TabsTrigger>
-              <TabsTrigger value="signals" className="text-xs sm:text-sm">Signals</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 tabs-list">
+              <TabsTrigger value="trade" className="text-xs sm:text-sm tabs-trigger">Trade</TabsTrigger>
+              <TabsTrigger value="portfolio" className="text-xs sm:text-sm tabs-trigger">Portfolio</TabsTrigger>
+              <TabsTrigger value="signals" className="text-xs sm:text-sm tabs-trigger">Signals</TabsTrigger>
             </TabsList>
             
             <TabsContent value="trade" className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-4">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="space-y-4 trading-controls">
                   <div>
                     <Label htmlFor="trade-mode" className="text-sm font-medium">Order Type</Label>
                     <Select value={tradeMode} onValueChange={(value: 'market' | 'limit') => setTradeMode(value)}>
-                      <SelectTrigger className="h-10">
+                      <SelectTrigger className="h-12 text-base">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -291,7 +315,7 @@ export default function TradingViewWidget({
                       onChange={(e) => setTradeAmount(e.target.value)}
                       min="0"
                       step="0.01"
-                      className="h-10 text-base"
+                      className="h-12 text-base"
                     />
                   </div>
                   
@@ -306,7 +330,7 @@ export default function TradingViewWidget({
                         onChange={(e) => setLimitPrice(e.target.value)}
                         min="0"
                         step="0.01"
-                        className="h-10 text-base"
+                        className="h-12 text-base"
                       />
                     </div>
                   )}
