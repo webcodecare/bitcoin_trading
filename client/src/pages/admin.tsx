@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import Sidebar from "@/components/layout/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
+import { Switch as UISwitch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -321,9 +322,9 @@ export default function Admin() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
-                              <Switch
+                              <UISwitch
                                 checked={user.isActive}
-                                onCheckedChange={(checked) =>
+                                onCheckedChange={(checked: boolean) =>
                                   updateUserMutation.mutate({
                                     userId: user.id,
                                     updates: { isActive: checked },
@@ -399,9 +400,9 @@ export default function Admin() {
                           />
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Switch
+                          <UISwitch
                             checked={newTicker.isEnabled}
-                            onCheckedChange={(checked) => setNewTicker({ ...newTicker, isEnabled: checked })}
+                            onCheckedChange={(checked: boolean) => setNewTicker({ ...newTicker, isEnabled: checked })}
                           />
                           <Label>Enabled</Label>
                         </div>
@@ -442,9 +443,9 @@ export default function Admin() {
                           <TableCell className="text-muted-foreground">{ticker.description}</TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
-                              <Switch
+                              <UISwitch
                                 checked={ticker.isEnabled}
-                                onCheckedChange={(checked) =>
+                                onCheckedChange={(checked: boolean) =>
                                   updateTickerMutation.mutate({
                                     tickerId: ticker.id,
                                     updates: { isEnabled: checked },

@@ -25,7 +25,7 @@ function Router() {
           <Dashboard />
         </AuthGuard>
       </Route>
-      <Route path="/admin">
+      <Route path="/admin" nest>
         <AuthGuard requiredRole="admin">
           <Admin />
         </AuthGuard>
