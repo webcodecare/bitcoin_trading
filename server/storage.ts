@@ -78,8 +78,56 @@ export interface IStorage {
 }
 
 export class MemoryStorage implements IStorage {
-  private users: User[] = [];
-  private userSettings: UserSettings[] = [];
+  private users: User[] = [
+    {
+      id: "test-user-123",
+      email: "demo@test.com",
+      hashedPassword: "$2b$10$AsIHwrKU6nwX.JLjCBHNvOXNcFjdllyiqNKDfcAfwjw49Z.wjd8qC", // password: "demo123"
+      role: "user",
+      firstName: "Demo",
+      lastName: "User",
+      isActive: true,
+      lastLoginAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "admin-user-456",
+      email: "admin@test.com", 
+      hashedPassword: "$2b$10$0YvgN82b48qyNveCIHrMwOMtItAXXaL51YolHUIpMJWrHPr6965/m", // password: "admin123"
+      role: "admin",
+      firstName: "Admin",
+      lastName: "User", 
+      isActive: true,
+      lastLoginAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
+  private userSettings: UserSettings[] = [
+    {
+      id: "settings-test-123",
+      userId: "test-user-123",
+      notificationEmail: true,
+      notificationSms: false,
+      notificationPush: true,
+      theme: "dark",
+      language: "en",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "settings-admin-456",
+      userId: "admin-user-456",
+      notificationEmail: true,
+      notificationSms: true,
+      notificationPush: true,
+      theme: "dark",
+      language: "en",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
   private tickers: AvailableTicker[] = [
     {
       id: "1",
@@ -106,7 +154,44 @@ export class MemoryStorage implements IStorage {
       updatedAt: new Date(),
     },
   ];
-  private signals: AlertSignal[] = [];
+  private signals: AlertSignal[] = [
+    {
+      id: "signal-1",
+      userId: "test-user-123",
+      ticker: "BTCUSDT",
+      signalType: "buy",
+      price: "67500.00",
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      source: "algorithm",
+      note: "Strong upward momentum detected",
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    },
+    {
+      id: "signal-2",
+      userId: "test-user-123",
+      ticker: "ETHUSDT",
+      signalType: "sell",
+      price: "3420.50",
+      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
+      source: "technical_analysis",
+      note: "Resistance level reached",
+      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+    },
+    {
+      id: "signal-3",
+      userId: "test-user-123",
+      ticker: "ADAUSDT",
+      signalType: "buy",
+      price: "0.4567",
+      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
+      source: "webhook",
+      note: "Oversold conditions detected",
+      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
+    }
+  ];
   private ohlcData: OhlcData[] = [];
   private heatmapData: HeatmapData[] = [];
   private cycleData: CycleData[] = [];
