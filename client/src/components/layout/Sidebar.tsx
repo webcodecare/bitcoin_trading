@@ -27,7 +27,11 @@ export default function Sidebar({ className }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useAuth();
 
-  const isActive = (path: string) => location === path;
+  const isActive = (path: string) => {
+    if (path === "/admin" && location === "/admin") return true;
+    if (path !== "/admin" && location.startsWith(path)) return true;
+    return location === path;
+  };
 
   const userNavItems = [
     {
