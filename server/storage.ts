@@ -21,6 +21,10 @@ import type {
   InsertForecast,
   AdminLog,
   InsertAdminLog,
+  SubscriptionPlan,
+  InsertSubscriptionPlan,
+  UserSubscription,
+  InsertUserSubscription,
 } from "@shared/schema";
 
 // Initialize database connection if URL is provided
@@ -75,6 +79,14 @@ export interface IStorage {
   // Admin logs
   getAdminLogs(limit?: number): Promise<AdminLog[]>;
   createAdminLog(log: InsertAdminLog): Promise<AdminLog>;
+  
+  // Subscription Plans
+  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlan(tier: string): Promise<SubscriptionPlan | undefined>;
+  createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
+  
+  // User Subscriptions
+  updateUserSubscription(userId: string, updates: Partial<User>): Promise<User | undefined>;
 }
 
 export class MemoryStorage implements IStorage {
@@ -87,6 +99,11 @@ export class MemoryStorage implements IStorage {
       firstName: "Demo",
       lastName: "User",
       isActive: true,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      subscriptionTier: "free",
+      subscriptionStatus: null,
+      subscriptionEndsAt: null,
       lastLoginAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -99,6 +116,11 @@ export class MemoryStorage implements IStorage {
       firstName: "Admin",
       lastName: "User", 
       isActive: true,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      subscriptionTier: "pro",
+      subscriptionStatus: "active",
+      subscriptionEndsAt: null,
       lastLoginAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -215,6 +237,11 @@ export class MemoryStorage implements IStorage {
       firstName: user.firstName ?? null,
       lastName: user.lastName ?? null,
       isActive: user.isActive ?? true,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      subscriptionTier: "free",
+      subscriptionStatus: null,
+      subscriptionEndsAt: null,
       lastLoginAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -413,6 +440,72 @@ export class MemoryStorage implements IStorage {
     this.adminLogs.push(newLog);
     return newLog;
   }
+
+  // Subscription Plans
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    // Return mock subscription plans for MemoryStorage
+    return [
+      {
+        id: "plan-free",
+        name: "Free Plan",
+        tier: "free",
+        stripePriceId: "price_free",
+        monthlyPrice: 0,
+        yearlyPrice: 0,
+        features: ["Basic signals", "Limited charts", "3 tickers"],
+        maxSignals: 10,
+        maxTickers: 3,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "plan-basic",
+        name: "Basic Plan",
+        tier: "basic",
+        stripePriceId: "price_basic_monthly",
+        monthlyPrice: 2999,
+        yearlyPrice: 29999,
+        features: ["Advanced signals", "Full charts", "10 tickers", "Email alerts"],
+        maxSignals: 100,
+        maxTickers: 10,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+  }
+
+  async getSubscriptionPlan(tier: string): Promise<SubscriptionPlan | undefined> {
+    const plans = await this.getSubscriptionPlans();
+    return plans.find(p => p.tier === tier);
+  }
+
+  async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    const newPlan: SubscriptionPlan = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: plan.name,
+      tier: plan.tier,
+      stripePriceId: plan.stripePriceId,
+      monthlyPrice: plan.monthlyPrice,
+      yearlyPrice: plan.yearlyPrice ?? null,
+      features: plan.features ?? null,
+      maxSignals: plan.maxSignals ?? null,
+      maxTickers: plan.maxTickers ?? null,
+      isActive: plan.isActive ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    return newPlan;
+  }
+
+  async updateUserSubscription(userId: string, updates: Partial<User>): Promise<User | undefined> {
+    const userIndex = this.users.findIndex(u => u.id === userId);
+    if (userIndex === -1) return undefined;
+    
+    this.users[userIndex] = { ...this.users[userIndex], ...updates, updatedAt: new Date() };
+    return this.users[userIndex];
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -571,6 +664,32 @@ export class DatabaseStorage implements IStorage {
   async createAdminLog(log: InsertAdminLog): Promise<AdminLog> {
     const result = await db.insert(schema.adminActivityLog).values(log).returning();
     return result[0];
+  }
+
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.isActive, true));
+  }
+
+  async getSubscriptionPlan(tier: string): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.tier, tier as any));
+    return plan;
+  }
+
+  async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    const [newPlan] = await db
+      .insert(schema.subscriptionPlans)
+      .values(plan)
+      .returning();
+    return newPlan;
+  }
+
+  async updateUserSubscription(userId: string, updates: Partial<User>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(schema.users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.users.id, userId))
+      .returning();
+    return updatedUser;
   }
 }
 
