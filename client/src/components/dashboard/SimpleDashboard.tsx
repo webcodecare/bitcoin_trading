@@ -408,18 +408,13 @@ export default function SimpleDashboard() {
                 <div className="relative group h-full">
                   <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0"
-                        onClick={() => toggleWidgetEnabled(widget.id)}
-                      >
+                      <div className="h-6 w-6 flex items-center justify-center">
                         <Switch 
                           checked={widget.enabled} 
-                          onChange={() => {}} 
+                          onCheckedChange={() => toggleWidgetEnabled(widget.id)}
                           className="h-3 w-6"
                         />
-                      </Button>
+                      </div>
                       <Button
                         size="sm"
                         variant="ghost"
