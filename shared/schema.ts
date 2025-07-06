@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, uuid, decimal, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, integer, boolean, timestamp, uuid, decimal, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -402,3 +402,31 @@ export type TradingSettings = typeof tradingSettings.$inferSelect;
 export type InsertTradingSettings = typeof tradingSettings.$inferInsert;
 export type UserAlert = typeof userAlerts.$inferSelect;
 export type InsertUserAlert = z.infer<typeof insertUserAlertSchema>;
+
+// Dashboard Layout table
+export const dashboardLayouts = pgTable("dashboard_layouts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  name: varchar("name", { length: 100 }).notNull(),
+  widgets: jsonb("widgets").notNull().$type<{
+    id: string;
+    type: string;
+    title: string;
+    position: number;
+    size: 'small' | 'medium' | 'large';
+    settings: Record<string, any>;
+    enabled: boolean;
+  }[]>(),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertDashboardLayoutSchema = createInsertSchema(dashboardLayouts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type DashboardLayout = typeof dashboardLayouts.$inferSelect;
+export type InsertDashboardLayout = z.infer<typeof insertDashboardLayoutSchema>;

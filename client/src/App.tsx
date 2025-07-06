@@ -28,6 +28,7 @@ import Alerts from "@/pages/alerts";
 import AdvancedAlertsPage from "@/pages/advanced-alerts";
 import AdvancedPortfolioPage from "@/pages/advanced-portfolio";
 import AlertsTest from "@/components/test/AlertsTest";
+import DashboardWidgetsPage from "@/pages/dashboard-widgets";
 import Settings from "@/pages/settings";
 import Preferences from "@/pages/preferences";
 import Pricing from "@/pages/pricing";
@@ -149,6 +150,7 @@ function Router() {
         </AuthGuard>
       </Route>
       <Route path="/test-alerts" component={AlertsTest} />
+      <Route path="/dashboard-widgets" component={DashboardWidgetsPage} />
       <Route path="/subscription">
         <AuthGuard>
           <Subscription />

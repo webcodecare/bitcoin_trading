@@ -31,6 +31,10 @@ import type {
   InsertUserPortfolio,
   TradingSettings,
   InsertTradingSettings,
+  UserAlert,
+  InsertUserAlert,
+  DashboardLayout,
+  InsertDashboardLayout,
 } from "@shared/schema";
 
 // Initialize database connection if URL is provided
@@ -107,6 +111,11 @@ export interface IStorage {
   createUserAlert(alert: InsertUserAlert): Promise<UserAlert>;
   updateUserAlert(id: string, updates: Partial<UserAlert>): Promise<UserAlert | undefined>;
   deleteUserAlert(id: string): Promise<boolean>;
+  
+  // Dashboard Layouts
+  getDashboardLayout(userId: string): Promise<DashboardLayout | undefined>;
+  saveDashboardLayout(layout: InsertDashboardLayout): Promise<DashboardLayout>;
+  updateDashboardLayout(id: string, updates: Partial<DashboardLayout>): Promise<DashboardLayout | undefined>;
 }
 
 export class MemoryStorage implements IStorage {
@@ -532,6 +541,7 @@ export class MemoryStorage implements IStorage {
   private portfolios: UserPortfolio[] = [];
   private tradingSettings: TradingSettings[] = [];
   private userAlerts: UserAlert[] = [];
+  private dashboardLayouts: DashboardLayout[] = [];
 
   async getUserTrades(userId: string, limit = 100): Promise<UserTrade[]> {
     return this.trades
@@ -652,6 +662,45 @@ export class MemoryStorage implements IStorage {
 
     this.userAlerts.splice(alertIndex, 1);
     return true;
+  }
+
+  // Dashboard Layout implementation
+  async getDashboardLayout(userId: string): Promise<DashboardLayout | undefined> {
+    return this.dashboardLayouts.find(layout => layout.userId === userId && layout.isDefault);
+  }
+
+  async saveDashboardLayout(layout: InsertDashboardLayout): Promise<DashboardLayout> {
+    // Check if user already has a default layout
+    const existingIndex = this.dashboardLayouts.findIndex(l => l.userId === layout.userId && l.isDefault);
+    
+    const newLayout: DashboardLayout = {
+      id: `layout-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      ...layout,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    if (existingIndex !== -1) {
+      // Update existing layout
+      this.dashboardLayouts[existingIndex] = { ...this.dashboardLayouts[existingIndex], ...newLayout };
+      return this.dashboardLayouts[existingIndex];
+    } else {
+      // Create new layout
+      this.dashboardLayouts.push(newLayout);
+      return newLayout;
+    }
+  }
+
+  async updateDashboardLayout(id: string, updates: Partial<DashboardLayout>): Promise<DashboardLayout | undefined> {
+    const layoutIndex = this.dashboardLayouts.findIndex(layout => layout.id === id);
+    if (layoutIndex === -1) return undefined;
+
+    this.dashboardLayouts[layoutIndex] = {
+      ...this.dashboardLayouts[layoutIndex],
+      ...updates,
+      updatedAt: new Date(),
+    };
+    return this.dashboardLayouts[layoutIndex];
   }
 }
 
@@ -949,6 +998,49 @@ export class DatabaseStorage implements IStorage {
       .delete(schema.userAlerts)
       .where(eq(schema.userAlerts.id, id));
     return result.rowCount > 0;
+  }
+
+  // Dashboard Layout implementation
+  async getDashboardLayout(userId: string): Promise<DashboardLayout | undefined> {
+    const [layout] = await db.select()
+      .from(schema.dashboardLayouts)
+      .where(and(
+        eq(schema.dashboardLayouts.userId, userId),
+        eq(schema.dashboardLayouts.isDefault, true)
+      ))
+      .limit(1);
+    return layout;
+  }
+
+  async saveDashboardLayout(layout: InsertDashboardLayout): Promise<DashboardLayout> {
+    // Check if user already has a default layout
+    const existing = await this.getDashboardLayout(layout.userId);
+    
+    if (existing) {
+      // Update existing layout
+      const [updated] = await db
+        .update(schema.dashboardLayouts)
+        .set({ ...layout, updatedAt: new Date() })
+        .where(eq(schema.dashboardLayouts.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new layout
+      const [newLayout] = await db
+        .insert(schema.dashboardLayouts)
+        .values(layout)
+        .returning();
+      return newLayout;
+    }
+  }
+
+  async updateDashboardLayout(id: string, updates: Partial<DashboardLayout>): Promise<DashboardLayout | undefined> {
+    const [updated] = await db
+      .update(schema.dashboardLayouts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.dashboardLayouts.id, id))
+      .returning();
+    return updated;
   }
 }
 

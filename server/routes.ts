@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import bcrypt from "bcryptjs";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertUserSchema, insertSignalSchema, insertTickerSchema, insertUserAlertSchema } from "@shared/schema";
+import { insertUserSchema, insertSignalSchema, insertTickerSchema, insertUserAlertSchema, insertDashboardLayoutSchema } from "@shared/schema";
 import { cycleForecastingService } from "./services/cycleForecasting";
 import { notificationService } from "./services/notificationService";
 import { z } from "zod";
@@ -575,6 +575,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting alert:', error);
       res.status(500).json({ message: 'Failed to delete alert' });
+    }
+  });
+
+  // Dashboard Layout API
+  app.get('/api/dashboard/layout', async (req: any, res) => {
+    try {
+      const demoUserId = 'b9a4c92c-33f8-445d-8e23-2a3bb701f4ab';
+      const layout = await storage.getDashboardLayout(demoUserId);
+      res.json(layout);
+    } catch (error) {
+      console.error('Error fetching dashboard layout:', error);
+      res.status(500).json({ message: 'Failed to get dashboard layout' });
+    }
+  });
+
+  app.post('/api/dashboard/layout', async (req: any, res) => {
+    try {
+      const demoUserId = 'b9a4c92c-33f8-445d-8e23-2a3bb701f4ab';
+      const layoutData = insertDashboardLayoutSchema.parse({
+        ...req.body,
+        userId: demoUserId
+      });
+      
+      const layout = await storage.saveDashboardLayout(layoutData);
+      res.json(layout);
+    } catch (error) {
+      console.error('Error saving dashboard layout:', error);
+      res.status(500).json({ message: 'Failed to save dashboard layout' });
+    }
+  });
+
+  app.patch('/api/dashboard/layout/:id', async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const layout = await storage.updateDashboardLayout(id, updates);
+      if (!layout) {
+        return res.status(404).json({ message: 'Layout not found' });
+      }
+
+      res.json(layout);
+    } catch (error) {
+      console.error('Error updating dashboard layout:', error);
+      res.status(500).json({ message: 'Failed to update dashboard layout' });
     }
   });
 
