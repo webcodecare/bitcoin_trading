@@ -29,11 +29,13 @@ export default function PortfolioWidget({ widget, onUpdateSettings }: PortfolioW
   const { data: portfolio, isLoading } = useQuery({
     queryKey: ['/api/trading/portfolio'],
     queryFn: () => apiRequest('GET', '/api/trading/portfolio'),
+    retry: false,
   });
 
   const { data: performance } = useQuery({
     queryKey: ['/api/trading/performance'],
     queryFn: () => apiRequest('GET', '/api/trading/performance'),
+    retry: false,
   });
 
   const saveSettings = () => {
