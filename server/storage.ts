@@ -101,6 +101,12 @@ export interface IStorage {
   updatePortfolio(userId: string, ticker: string, updates: Partial<UserPortfolio>): Promise<UserPortfolio | undefined>;
   getTradingSettings(userId: string): Promise<TradingSettings | undefined>;
   updateTradingSettings(userId: string, settings: Partial<TradingSettings>): Promise<TradingSettings>;
+  
+  // User Alerts
+  getUserAlerts(userId: string): Promise<UserAlert[]>;
+  createUserAlert(alert: InsertUserAlert): Promise<UserAlert>;
+  updateUserAlert(id: string, updates: Partial<UserAlert>): Promise<UserAlert | undefined>;
+  deleteUserAlert(id: string): Promise<boolean>;
 }
 
 export class MemoryStorage implements IStorage {
@@ -525,6 +531,7 @@ export class MemoryStorage implements IStorage {
   private trades: UserTrade[] = [];
   private portfolios: UserPortfolio[] = [];
   private tradingSettings: TradingSettings[] = [];
+  private userAlerts: UserAlert[] = [];
 
   async getUserTrades(userId: string, limit = 100): Promise<UserTrade[]> {
     return this.trades
@@ -607,6 +614,44 @@ export class MemoryStorage implements IStorage {
     };
     this.tradingSettings.push(newSettings);
     return newSettings;
+  }
+
+  // User Alerts implementation
+  async getUserAlerts(userId: string): Promise<UserAlert[]> {
+    return this.userAlerts.filter(alert => alert.userId === userId);
+  }
+
+  async createUserAlert(alert: InsertUserAlert): Promise<UserAlert> {
+    const newAlert: UserAlert = {
+      id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      ...alert,
+      triggerCount: 0,
+      lastTriggered: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.userAlerts.push(newAlert);
+    return newAlert;
+  }
+
+  async updateUserAlert(id: string, updates: Partial<UserAlert>): Promise<UserAlert | undefined> {
+    const alertIndex = this.userAlerts.findIndex(alert => alert.id === id);
+    if (alertIndex === -1) return undefined;
+
+    this.userAlerts[alertIndex] = {
+      ...this.userAlerts[alertIndex],
+      ...updates,
+      updatedAt: new Date(),
+    };
+    return this.userAlerts[alertIndex];
+  }
+
+  async deleteUserAlert(id: string): Promise<boolean> {
+    const alertIndex = this.userAlerts.findIndex(alert => alert.id === id);
+    if (alertIndex === -1) return false;
+
+    this.userAlerts.splice(alertIndex, 1);
+    return true;
   }
 }
 
@@ -874,6 +919,36 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updated;
+  }
+
+  // User Alerts implementation
+  async getUserAlerts(userId: string): Promise<UserAlert[]> {
+    const alerts = await db.select().from(schema.userAlerts).where(eq(schema.userAlerts.userId, userId));
+    return alerts;
+  }
+
+  async createUserAlert(alert: InsertUserAlert): Promise<UserAlert> {
+    const [newAlert] = await db
+      .insert(schema.userAlerts)
+      .values(alert)
+      .returning();
+    return newAlert;
+  }
+
+  async updateUserAlert(id: string, updates: Partial<UserAlert>): Promise<UserAlert | undefined> {
+    const [updatedAlert] = await db
+      .update(schema.userAlerts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.userAlerts.id, id))
+      .returning();
+    return updatedAlert;
+  }
+
+  async deleteUserAlert(id: string): Promise<boolean> {
+    const result = await db
+      .delete(schema.userAlerts)
+      .where(eq(schema.userAlerts.id, id));
+    return result.rowCount > 0;
   }
 }
 

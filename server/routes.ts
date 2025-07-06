@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import bcrypt from "bcryptjs";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertUserSchema, insertSignalSchema, insertTickerSchema } from "@shared/schema";
+import { insertUserSchema, insertSignalSchema, insertTickerSchema, insertUserAlertSchema } from "@shared/schema";
 import { cycleForecastingService } from "./services/cycleForecasting";
 import { notificationService } from "./services/notificationService";
 import { z } from "zod";
@@ -474,6 +474,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(signals);
     } catch (error) {
       res.status(500).json({ message: 'Failed to get user signals' });
+    }
+  });
+
+  // User Alerts API
+  app.get('/api/alerts', requireAuth, async (req: any, res) => {
+    try {
+      const alerts = await storage.getUserAlerts(req.user.id);
+      res.json(alerts);
+    } catch (error) {
+      console.error('Error fetching user alerts:', error);
+      res.status(500).json({ message: 'Failed to get alerts' });
+    }
+  });
+
+  app.post('/api/alerts', requireAuth, async (req: any, res) => {
+    try {
+      const alertData = insertUserAlertSchema.parse({
+        ...req.body,
+        userId: req.user.id
+      });
+      
+      const alert = await storage.createUserAlert(alertData);
+      
+      // Log the creation
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: "create_alert",
+        targetTable: "user_alerts",
+        targetId: alert.id,
+        notes: `Created ${alertData.type} alert for ${alertData.ticker}`,
+      });
+
+      res.json(alert);
+    } catch (error) {
+      console.error('Error creating alert:', error);
+      res.status(500).json({ message: 'Failed to create alert' });
+    }
+  });
+
+  app.patch('/api/alerts/:id', requireAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const alert = await storage.updateUserAlert(id, updates);
+      if (!alert) {
+        return res.status(404).json({ message: 'Alert not found' });
+      }
+
+      // Log the update
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: "update_alert",
+        targetTable: "user_alerts",
+        targetId: id,
+        notes: `Updated alert settings`,
+      });
+
+      res.json(alert);
+    } catch (error) {
+      console.error('Error updating alert:', error);
+      res.status(500).json({ message: 'Failed to update alert' });
+    }
+  });
+
+  app.delete('/api/alerts/:id', requireAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      const success = await storage.deleteUserAlert(id);
+      if (!success) {
+        return res.status(404).json({ message: 'Alert not found' });
+      }
+
+      // Log the deletion
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: "delete_alert",
+        targetTable: "user_alerts",
+        targetId: id,
+        notes: `Deleted user alert`,
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting alert:', error);
+      res.status(500).json({ message: 'Failed to delete alert' });
     }
   });
 

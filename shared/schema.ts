@@ -240,6 +240,22 @@ export const userRoles = pgTable("user_roles", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// User custom alerts table
+export const userAlerts = pgTable("user_alerts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  type: text("type", { enum: ["price", "technical", "volume", "news", "whale"] }).notNull(),
+  ticker: text("ticker").notNull(),
+  condition: text("condition", { enum: ["above", "below", "crosses_above", "crosses_below"] }).notNull(),
+  value: decimal("value", { precision: 20, scale: 8 }).notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  channels: text("channels").array().notNull().default(["email"]),
+  lastTriggered: timestamp("last_triggered"),
+  triggerCount: integer("trigger_count").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Trading system tables
 export const userTrades = pgTable("user_trades", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -345,6 +361,14 @@ export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions
   updatedAt: true,
 });
 
+export const insertUserAlertSchema = createInsertSchema(userAlerts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  triggerCount: true,
+  lastTriggered: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -376,3 +400,5 @@ export type UserPortfolio = typeof userPortfolio.$inferSelect;
 export type InsertUserPortfolio = typeof userPortfolio.$inferInsert;
 export type TradingSettings = typeof tradingSettings.$inferSelect;
 export type InsertTradingSettings = typeof tradingSettings.$inferInsert;
+export type UserAlert = typeof userAlerts.$inferSelect;
+export type InsertUserAlert = z.infer<typeof insertUserAlertSchema>;
