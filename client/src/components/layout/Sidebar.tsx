@@ -20,6 +20,7 @@ import {
   Edit,
   AlertTriangle,
   PieChart,
+  Smile,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -46,6 +47,16 @@ export default function Sidebar({ className }: SidebarProps) {
       title: "Multi-Ticker",
       href: "/multi-ticker",
       icon: BarChart3,
+    },
+    {
+      title: "Trading",
+      href: "/trading",
+      icon: Activity,
+    },
+    {
+      title: "Signal Mood Board",
+      href: "/mood-board",
+      icon: Smile,
     },
     {
       title: "Alerts",
