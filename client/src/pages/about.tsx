@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import Navigation from "@/components/layout/Navigation";
+import Footer from "@/components/layout/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -262,6 +263,7 @@ export default function About() {
           </Card>
         </div>
       </section>
+      <Footer />
     </div>
   );
 }
