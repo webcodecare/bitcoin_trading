@@ -2514,6 +2514,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Chat ID is required' });
       }
 
+      if (!telegramService.isConfigured()) {
+        return res.status(400).json({ 
+          error: 'Telegram service not configured. Please contact admin to set up bot credentials.' 
+        });
+      }
+
       const result = await telegramService.validateChatId(chatId);
       
       if (result.valid) {
@@ -2554,6 +2560,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!chatId) {
         return res.status(400).json({ error: 'Chat ID is required' });
+      }
+
+      if (!telegramService.isConfigured()) {
+        return res.status(400).json({ 
+          error: 'Telegram service not configured. Please contact admin to set up bot credentials.' 
+        });
       }
 
       const result = await telegramService.sendMessage({
