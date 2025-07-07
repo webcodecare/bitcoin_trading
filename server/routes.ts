@@ -2460,5 +2460,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // SMS Configuration and Testing
+  app.post('/api/notifications/sms/verify', requireAuth, async (req: any, res) => {
+    try {
+      const { phoneNumber } = req.body;
+      
+      if (!phoneNumber || !phoneNumber.startsWith('+')) {
+        return res.status(400).json({ 
+          error: 'Phone number must include country code (e.g., +1234567890)' 
+        });
+      }
+
+      const result = await smsService.sendVerificationCode(phoneNumber);
+      
+      if (result.success) {
+        // Store verification code temporarily (in production, use Redis or database)
+        // For demo, we'll return the code directly
+        res.json({ 
+          success: true, 
+          message: 'Verification code sent',
+          code: result.code // Remove this in production
+        });
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error: any) {
+      console.error('Error sending SMS verification:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/notifications/sms/status', requireAuth, async (req: any, res) => {
+    try {
+      res.json({
+        configured: smsService.isConfigured(),
+        configStatus: smsService.getConfigStatus(),
+        provider: 'Twilio'
+      });
+    } catch (error: any) {
+      console.error('Error getting SMS status:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Telegram Configuration and Testing
+  app.post('/api/notifications/telegram/validate', requireAuth, async (req: any, res) => {
+    try {
+      const { chatId } = req.body;
+      
+      if (!chatId) {
+        return res.status(400).json({ error: 'Chat ID is required' });
+      }
+
+      const result = await telegramService.validateChatId(chatId);
+      
+      if (result.valid) {
+        res.json({ 
+          success: true, 
+          message: 'Chat ID is valid',
+          chatId: chatId
+        });
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error: any) {
+      console.error('Error validating Telegram chat ID:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/notifications/telegram/status', requireAuth, async (req: any, res) => {
+    try {
+      const testResult = await telegramService.testConnection();
+      
+      res.json({
+        configured: telegramService.isConfigured(),
+        configStatus: telegramService.getConfigStatus(),
+        botUsername: telegramService.getBotUsername(),
+        setupInstructions: telegramService.getSetupInstructions(),
+        botInfo: testResult.success ? testResult.botInfo : null
+      });
+    } catch (error: any) {
+      console.error('Error getting Telegram status:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/notifications/telegram/test', requireAuth, async (req: any, res) => {
+    try {
+      const { chatId } = req.body;
+      
+      if (!chatId) {
+        return res.status(400).json({ error: 'Chat ID is required' });
+      }
+
+      const result = await telegramService.sendMessage({
+        chatId: chatId,
+        message: '🧪 <b>Test Notification</b>\n\nThis is a test message from CryptoStrategy Pro!\n\n✅ Your Telegram notifications are working correctly.',
+        parseMode: 'HTML'
+      });
+
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: 'Test message sent successfully',
+          messageId: result.messageId
+        });
+      } else {
+        res.status(400).json({ error: result.error });
+      }
+    } catch (error: any) {
+      console.error('Error sending Telegram test:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return httpServer;
 }

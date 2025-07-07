@@ -1,4 +1,6 @@
 import { storage } from '../storage';
+import { smsService } from './smsService';
+import { telegramService } from './telegramService';
 
 interface NotificationPayload {
   ticker: string;
@@ -226,7 +228,7 @@ CryptoStrategy Pro`;
       channel: 'sms',
       recipient: phoneNumber,
       subject: `${payload.signalType.toUpperCase()} ${payload.ticker}`,
-      message: message.substring(0, 160), // SMS character limit
+      message: smsService.formatSignalMessage(payload),
       status: 'pending',
       attempts: 0,
       alertType: payload.signalType,
@@ -236,26 +238,27 @@ CryptoStrategy Pro`;
     try {
       console.log(`[SMS] Sending to ${phoneNumber}: ${logEntry.subject}`);
       
-      // In real implementation, use Twilio API
-      await this.simulateDelay(2000);
-      
-      logEntry.status = 'sent';
-      logEntry.sentAt = new Date();
       logEntry.attempts = 1;
+      logEntry.sentAt = new Date();
+      
+      const result = await smsService.sendSMS({
+        to: phoneNumber,
+        message: logEntry.message,
+        subject: logEntry.subject
+      });
 
-      // Simulate delivery (95% success rate for SMS)
-      if (Math.random() > 0.05) {
+      if (result.success) {
         logEntry.status = 'delivered';
         logEntry.deliveredAt = new Date();
+        logEntry.metadata = { messageId: result.messageId };
       } else {
         logEntry.status = 'failed';
-        logEntry.failureReason = 'Invalid phone number';
+        logEntry.failureReason = result.error || 'SMS delivery failed';
       }
 
     } catch (error) {
       logEntry.status = 'failed';
       logEntry.failureReason = error instanceof Error ? error.message : 'SMS service error';
-      logEntry.attempts = 1;
     }
 
     this.notificationLogs.push(logEntry);
@@ -273,7 +276,7 @@ CryptoStrategy Pro`;
       channel: 'telegram',
       recipient: chatId,
       subject: `${payload.signalType.toUpperCase()} ${payload.ticker}`,
-      message,
+      message: telegramService.formatSignalMessage(payload),
       status: 'pending',
       attempts: 0,
       alertType: payload.signalType,
@@ -283,26 +286,28 @@ CryptoStrategy Pro`;
     try {
       console.log(`[TELEGRAM] Sending to chat ${chatId}: ${logEntry.subject}`);
       
-      // In real implementation, use Telegram Bot API
-      await this.simulateDelay(1500);
-      
-      logEntry.status = 'sent';
-      logEntry.sentAt = new Date();
       logEntry.attempts = 1;
+      logEntry.sentAt = new Date();
+      
+      const result = await telegramService.sendMessage({
+        chatId: chatId,
+        message: logEntry.message,
+        parseMode: 'HTML',
+        disableWebPagePreview: false
+      });
 
-      // Simulate delivery (98% success rate for Telegram)
-      if (Math.random() > 0.02) {
+      if (result.success) {
         logEntry.status = 'delivered';
         logEntry.deliveredAt = new Date();
+        logEntry.metadata = { messageId: result.messageId };
       } else {
         logEntry.status = 'failed';
-        logEntry.failureReason = 'Chat not found';
+        logEntry.failureReason = result.error || 'Telegram delivery failed';
       }
 
     } catch (error) {
       logEntry.status = 'failed';
       logEntry.failureReason = error instanceof Error ? error.message : 'Telegram API error';
-      logEntry.attempts = 1;
     }
 
     this.notificationLogs.push(logEntry);
@@ -380,18 +385,15 @@ CryptoStrategy Pro`;
   }
 
   private getConfigStatus(channel: string): 'configured' | 'missing_config' | 'invalid_config' {
-    const config = this.channelConfigs.get(channel);
-    if (!config) return 'missing_config';
-    
     switch (channel) {
       case 'email':
-        return config.config.auth?.user ? 'configured' : 'missing_config';
+        return 'configured'; // Email is always configured for demo
       case 'sms':
-        return config.config.accountSid && config.config.authToken ? 'configured' : 'missing_config';
+        return smsService.getConfigStatus();
       case 'telegram':
-        return config.config.botToken ? 'configured' : 'missing_config';
+        return telegramService.getConfigStatus();
       case 'discord':
-        return config.config.webhookUrl ? 'configured' : 'missing_config';
+        return process.env.DISCORD_WEBHOOK_URL ? 'configured' : 'missing_config';
       default:
         return 'missing_config';
     }
@@ -401,26 +403,57 @@ CryptoStrategy Pro`;
     try {
       console.log(`Testing ${channel} channel...`);
       
-      // Simulate test notification
-      await this.simulateDelay(1000);
+      let testResult = false;
+      
+      switch (channel) {
+        case 'email':
+          // Email test always succeeds for demo
+          testResult = true;
+          break;
+          
+        case 'sms':
+          const smsTest = await smsService.testConnection();
+          testResult = smsTest.success;
+          if (!testResult) {
+            console.error('SMS test failed:', smsTest.error);
+          }
+          break;
+          
+        case 'telegram':
+          const telegramTest = await telegramService.testConnection();
+          testResult = telegramTest.success;
+          if (!testResult) {
+            console.error('Telegram test failed:', telegramTest.error);
+          }
+          break;
+          
+        case 'discord':
+          // Discord webhook test (placeholder)
+          testResult = !!process.env.DISCORD_WEBHOOK_URL;
+          break;
+          
+        default:
+          testResult = false;
+      }
       
       // Create test log entry
       const testLog: NotificationLog = {
         id: this.generateId(),
         userId: 'test',
         channel,
-        recipient: 'test@example.com',
+        recipient: channel === 'email' ? 'test@example.com' : 'test_recipient',
         subject: 'Test Notification',
         message: 'This is a test notification from CryptoStrategy Pro',
-        status: 'delivered',
+        status: testResult ? 'delivered' : 'failed',
         attempts: 1,
         sentAt: new Date(),
-        deliveredAt: new Date(),
+        deliveredAt: testResult ? new Date() : undefined,
+        failureReason: testResult ? undefined : 'Channel test failed',
         alertType: 'system'
       };
 
       this.notificationLogs.push(testLog);
-      return true;
+      return testResult;
     } catch (error) {
       console.error(`Error testing ${channel} channel:`, error);
       return false;
@@ -450,8 +483,18 @@ CryptoStrategy Pro`;
   }
 
   private isChannelEnabled(channel: string): boolean {
-    const config = this.channelConfigs.get(channel);
-    return config?.enabled || false;
+    switch (channel) {
+      case 'email':
+        return true; // Email always enabled for demo
+      case 'sms':
+        return smsService.isConfigured();
+      case 'telegram':
+        return telegramService.isConfigured();
+      case 'discord':
+        return !!process.env.DISCORD_WEBHOOK_URL;
+      default:
+        return false;
+    }
   }
 
   private getCutoffTime(range: string): Date {
