@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { tokenStorage } from '@/lib/auth';
 
 interface Alert {
   id: string;
@@ -43,27 +44,48 @@ export default function AlertSystem() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const token = tokenStorage.get();
+
+  // Helper function for authenticated requests
+  const authRequest = async (method: string, url: string, data?: any) => {
+    if (!token) throw new Error("Authentication required");
+    const response = await fetch(url, {
+      method,
+      headers: {
+        ...(data ? { "Content-Type": "application/json" } : {}),
+        Authorization: `Bearer ${token}`,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `${response.status}: ${response.statusText}`);
+    }
+    return response.json();
+  };
 
   const { data: alerts = [], isLoading: alertsLoading, error: alertsError } = useQuery({
-    queryKey: ['/api/alerts'],
-    queryFn: () => apiRequest('GET', '/api/alerts'),
-    retry: 2,
-    staleTime: 30000, // 30 seconds
+    queryKey: ['/api/alerts', token],
+    queryFn: () => authRequest('GET', '/api/alerts'),
+    enabled: !!token,
+    retry: 1,
+    staleTime: 30000,
   });
 
   const { data: tickers = [], isLoading: tickersLoading, error: tickersError } = useQuery({
-    queryKey: ['/api/tickers'],
-    queryFn: () => apiRequest('GET', '/api/tickers'),
-    retry: 2,
-    staleTime: 60000, // 60 seconds
+    queryKey: ['/api/tickers', token],
+    queryFn: () => authRequest('GET', '/api/tickers'),
+    enabled: !!token,
+    retry: 1,
+    staleTime: 60000,
   });
 
   const isLoading = alertsLoading || tickersLoading;
 
   const createAlertMutation = useMutation({
-    mutationFn: (alertData: AlertFormData) => apiRequest('POST', '/api/alerts', alertData),
+    mutationFn: (alertData: AlertFormData) => authRequest('POST', '/api/alerts', alertData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/alerts', token] });
       toast({
         title: "Alert Created",
         description: "Your alert has been set up successfully",
@@ -87,16 +109,16 @@ export default function AlertSystem() {
 
   const updateAlertMutation = useMutation({
     mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => 
-      apiRequest('PATCH', `/api/alerts/${id}`, { enabled }),
+      authRequest('PATCH', `/api/alerts/${id}`, { enabled }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/alerts', token] });
     },
   });
 
   const deleteAlertMutation = useMutation({
-    mutationFn: (id: string) => apiRequest('DELETE', `/api/alerts/${id}`),
+    mutationFn: (id: string) => authRequest('DELETE', `/api/alerts/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/alerts', token] });
       toast({
         title: "Alert Deleted",
         description: "Alert has been removed",
@@ -148,13 +170,49 @@ export default function AlertSystem() {
     }
   };
 
-  // Loading state
+  // Authentication check
+  if (!token) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">Authentication Required</h3>
+            <p className="text-muted-foreground mb-4">
+              Please log in to access the alert system.
+            </p>
+            <Button onClick={() => window.location.href = "/login"}>
+              Go to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Loading state with skeleton
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-center p-8">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-          <span className="ml-2 text-muted-foreground">Loading alerts...</span>
+        <div className="flex items-center justify-between">
+          <div className="animate-pulse">
+            <div className="h-8 bg-muted rounded w-64 mb-2"></div>
+            <div className="h-4 bg-muted rounded w-96"></div>
+          </div>
+          <div className="h-6 bg-muted rounded w-24"></div>
+        </div>
+        <div className="grid gap-4">
+          {[1, 2, 3].map(i => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
+                  <div className="h-4 bg-muted rounded w-1/4"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );
@@ -169,11 +227,19 @@ export default function AlertSystem() {
             <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">Unable to Load Alerts</h3>
             <p className="text-muted-foreground mb-4">
-              There was an error loading the alert system. Please try refreshing the page.
+              {alertsError?.message || tickersError?.message || "There was an error loading the alert system."}
             </p>
-            <Button onClick={() => window.location.reload()}>
-              Refresh Page
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ['/api/alerts', token] });
+                queryClient.invalidateQueries({ queryKey: ['/api/tickers', token] });
+              }}>
+                Retry
+              </Button>
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
