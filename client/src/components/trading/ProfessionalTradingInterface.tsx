@@ -58,6 +58,16 @@ export default function ProfessionalTradingInterface({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Check TradingView timeframe support for current symbol
+  const { data: timeframeConfig } = useQuery({
+    queryKey: ['/api/trading/timeframes', symbol],
+    retry: false,
+  });
+
+  // Supported timeframes for TradingView alerts
+  const supportedTimeframes = timeframeConfig?.supported_timeframes || [];
+  const isTradingViewSupported = timeframeConfig?.supported || false;
+
   // Generate realistic order book data
   const generateOrderBook = () => {
     const spread = currentPrice * 0.001; // 0.1% spread
@@ -199,8 +209,53 @@ export default function ProfessionalTradingInterface({
   const estimate = getOrderEstimate();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Order Book */}
+    <div className="space-y-6">
+      {/* TradingView Alert Status */}
+      {symbol === 'BTCUSD' && isTradingViewSupported && (
+        <Card className="border-green-500/20 bg-gradient-to-r from-green-500/5 to-emerald-500/5">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <div>
+                  <h3 className="font-semibold text-sm">TradingView Alerts Active</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Receiving live buy/sell signals from TradingView bots
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <Badge variant="outline" className="text-green-600 border-green-500/30">
+                  {supportedTimeframes.length} Timeframes
+                </Badge>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {supportedTimeframes.join(', ')}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {symbol !== 'BTCUSD' && (
+        <Card className="border-yellow-500/20 bg-gradient-to-r from-yellow-500/5 to-orange-500/5">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <div>
+                <h3 className="font-semibold text-sm">TradingView Alerts Limited</h3>
+                <p className="text-xs text-muted-foreground">
+                  TradingView webhook integration currently supports BTCUSD only. 
+                  Switch to BTCUSD for automated signals across 7 timeframes.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Order Book */}
       <Card className="lg:col-span-1">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -515,6 +570,7 @@ export default function ProfessionalTradingInterface({
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

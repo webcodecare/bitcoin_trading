@@ -79,6 +79,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // TradingView webhook authentication
+  const validateWebhookSecret = (req: any, res: any, next: any) => {
+    const secret = req.headers['x-webhook-secret'] || req.body.secret || req.query.secret;
+    const validSecret = process.env.TRADINGVIEW_WEBHOOK_SECRET || 'default_secret';
+    
+    if (secret !== validSecret) {
+      return res.status(401).json({ message: 'Invalid webhook secret' });
+    }
+    
+    next();
+  };
+
+  // Supported timeframes for BTCUSD
+  const SUPPORTED_TIMEFRAMES = ['1M', '1W', '1D', '12h', '4h', '1h', '30m'];
+  const SUPPORTED_TICKERS = ['BTCUSD']; // Initially only BTCUSD
+
   // Auth routes
   app.post('/api/auth/register', async (req, res) => {
     try {
@@ -474,6 +490,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(signals);
     } catch (error) {
       res.status(500).json({ message: 'Failed to get user signals' });
+    }
+  });
+
+  // TradingView Webhook Endpoints
+  app.post('/api/webhook/tradingview', validateWebhookSecret, async (req: any, res) => {
+    try {
+      const { ticker, action, price, time, timeframe, strategy, alert_id } = req.body;
+      
+      // Validate ticker (initially only BTCUSD supported)
+      if (!SUPPORTED_TICKERS.includes(ticker)) {
+        return res.status(400).json({ 
+          message: `Ticker ${ticker} not supported. Supported tickers: ${SUPPORTED_TICKERS.join(', ')}` 
+        });
+      }
+      
+      // Validate timeframe
+      if (!SUPPORTED_TIMEFRAMES.includes(timeframe)) {
+        return res.status(400).json({ 
+          message: `Timeframe ${timeframe} not supported. Supported timeframes: ${SUPPORTED_TIMEFRAMES.join(', ')}` 
+        });
+      }
+      
+      // Validate action (buy/sell)
+      if (!['buy', 'sell'].includes(action)) {
+        return res.status(400).json({ 
+          message: 'Action must be either "buy" or "sell"' 
+        });
+      }
+      
+      // Create signal in database
+      const signal = await storage.createSignal({
+        ticker: ticker,
+        signalType: action,
+        price: price.toString(),
+        timestamp: time ? new Date(time) : new Date(),
+        timeframe: timeframe,
+        source: 'tradingview_webhook',
+        note: strategy ? `Strategy: ${strategy}` : 'TradingView Alert',
+      });
+      
+      // Broadcast to all connected WebSocket clients
+      broadcast({
+        type: 'new_signal',
+        signal: signal,
+        source: 'tradingview'
+      });
+      
+      // TODO: Send notifications to users (notification service not yet implemented)
+      // await notificationService.sendSignalNotification(signal);
+      
+      console.log(`TradingView signal received: ${action.toUpperCase()} ${ticker} at ${price} (${timeframe})`);
+      
+      res.json({ 
+        success: true, 
+        signal_id: signal.id,
+        message: `${action.toUpperCase()} signal processed for ${ticker} at ${price}`,
+        timeframe: timeframe
+      });
+      
+    } catch (error) {
+      console.error('TradingView webhook error:', error);
+      res.status(500).json({ 
+        message: 'Failed to process TradingView webhook',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Get supported timeframes and tickers for TradingView setup
+  app.get('/api/webhook/config', (req: any, res) => {
+    res.json({
+      supported_tickers: SUPPORTED_TICKERS,
+      supported_timeframes: SUPPORTED_TIMEFRAMES,
+      webhook_url: `${req.protocol}://${req.get('host')}/api/webhook/tradingview`,
+      secret_header: 'x-webhook-secret',
+      required_fields: ['ticker', 'action', 'price', 'timeframe']
+    });
+  });
+
+  // Get supported timeframes for specific ticker (for trading interface)
+  app.get('/api/trading/timeframes/:ticker', (req: any, res) => {
+    const { ticker } = req.params;
+    
+    if (!SUPPORTED_TICKERS.includes(ticker)) {
+      return res.json({
+        ticker: ticker,
+        supported: false,
+        supported_timeframes: [],
+        message: `${ticker} is not currently supported for TradingView alerts`
+      });
+    }
+    
+    res.json({
+      ticker: ticker,
+      supported: true,
+      supported_timeframes: SUPPORTED_TIMEFRAMES,
+      tradingview_enabled: true,
+      webhook_configured: true
+    });
+  });
+
+  // Manual signal injection for testing (admin only)
+  app.post('/api/admin/signals/inject', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { ticker, action, price, timeframe, strategy, note } = req.body;
+      
+      // Validate ticker and timeframe
+      if (!SUPPORTED_TICKERS.includes(ticker)) {
+        return res.status(400).json({ 
+          message: `Ticker ${ticker} not supported` 
+        });
+      }
+      
+      if (!SUPPORTED_TIMEFRAMES.includes(timeframe)) {
+        return res.status(400).json({ 
+          message: `Timeframe ${timeframe} not supported` 
+        });
+      }
+      
+      const signal = await storage.createSignal({
+        ticker: ticker,
+        signalType: action,
+        price: price.toString(),
+        timestamp: new Date(),
+        timeframe: timeframe,
+        source: 'manual_admin',
+        note: note || `Manual injection by admin - ${strategy || 'No strategy specified'}`,
+      });
+      
+      // Log admin action
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: 'INJECT_SIGNAL',
+        targetTable: 'alert_signals',
+        targetId: signal.id,
+        notes: `Manually injected ${action} signal for ${ticker} at ${price} (${timeframe})`,
+      });
+      
+      // Broadcast to WebSocket clients
+      broadcast({
+        type: 'new_signal',
+        signal: signal,
+        source: 'admin'
+      });
+      
+      res.json({ 
+        success: true, 
+        signal: signal,
+        message: `Manual ${action} signal injected for ${ticker}`
+      });
+      
+    } catch (error) {
+      console.error('Manual signal injection error:', error);
+      res.status(500).json({ message: 'Failed to inject signal' });
     }
   });
 
