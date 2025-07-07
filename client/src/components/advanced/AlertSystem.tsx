@@ -83,7 +83,14 @@ export default function AlertSystem() {
   const isLoading = alertsLoading || tickersLoading;
 
   const createAlertMutation = useMutation({
-    mutationFn: (alertData: AlertFormData) => authRequest('POST', '/api/alerts', alertData),
+    mutationFn: (alertData: AlertFormData) => {
+      // Convert value to string to match decimal schema
+      const payload = {
+        ...alertData,
+        value: alertData.value.toString()
+      };
+      return authRequest('POST', '/api/alerts', payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/alerts', token] });
       toast({
