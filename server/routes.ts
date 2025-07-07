@@ -2461,7 +2461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // SMS Configuration and Testing
-  app.post('/api/notifications/sms/verify', requireAuth, async (req: any, res) => {
+  app.post('/api/notifications/sms/verify', async (req: any, res) => {
     try {
       const { phoneNumber } = req.body;
       
@@ -2490,7 +2490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/notifications/sms/status', requireAuth, async (req: any, res) => {
+  app.get('/api/notifications/sms/status', async (req: any, res) => {
     try {
       res.json({
         configured: smsService.isConfigured(),
@@ -2504,7 +2504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Telegram Configuration and Testing
-  app.post('/api/notifications/telegram/validate', requireAuth, async (req: any, res) => {
+  app.post('/api/notifications/telegram/validate', async (req: any, res) => {
     try {
       const { chatId } = req.body;
       
@@ -2529,7 +2529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/notifications/telegram/status', requireAuth, async (req: any, res) => {
+  app.get('/api/notifications/telegram/status', async (req: any, res) => {
     try {
       const testResult = await telegramService.testConnection();
       
@@ -2546,7 +2546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/notifications/telegram/test', requireAuth, async (req: any, res) => {
+  app.post('/api/notifications/telegram/test', async (req: any, res) => {
     try {
       const { chatId } = req.body;
       
