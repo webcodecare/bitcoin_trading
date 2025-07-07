@@ -1432,6 +1432,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Subscription Management Routes
+  app.get("/api/subscription/plans", async (req, res) => {
+    try {
+      const plans = await storage.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching subscription plans:", error);
+      res.status(500).json({ message: "Failed to fetch subscription plans" });
+    }
+  });
+
   app.get("/api/subscription-plans", async (req, res) => {
     try {
       const plans = await storage.getSubscriptionPlans();
@@ -1439,6 +1449,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching subscription plans:", error);
       res.status(500).json({ message: "Failed to fetch subscription plans" });
+    }
+  });
+
+  // Get current user subscription
+  app.get("/api/subscription/current", requireAuth, async (req: any, res) => {
+    try {
+      
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const plan = await storage.getSubscriptionPlan(user.subscriptionTier || 'free');
+      
+      res.json({
+        currentPlan: plan,
+        subscriptionStatus: user.subscriptionStatus,
+        stripeSubscriptionId: user.stripeSubscriptionId
+      });
+    } catch (error) {
+      console.error("Error fetching current subscription:", error);
+      res.status(500).json({ message: "Failed to fetch subscription" });
+    }
+  });
+
+  // Upgrade subscription
+  app.post("/api/subscription/upgrade", requireAuth, async (req: any, res) => {
+    try {
+      
+      const { tier } = req.body;
+      if (!tier || !['free', 'basic', 'premium', 'pro'].includes(tier)) {
+        return res.status(400).json({ message: "Invalid subscription tier" });
+      }
+      
+      const user = await storage.updateUser(req.user.id, {
+        subscriptionTier: tier,
+        subscriptionStatus: tier === 'free' ? undefined : 'active'
+      });
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Log the upgrade
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: 'SUBSCRIPTION_UPGRADE',
+        targetTable: 'users',
+        targetId: user.id,
+        notes: `User upgraded to ${tier} plan`
+      });
+      
+      res.json({ 
+        success: true, 
+        message: `Successfully upgraded to ${tier} plan`,
+        subscriptionTier: user.subscriptionTier,
+        subscriptionStatus: user.subscriptionStatus
+      });
+    } catch (error) {
+      console.error("Error upgrading subscription:", error);
+      res.status(500).json({ message: "Failed to upgrade subscription" });
+    }
+  });
+
+  // Get subscription usage
+  app.get("/api/subscription/usage", requireAuth, async (req: any, res) => {
+    try {
+      
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const plan = await storage.getSubscriptionPlan(user.subscriptionTier || 'free');
+      const userSignals = await storage.getSignalsByUser(user.id, 1000);
+      
+      // Calculate usage for current month
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthlySignals = userSignals.filter(signal => 
+        new Date(signal.timestamp) >= monthStart
+      );
+      
+      const maxSignals = plan?.maxSignals || 10;
+      const signalsUsed = monthlySignals.length;
+      const signalsRemaining = maxSignals === -1 ? 'Unlimited' : Math.max(0, maxSignals - signalsUsed);
+      const usagePercentage = maxSignals === -1 ? 0 : Math.min(100, (signalsUsed / maxSignals) * 100);
+      
+      // Create daily trend data for the past 7 days
+      const dailyTrend = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+        
+        const daySignals = userSignals.filter(signal => {
+          const signalDate = new Date(signal.timestamp);
+          return signalDate >= dayStart && signalDate < dayEnd;
+        });
+        
+        dailyTrend.push({
+          date: date.toISOString().split('T')[0],
+          signals: daySignals.length
+        });
+      }
+      
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      
+      res.json({
+        currentPlan: {
+          name: plan?.name || 'Free',
+          tier: plan?.tier || 'free',
+          monthlyPrice: plan?.monthlyPrice || 0,
+          features: plan?.features || [],
+          maxSignals: plan?.maxSignals || 10,
+          maxTickers: plan?.maxTickers || 3
+        },
+        usage: {
+          signalsUsed,
+          signalsLimit: maxSignals,
+          signalsRemaining,
+          usagePercentage,
+          resetDate: nextMonth.toISOString(),
+          renewalDate: nextMonth.toISOString(),
+          dailyTrend
+        },
+        analytics: {
+          totalSignalsReceived: userSignals.length,
+          averageSignalsPerDay: userSignals.length / 30,
+          mostActiveDay: dailyTrend.reduce((max, day) => 
+            day.signals > max.signals ? day : max, 
+            { date: '', signals: 0 }
+          )
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching subscription usage:", error);
+      res.status(500).json({ message: "Failed to fetch usage data" });
     }
   });
 
