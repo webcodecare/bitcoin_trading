@@ -32,6 +32,8 @@ export default function Alerts() {
   const { settings, updateSettings } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingAlert, setEditingAlert] = useState<any>(null);
 
   const [alertSettings, setAlertSettings] = useState({
     email: settings?.notificationEmail ?? true,
@@ -76,6 +78,31 @@ export default function Alerts() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAddAlert = () => {
+    toast({
+      title: "Add Alert",
+      description: "Opening alert creation dialog...",
+    });
+    // You can add a modal/dialog here or navigate to a form
+    setShowAddDialog(true);
+  };
+
+  const handleEditAlert = (alert: any) => {
+    setEditingAlert(alert);
+    toast({
+      title: "Edit Alert",
+      description: `Editing alert: ${alert.name}`,
+    });
+  };
+
+  const handleDeleteAlert = (alertId: string) => {
+    setCustomAlerts(prev => prev.filter(alert => alert.id !== alertId));
+    toast({
+      title: "Alert Deleted",
+      description: "The alert has been removed successfully.",
+    });
   };
 
   const alertTypes = [
@@ -198,7 +225,7 @@ export default function Alerts() {
                     <Volume2 className="mr-2 h-5 w-5" />
                     Custom Price Alerts
                   </CardTitle>
-                  <Button>
+                  <Button onClick={handleAddAlert}>
                     <Plus className="mr-2 h-4 w-4" />
                     Add Alert
                   </Button>
@@ -228,10 +255,10 @@ export default function Alerts() {
                         <Badge variant={alert.enabled ? "default" : "secondary"}>
                           {alert.enabled ? "Active" : "Inactive"}
                         </Badge>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" onClick={() => handleEditAlert(alert)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive">
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteAlert(alert.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
