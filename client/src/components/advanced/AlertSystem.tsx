@@ -44,15 +44,21 @@ export default function AlertSystem() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: alerts = [], isLoading } = useQuery({
+  const { data: alerts = [], isLoading: alertsLoading, error: alertsError } = useQuery({
     queryKey: ['/api/alerts'],
     queryFn: () => apiRequest('GET', '/api/alerts'),
+    retry: 2,
+    staleTime: 30000, // 30 seconds
   });
 
-  const { data: tickers = [] } = useQuery({
+  const { data: tickers = [], isLoading: tickersLoading, error: tickersError } = useQuery({
     queryKey: ['/api/tickers'],
     queryFn: () => apiRequest('GET', '/api/tickers'),
+    retry: 2,
+    staleTime: 60000, // 60 seconds
   });
+
+  const isLoading = alertsLoading || tickersLoading;
 
   const createAlertMutation = useMutation({
     mutationFn: (alertData: AlertFormData) => apiRequest('POST', '/api/alerts', alertData),
@@ -141,6 +147,38 @@ export default function AlertSystem() {
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center p-8">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+          <span className="ml-2 text-muted-foreground">Loading alerts...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (alertsError || tickersError) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">Unable to Load Alerts</h3>
+            <p className="text-muted-foreground mb-4">
+              There was an error loading the alert system. Please try refreshing the page.
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Refresh Page
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
