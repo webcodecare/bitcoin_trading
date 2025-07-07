@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
 import TradingViewWidget from "@/components/charts/TradingViewWidget";
 import ProfessionalTradingInterface from "@/components/trading/ProfessionalTradingInterface";
+import MoodBoardWidget from "@/components/trading/MoodBoardWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -238,18 +239,32 @@ export default function TradingPage() {
             </motion.div>
           </div>
           
-          {/* Professional Trading Interface */}
-          <div className="p-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-            >
-              <ProfessionalTradingInterface 
-                symbol={selectedTicker}
-                currentPrice={currentPrice}
-              />
-            </motion.div>
+          {/* Trading Interface Grid */}
+          <div className="p-4 grid grid-cols-1 xl:grid-cols-4 gap-4">
+            {/* Professional Trading Interface */}
+            <div className="xl:col-span-3">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+              >
+                <ProfessionalTradingInterface 
+                  symbol={selectedTicker}
+                  currentPrice={currentPrice}
+                />
+              </motion.div>
+            </div>
+            
+            {/* Mood Board Widget */}
+            <div className="xl:col-span-1">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
+              >
+                <MoodBoardWidget />
+              </motion.div>
+            </div>
           </div>
         </div>
 
