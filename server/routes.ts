@@ -7,6 +7,8 @@ import { storage } from "./storage";
 import { insertUserSchema, insertSignalSchema, insertTickerSchema, insertUserAlertSchema, insertDashboardLayoutSchema } from "@shared/schema";
 import { cycleForecastingService } from "./services/cycleForecasting";
 import { notificationService } from "./services/notificationService";
+import { smsService } from "./services/smsService";
+import { telegramService } from "./services/telegramService";
 import { z } from "zod";
 
 // Initialize Stripe
