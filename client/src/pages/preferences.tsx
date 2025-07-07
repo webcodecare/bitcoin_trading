@@ -13,6 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UserSettings } from "@shared/schema";
+import { useAuth } from "@/hooks/useAuth";
+import { authAPI, tokenStorage } from "@/lib/auth";
+import Sidebar from "@/components/layout/Sidebar";
 import { 
   Bell, 
   Palette, 
@@ -53,9 +56,25 @@ const languages = [
 export default function Preferences() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("notifications");
+  const token = tokenStorage.get();
 
-  const { data: settings, isLoading } = useQuery<UserSettings>({
-    queryKey: ["/api/user/settings"],
+  const { data: settings, isLoading, error } = useQuery<UserSettings>({
+    queryKey: ["/api/user/settings", token],
+    queryFn: async () => {
+      if (!token) throw new Error("No authentication token");
+      const response = await fetch("/api/user/settings", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
+    enabled: !!token,
+    retry: 2,
+    staleTime: 30000,
   });
 
   // Provide default values to avoid TypeScript errors
@@ -123,7 +142,19 @@ export default function Preferences() {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (updates: PreferenceFormData) => {
-      const response = await apiRequest("PATCH", "/api/user/settings", updates);
+      if (!token) throw new Error("No authentication token");
+      const response = await fetch("/api/user/settings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updates),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `${response.status}: ${response.statusText}`);
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -131,7 +162,7 @@ export default function Preferences() {
         title: "Preferences Updated",
         description: "Your settings have been saved successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/settings", token] });
     },
     onError: (error: any) => {
       toast({
@@ -150,26 +181,54 @@ export default function Preferences() {
     updateSettingsMutation.mutate(updates);
   };
 
+  const { user } = useAuth();
+
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-64"></div>
-          <div className="h-4 bg-muted rounded w-96"></div>
-          <div className="h-96 bg-muted rounded"></div>
+      <div className="min-h-screen bg-background">
+        <div className="flex">
+          <Sidebar />
+          <div className="ml-64 flex-1">
+            <div className="p-6">
+              <div className="animate-pulse space-y-4">
+                <div className="h-8 bg-muted rounded w-64"></div>
+                <div className="h-4 bg-muted rounded w-96"></div>
+                <div className="h-96 bg-muted rounded"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">User Preferences</h1>
-        <p className="text-muted-foreground">
-          Customize your trading experience and platform settings
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        <Sidebar />
+        
+        {/* Main Content */}
+        <div className="ml-64 flex-1">
+          {/* Top Bar */}
+          <header className="bg-card border-b border-border p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Settings className="h-6 w-6" />
+                <h1 className="text-2xl font-bold">User Preferences</h1>
+              </div>
+              <Badge variant="outline" className="text-blue-400">
+                Customize Settings
+              </Badge>
+            </div>
+          </header>
+
+          {/* Preferences Content */}
+          <div className="p-6 max-w-4xl">
+            <div className="mb-6">
+              <p className="text-muted-foreground">
+                Customize your trading experience and platform settings
+              </p>
+            </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-7">
@@ -959,15 +1018,18 @@ export default function Preferences() {
         </TabsContent>
       </Tabs>
 
-      {/* Save All Button */}
-      <div className="flex justify-end">
-        <Button
-          onClick={() => toast({ title: "Settings Auto-saved", description: "All changes are saved automatically" })}
-          variant="outline"
-        >
-          <Settings className="h-4 w-4 mr-2" />
-          Auto-saved
-        </Button>
+            {/* Save All Button */}
+            <div className="flex justify-end">
+              <Button
+                onClick={() => toast({ title: "Settings Auto-saved", description: "All changes are saved automatically" })}
+                variant="outline"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Auto-saved
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
