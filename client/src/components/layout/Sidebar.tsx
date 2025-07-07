@@ -83,6 +83,11 @@ export default function Sidebar({ className }: SidebarProps) {
       href: "/preferences",
       icon: SlidersHorizontal,
     },
+    {
+      title: "Notifications",
+      href: "/notification-setup",
+      icon: Bell,
+    },
   ];
 
   const adminNavItems = [
