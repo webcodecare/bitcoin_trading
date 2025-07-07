@@ -2404,5 +2404,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Notification Dashboard API routes
+  app.get('/api/notifications/stats', requireAuth, async (req: any, res) => {
+    try {
+      const range = req.query.range || '24h';
+      const stats = await notificationService.getNotificationStats(range);
+      res.json(stats);
+    } catch (error: any) {
+      console.error('Error fetching notification stats:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/notifications/logs', requireAuth, async (req: any, res) => {
+    try {
+      const channel = req.query.channel || 'all';
+      const limit = parseInt(req.query.limit) || 100;
+      const logs = notificationService.getNotificationLogs(channel, limit);
+      res.json(logs);
+    } catch (error: any) {
+      console.error('Error fetching notification logs:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/notifications/health', requireAuth, async (req: any, res) => {
+    try {
+      const health = notificationService.getChannelHealth();
+      res.json(health);
+    } catch (error: any) {
+      console.error('Error fetching channel health:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/notifications/:id/retry', requireAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const success = await notificationService.retryNotification(id);
+      res.json({ success });
+    } catch (error: any) {
+      console.error('Error retrying notification:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/notifications/test/:channel', requireAuth, async (req: any, res) => {
+    try {
+      const { channel } = req.params;
+      const success = await notificationService.testChannel(channel);
+      res.json({ success });
+    } catch (error: any) {
+      console.error('Error testing notification channel:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return httpServer;
 }

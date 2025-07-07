@@ -88,6 +88,11 @@ export default function Sidebar({ className }: SidebarProps) {
       href: "/notification-setup",
       icon: Bell,
     },
+    {
+      title: "Notification Dashboard",
+      href: "/notification-dashboard",
+      icon: Activity,
+    },
   ];
 
   const adminNavItems = [
