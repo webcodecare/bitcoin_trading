@@ -7,6 +7,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Separator } from '@/components/ui/separator';
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
@@ -21,459 +23,569 @@ import {
   ExternalLink,
   Settings,
   AlertTriangle,
-  Info
+  Info,
+  Copy,
+  Bot,
+  Check,
+  X,
+  Phone
 } from 'lucide-react';
-
-interface NotificationChannel {
-  id: string;
-  name: string;
-  type: 'email' | 'sms' | 'telegram' | 'discord' | 'webhook';
-  icon: React.ReactNode;
-  enabled: boolean;
-  configured: boolean;
-  description: string;
-  setupSteps: string[];
-}
 
 export default function NotificationSetup() {
   const { toast } = useToast();
-  const [channels, setChannels] = useState<NotificationChannel[]>([
-    {
-      id: 'email',
-      name: 'Email Notifications',
-      type: 'email',
-      icon: <Mail className="h-5 w-5" />,
-      enabled: true,
-      configured: true,
-      description: 'Receive trading signals via email',
-      setupSteps: ['Verify your email address', 'Enable email notifications in settings']
-    },
-    {
-      id: 'sms',
-      name: 'SMS/Text Messages',
-      type: 'sms',
-      icon: <Smartphone className="h-5 w-5" />,
-      enabled: false,
-      configured: false,
-      description: 'Get instant SMS alerts on your phone',
-      setupSteps: [
-        'Add your phone number',
-        'Verify phone number with SMS code',
-        'Configure Twilio API (Admin required)',
-        'Enable SMS notifications'
-      ]
-    },
-    {
-      id: 'telegram',
-      name: 'Telegram Bot',
-      type: 'telegram',
-      icon: <MessageSquare className="h-5 w-5" />,
-      enabled: false,
-      configured: false,
-      description: 'Receive signals via Telegram bot',
-      setupSteps: [
-        'Message @CryptoStrategyProBot on Telegram',
-        'Send /start to activate',
-        'Copy your Telegram Chat ID',
-        'Paste Chat ID in settings below',
-        'Test connection'
-      ]
-    },
-    {
-      id: 'discord',
-      name: 'Discord Webhook',
-      type: 'discord',
-      icon: <MessageSquare className="h-5 w-5" />,
-      enabled: false,
-      configured: false,
-      description: 'Send alerts to Discord channel',
-      setupSteps: [
-        'Create Discord webhook in your server',
-        'Copy webhook URL',
-        'Paste URL in settings below',
-        'Test webhook connection'
-      ]
-    }
-  ]);
+  const [selectedTab, setSelectedTab] = useState('email');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [telegramChatId, setTelegramChatId] = useState('');
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [isTelegramConnected, setIsTelegramConnected] = useState(false);
 
-  const [notificationSettings, setNotificationSettings] = useState({
-    email: '',
-    phone: '',
-    telegramChatId: '',
-    discordWebhook: '',
-    frequency: 'all', // all, important, daily_summary
-    quietHours: {
-      enabled: false,
-      start: '22:00',
-      end: '08:00'
-    }
+  // Fetch SMS status
+  const { data: smsStatus, isLoading: smsLoading } = useQuery({
+    queryKey: ['/api/notifications/sms/status'],
+    retry: false,
   });
 
-  const toggleChannel = (channelId: string) => {
-    setChannels(prev => 
-      prev.map(channel => 
-        channel.id === channelId 
-          ? { ...channel, enabled: !channel.enabled }
-          : channel
-      )
-    );
+  // Fetch Telegram status
+  const { data: telegramStatus, isLoading: telegramLoading } = useQuery({
+    queryKey: ['/api/notifications/telegram/status'],
+    retry: false,
+  });
+
+  // SMS verification mutation
+  const smsVerifyMutation = useMutation({
+    mutationFn: async (phoneNumber: string) => {
+      return await apiRequest('POST', '/api/notifications/sms/verify', { phoneNumber });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Verification Code Sent",
+        description: `SMS sent to ${phoneNumber}. Code: ${data.code}`,
+      });
+      setIsPhoneVerified(true);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "SMS Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Telegram validation mutation
+  const telegramValidateMutation = useMutation({
+    mutationFn: async (chatId: string) => {
+      return await apiRequest('POST', '/api/notifications/telegram/validate', { chatId });
+    },
+    onSuccess: () => {
+      setIsTelegramConnected(true);
+      toast({
+        title: "Telegram Connected",
+        description: "Chat ID validated successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Telegram Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Telegram test mutation
+  const telegramTestMutation = useMutation({
+    mutationFn: async (chatId: string) => {
+      return await apiRequest('POST', '/api/notifications/telegram/test', { chatId });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Test Message Sent",
+        description: "Check your Telegram for the test message!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Test Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSmsVerify = () => {
+    if (!phoneNumber) {
+      toast({
+        title: "Phone Number Required",
+        description: "Please enter your phone number with country code",
+        variant: "destructive",
+      });
+      return;
+    }
+    smsVerifyMutation.mutate(phoneNumber);
   };
 
-  const testNotification = async (channelType: string) => {
-    toast({
-      title: "Test Notification Sent",
-      description: `Test message sent via ${channelType}. Check your ${channelType} for the test alert.`,
-    });
+  const handleTelegramValidate = () => {
+    if (!telegramChatId) {
+      toast({
+        title: "Chat ID Required",
+        description: "Please enter your Telegram Chat ID",
+        variant: "destructive",
+      });
+      return;
+    }
+    telegramValidateMutation.mutate(telegramChatId);
   };
 
-  const saveSettings = () => {
+  const handleTelegramTest = () => {
+    if (!telegramChatId) {
+      toast({
+        title: "Chat ID Required",
+        description: "Please enter your Telegram Chat ID first",
+        variant: "destructive",
+      });
+      return;
+    }
+    telegramTestMutation.mutate(telegramChatId);
+  };
+
+  const copyBotUsername = () => {
+    if (telegramStatus?.botUsername) {
+      navigator.clipboard.writeText(telegramStatus.botUsername);
+      toast({
+        title: "Copied",
+        description: "Bot username copied to clipboard",
+      });
+    }
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
     toast({
-      title: "Settings Saved",
-      description: "Your notification preferences have been updated successfully.",
+      title: "Copied",
+      description: `${label} copied to clipboard`,
     });
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
       <Navigation />
       
       <div className="flex">
         <Sidebar />
         
-        {/* Main Content */}
-        <div className="ml-64 flex-1">
-          {/* Header */}
-          <header className="bg-card border-b border-border p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Bell className="h-6 w-6" />
-                <div>
-                  <h1 className="text-2xl font-bold">Notification Setup</h1>
-                  <p className="text-muted-foreground">Configure how you receive trading alerts</p>
-                </div>
-              </div>
-              <Badge variant="outline" className="text-blue-400">
-                Multi-Channel Alerts
-              </Badge>
+        <main className="flex-1 ml-64 p-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-white mb-2">Notification Setup</h1>
+              <p className="text-gray-400">Configure how you receive trading signals and market alerts</p>
             </div>
-          </header>
 
-          <div className="p-6 space-y-6">
-            {/* Quick Setup Guide */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Info className="h-5 w-5" />
-                  <span>Quick Setup Guide</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="text-center p-4 border rounded-lg">
-                    <Mail className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-                    <h3 className="font-semibold">Email</h3>
-                    <p className="text-sm text-muted-foreground">Ready to use</p>
-                    <Badge variant="outline" className="mt-2 text-green-600">Active</Badge>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <Smartphone className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                    <h3 className="font-semibold">SMS</h3>
-                    <p className="text-sm text-muted-foreground">Add phone number</p>
-                    <Badge variant="outline" className="mt-2 text-orange-600">Setup Required</Badge>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <MessageSquare className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-                    <h3 className="font-semibold">Telegram</h3>
-                    <p className="text-sm text-muted-foreground">Message our bot</p>
-                    <Badge variant="outline" className="mt-2 text-orange-600">Setup Required</Badge>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <MessageSquare className="h-8 w-8 mx-auto mb-2 text-purple-500" />
-                    <h3 className="font-semibold">Discord</h3>
-                    <p className="text-sm text-muted-foreground">Webhook URL needed</p>
-                    <Badge variant="outline" className="mt-2 text-orange-600">Setup Required</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Tabs defaultValue="channels" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="channels">Notification Channels</TabsTrigger>
-                <TabsTrigger value="settings">Settings</TabsTrigger>
-                <TabsTrigger value="test">Test & Verify</TabsTrigger>
+            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="email" className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  Email
+                </TabsTrigger>
+                <TabsTrigger value="sms" className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4" />
+                  SMS
+                </TabsTrigger>
+                <TabsTrigger value="telegram" className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Telegram
+                </TabsTrigger>
+                <TabsTrigger value="advanced" className="flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  Advanced
+                </TabsTrigger>
               </TabsList>
 
-              {/* Notification Channels Tab */}
-              <TabsContent value="channels" className="space-y-4">
-                {channels.map((channel) => (
-                  <Card key={channel.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          {channel.icon}
-                          <div>
-                            <CardTitle className="text-lg">{channel.name}</CardTitle>
-                            <p className="text-sm text-muted-foreground">{channel.description}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {channel.configured ? (
-                            <Badge variant="outline" className="text-green-600">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Configured
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-orange-600">
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              Setup Required
-                            </Badge>
-                          )}
-                          <Switch
-                            checked={channel.enabled}
-                            onCheckedChange={() => toggleChannel(channel.id)}
-                            disabled={!channel.configured}
-                          />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="font-semibold mb-2">Setup Steps:</h4>
-                          <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
-                            {channel.setupSteps.map((step, index) => (
-                              <li key={index}>{step}</li>
-                            ))}
-                          </ol>
-                        </div>
-                        
-                        {/* Channel-specific configuration */}
-                        {channel.type === 'sms' && (
-                          <div className="space-y-3 border-t pt-4">
-                            <div>
-                              <Label htmlFor="phone">Phone Number</Label>
-                              <Input
-                                id="phone"
-                                placeholder="+1234567890"
-                                value={notificationSettings.phone}
-                                onChange={(e) => setNotificationSettings(prev => ({
-                                  ...prev,
-                                  phone: e.target.value
-                                }))}
-                              />
-                            </div>
-                            <Button size="sm" variant="outline">
-                              <Send className="h-4 w-4 mr-2" />
-                              Send Verification Code
-                            </Button>
-                          </div>
-                        )}
-                        
-                        {channel.type === 'telegram' && (
-                          <div className="space-y-3 border-t pt-4">
-                            <div className="flex items-center space-x-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                              <MessageSquare className="h-5 w-5 text-blue-600" />
-                              <div className="text-sm">
-                                <p className="font-semibold">Telegram Bot: @CryptoStrategyProBot</p>
-                                <p className="text-muted-foreground">Message the bot with /start to get your Chat ID</p>
-                              </div>
-                              <Button size="sm" variant="outline">
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                Open Telegram
-                              </Button>
-                            </div>
-                            <div>
-                              <Label htmlFor="telegram">Telegram Chat ID</Label>
-                              <Input
-                                id="telegram"
-                                placeholder="123456789"
-                                value={notificationSettings.telegramChatId}
-                                onChange={(e) => setNotificationSettings(prev => ({
-                                  ...prev,
-                                  telegramChatId: e.target.value
-                                }))}
-                              />
-                            </div>
-                          </div>
-                        )}
-                        
-                        {channel.type === 'discord' && (
-                          <div className="space-y-3 border-t pt-4">
-                            <div>
-                              <Label htmlFor="discord">Discord Webhook URL</Label>
-                              <Input
-                                id="discord"
-                                placeholder="https://discord.com/api/webhooks/..."
-                                value={notificationSettings.discordWebhook}
-                                onChange={(e) => setNotificationSettings(prev => ({
-                                  ...prev,
-                                  discordWebhook: e.target.value
-                                }))}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </TabsContent>
-
-              {/* Settings Tab */}
-              <TabsContent value="settings" className="space-y-4">
-                <Card>
+              {/* Email Tab */}
+              <TabsContent value="email">
+                <Card className="bg-gray-900/50 border-gray-800">
                   <CardHeader>
-                    <CardTitle>Notification Preferences</CardTitle>
+                    <CardTitle className="flex items-center gap-3 text-white">
+                      <Mail className="w-5 h-5" />
+                      Email Notifications
+                      <Badge variant="secondary" className="bg-green-900/50 text-green-300">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Configured
+                      </Badge>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div>
-                      <Label>Email Address</Label>
-                      <Input
-                        value={notificationSettings.email}
-                        onChange={(e) => setNotificationSettings(prev => ({
-                          ...prev,
-                          email: e.target.value
-                        }))}
-                        placeholder="your@email.com"
-                      />
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <Label className="text-base font-semibold">Notification Frequency</Label>
-                      <div className="space-y-3 mt-3">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="all"
-                            name="frequency"
-                            checked={notificationSettings.frequency === 'all'}
-                            onChange={() => setNotificationSettings(prev => ({ ...prev, frequency: 'all' }))}
-                          />
-                          <Label htmlFor="all">All Signals (Real-time)</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="important"
-                            name="frequency"
-                            checked={notificationSettings.frequency === 'important'}
-                            onChange={() => setNotificationSettings(prev => ({ ...prev, frequency: 'important' }))}
-                          />
-                          <Label htmlFor="important">Important Signals Only</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="summary"
-                            name="frequency"
-                            checked={notificationSettings.frequency === 'daily_summary'}
-                            onChange={() => setNotificationSettings(prev => ({ ...prev, frequency: 'daily_summary' }))}
-                          />
-                          <Label htmlFor="summary">Daily Summary</Label>
-                        </div>
+                    <div className="p-4 bg-green-900/20 border border-green-800 rounded-lg">
+                      <div className="flex items-center gap-2 text-green-300 mb-2">
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="font-medium">Email notifications are active</span>
                       </div>
+                      <p className="text-sm text-green-200">
+                        You'll receive trading signals and market updates via email instantly.
+                      </p>
                     </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <div className="flex items-center space-x-2 mb-4">
-                        <Switch
-                          checked={notificationSettings.quietHours.enabled}
-                          onCheckedChange={(checked) => setNotificationSettings(prev => ({
-                            ...prev,
-                            quietHours: { ...prev.quietHours, enabled: checked }
-                          }))}
+
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-white">Email Address</Label>
+                        <Input
+                          value="demo@cryptostrategy.pro"
+                          disabled
+                          className="bg-gray-800 border-gray-700 text-gray-300"
                         />
-                        <Label>Enable Quiet Hours</Label>
                       </div>
-                      
-                      {notificationSettings.quietHours.enabled && (
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label>Start Time</Label>
-                            <Input
-                              type="time"
-                              value={notificationSettings.quietHours.start}
-                              onChange={(e) => setNotificationSettings(prev => ({
-                                ...prev,
-                                quietHours: { ...prev.quietHours, start: e.target.value }
-                              }))}
-                            />
-                          </div>
-                          <div>
-                            <Label>End Time</Label>
-                            <Input
-                              type="time"
-                              value={notificationSettings.quietHours.end}
-                              onChange={(e) => setNotificationSettings(prev => ({
-                                ...prev,
-                                quietHours: { ...prev.quietHours, end: e.target.value }
-                              }))}
-                            />
-                          </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="text-white">Instant Alerts</Label>
+                          <p className="text-sm text-gray-400">Get notified immediately when signals are generated</p>
                         </div>
-                      )}
+                        <Switch checked={true} />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="text-white">Daily Summary</Label>
+                          <p className="text-sm text-gray-400">Receive a daily recap of all signals</p>
+                        </div>
+                        <Switch checked={true} />
+                      </div>
                     </div>
-                    
-                    <Button onClick={saveSettings} className="w-full">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Save Notification Settings
-                    </Button>
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              {/* Test & Verify Tab */}
-              <TabsContent value="test" className="space-y-4">
-                <Card>
+              {/* SMS Tab */}
+              <TabsContent value="sms">
+                <Card className="bg-gray-900/50 border-gray-800">
                   <CardHeader>
-                    <CardTitle>Test Notifications</CardTitle>
-                    <p className="text-muted-foreground">Send test messages to verify your notification channels</p>
+                    <CardTitle className="flex items-center gap-3 text-white">
+                      <Smartphone className="w-5 h-5" />
+                      SMS Alerts
+                      <Badge variant="secondary" className={
+                        smsStatus?.configured 
+                          ? "bg-green-900/50 text-green-300" 
+                          : "bg-yellow-900/50 text-yellow-300"
+                      }>
+                        {smsStatus?.configured ? (
+                          <>
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Ready
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            Setup Required
+                          </>
+                        )}
+                      </Badge>
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4">
-                      {channels.filter(channel => channel.configured).map((channel) => (
-                        <div key={channel.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            {channel.icon}
-                            <div>
-                              <h3 className="font-semibold">{channel.name}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {channel.enabled ? 'Active' : 'Disabled'}
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            onClick={() => testNotification(channel.type)}
-                            disabled={!channel.enabled}
-                            size="sm"
+                  <CardContent className="space-y-6">
+                    {!smsStatus?.configured ? (
+                      <div className="p-4 bg-yellow-900/20 border border-yellow-800 rounded-lg">
+                        <div className="flex items-center gap-2 text-yellow-300 mb-2">
+                          <AlertTriangle className="w-4 h-4" />
+                          <span className="font-medium">SMS service requires configuration</span>
+                        </div>
+                        <p className="text-sm text-yellow-200 mb-3">
+                          To enable SMS alerts, you need to provide Twilio API credentials in your environment variables:
+                        </p>
+                        <div className="bg-gray-800 p-3 rounded font-mono text-sm text-gray-300">
+                          <div>TWILIO_ACCOUNT_SID=your_account_sid</div>
+                          <div>TWILIO_AUTH_TOKEN=your_auth_token</div>
+                          <div>TWILIO_PHONE_NUMBER=+1234567890</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-green-900/20 border border-green-800 rounded-lg">
+                        <div className="flex items-center gap-2 text-green-300 mb-2">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="font-medium">SMS service configured with {smsStatus.provider}</span>
+                        </div>
+                        <p className="text-sm text-green-200">
+                          Ready to send instant SMS alerts for trading signals.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-white">Phone Number</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="+1 (555) 123-4567"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            className="bg-gray-800 border-gray-700 text-white"
+                            disabled={!smsStatus?.configured}
+                          />
+                          <Button 
+                            onClick={handleSmsVerify}
+                            disabled={!smsStatus?.configured || smsVerifyMutation.isPending}
+                            className="bg-blue-600 hover:bg-blue-700"
                           >
-                            <Send className="h-4 w-4 mr-2" />
-                            Send Test
+                            {smsVerifyMutation.isPending ? 'Sending...' : 'Verify'}
                           </Button>
                         </div>
-                      ))}
-                    </div>
-                    
-                    {channels.filter(channel => channel.configured).length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>No notification channels configured yet.</p>
-                        <p>Set up your channels in the Notification Channels tab.</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Include country code (e.g., +1 for US, +44 for UK)
+                        </p>
                       </div>
+
+                      {isPhoneVerified && (
+                        <div className="p-4 bg-green-900/20 border border-green-800 rounded-lg">
+                          <div className="flex items-center gap-2 text-green-300">
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="font-medium">Phone number verified!</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="text-white">Critical Alerts Only</Label>
+                          <p className="text-sm text-gray-400">Only send SMS for high-confidence signals</p>
+                        </div>
+                        <Switch checked={true} disabled={!smsStatus?.configured} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Telegram Tab */}
+              <TabsContent value="telegram">
+                <Card className="bg-gray-900/50 border-gray-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-white">
+                      <Bot className="w-5 h-5" />
+                      Telegram Bot
+                      <Badge variant="secondary" className={
+                        telegramStatus?.configured 
+                          ? "bg-green-900/50 text-green-300" 
+                          : "bg-yellow-900/50 text-yellow-300"
+                      }>
+                        {telegramStatus?.configured ? (
+                          <>
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Ready
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            Setup Required
+                          </>
+                        )}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {!telegramStatus?.configured ? (
+                      <div className="p-4 bg-yellow-900/20 border border-yellow-800 rounded-lg">
+                        <div className="flex items-center gap-2 text-yellow-300 mb-2">
+                          <AlertTriangle className="w-4 h-4" />
+                          <span className="font-medium">Telegram bot requires configuration</span>
+                        </div>
+                        <p className="text-sm text-yellow-200 mb-3">
+                          To enable Telegram alerts, you need to provide a bot token in your environment variables:
+                        </p>
+                        <div className="bg-gray-800 p-3 rounded font-mono text-sm text-gray-300">
+                          TELEGRAM_BOT_TOKEN=your_bot_token
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="p-4 bg-green-900/20 border border-green-800 rounded-lg">
+                          <div className="flex items-center gap-2 text-green-300 mb-2">
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="font-medium">Telegram bot is online</span>
+                          </div>
+                          <p className="text-sm text-green-200">
+                            Bot: {telegramStatus.botUsername || '@CryptoStrategyProBot'} is ready to send alerts.
+                          </p>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="p-4 bg-blue-900/20 border border-blue-800 rounded-lg">
+                            <h4 className="font-medium text-blue-300 mb-3">Setup Instructions:</h4>
+                            <ol className="space-y-2 text-sm text-blue-200">
+                              <li className="flex items-start gap-2">
+                                <span className="bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">1</span>
+                                <div>
+                                  Open Telegram and search for{" "}
+                                  <button
+                                    onClick={copyBotUsername}
+                                    className="bg-blue-600 px-2 py-1 rounded text-white hover:bg-blue-700 inline-flex items-center gap-1"
+                                  >
+                                    {telegramStatus.botUsername || '@CryptoStrategyProBot'}
+                                    <Copy className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">2</span>
+                                <span>Send <code className="bg-gray-800 px-1 rounded">/start</code> command to the bot</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">3</span>
+                                <span>Copy your Chat ID from the bot's response</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mt-0.5">4</span>
+                                <span>Paste the Chat ID below and validate</span>
+                              </li>
+                            </ol>
+                          </div>
+
+                          <div>
+                            <Label className="text-white">Telegram Chat ID</Label>
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="123456789"
+                                value={telegramChatId}
+                                onChange={(e) => setTelegramChatId(e.target.value)}
+                                className="bg-gray-800 border-gray-700 text-white"
+                              />
+                              <Button 
+                                onClick={handleTelegramValidate}
+                                disabled={telegramValidateMutation.isPending}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                {telegramValidateMutation.isPending ? 'Validating...' : 'Validate'}
+                              </Button>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                              Get your Chat ID by messaging the bot
+                            </p>
+                          </div>
+
+                          {isTelegramConnected && (
+                            <div className="p-4 bg-green-900/20 border border-green-800 rounded-lg">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-green-300">
+                                  <CheckCircle className="w-4 h-4" />
+                                  <span className="font-medium">Chat connected successfully!</span>
+                                </div>
+                                <Button 
+                                  onClick={handleTelegramTest}
+                                  disabled={telegramTestMutation.isPending}
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  {telegramTestMutation.isPending ? 'Sending...' : 'Send Test'}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label className="text-white">Rich Formatting</Label>
+                              <p className="text-sm text-gray-400">Send messages with charts and formatting</p>
+                            </div>
+                            <Switch checked={true} />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label className="text-white">Signal Previews</Label>
+                              <p className="text-sm text-gray-400">Include price charts in messages</p>
+                            </div>
+                            <Switch checked={true} />
+                          </div>
+                        </div>
+                      </>
                     )}
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* Advanced Tab */}
+              <TabsContent value="advanced">
+                <Card className="bg-gray-900/50 border-gray-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-white">
+                      <Settings className="w-5 h-5" />
+                      Advanced Settings
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-white">Discord Webhook URL</Label>
+                        <Input
+                          placeholder="https://discord.com/api/webhooks/..."
+                          className="bg-gray-800 border-gray-700 text-white"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          Send signals to your Discord server
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label className="text-white">Custom Webhook URL</Label>
+                        <Input
+                          placeholder="https://your-api.com/webhook"
+                          className="bg-gray-800 border-gray-700 text-white"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                          Send POST requests to your custom endpoint
+                        </p>
+                      </div>
+
+                      <Separator className="bg-gray-700" />
+
+                      <div className="space-y-4">
+                        <h4 className="font-medium text-white">Notification Preferences</h4>
+                        
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label className="text-white">Sound Alerts</Label>
+                            <p className="text-sm text-gray-400">Play notification sounds in browser</p>
+                          </div>
+                          <Switch />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label className="text-white">Desktop Notifications</Label>
+                            <p className="text-sm text-gray-400">Show browser notifications when page is not active</p>
+                          </div>
+                          <Switch />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label className="text-white">Quiet Hours</Label>
+                            <p className="text-sm text-gray-400">Disable notifications from 10 PM to 8 AM</p>
+                          </div>
+                          <Switch />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </Tabs>
+
+            <div className="mt-8 p-4 bg-blue-900/20 border border-blue-800 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Info className="w-5 h-5 text-blue-300 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-blue-300 mb-2">About Notifications</h4>
+                  <p className="text-sm text-blue-200">
+                    Our notification system delivers real-time trading signals from advanced algorithms and TradingView webhooks. 
+                    Choose your preferred channels to stay informed about market opportunities without missing critical signals.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
-      
+
       <Footer />
     </div>
   );
