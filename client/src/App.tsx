@@ -32,6 +32,7 @@ import AlertsTest from "@/components/test/AlertsTest";
 import DashboardWidgetsPage from "@/pages/dashboard-widgets";
 import Settings from "@/pages/settings";
 import Preferences from "@/pages/preferences";
+import NotificationSetup from "@/pages/notification-setup";
 import Pricing from "@/pages/pricing";
 import Members from "@/pages/members";
 import MarketData from "@/pages/market-data";
@@ -138,6 +139,11 @@ function Router() {
       <Route path="/preferences">
         <AuthGuard>
           <Preferences />
+        </AuthGuard>
+      </Route>
+      <Route path="/notification-setup">
+        <AuthGuard>
+          <NotificationSetup />
         </AuthGuard>
       </Route>
       <Route path="/advanced-alerts">
