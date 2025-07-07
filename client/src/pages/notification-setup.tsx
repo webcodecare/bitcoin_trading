@@ -58,10 +58,18 @@ export default function NotificationSetup() {
       return await apiRequest('POST', '/api/notifications/sms/verify', { phoneNumber });
     },
     onSuccess: (data) => {
-      toast({
-        title: "Verification Code Sent",
-        description: `SMS sent to ${phoneNumber}. Code: ${data.code}`,
-      });
+      if (data.demo) {
+        toast({
+          title: "Demo Mode",
+          description: `Demo verification code: ${data.code} (SMS service not configured)`,
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Verification Code Sent",
+          description: `SMS sent to ${phoneNumber}. Code: ${data.code}`,
+        });
+      }
       setIsPhoneVerified(true);
     },
     onError: (error: any) => {
@@ -88,12 +96,19 @@ export default function NotificationSetup() {
     mutationFn: async (chatId: string) => {
       return await apiRequest('POST', '/api/notifications/telegram/validate', { chatId });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setIsTelegramConnected(true);
-      toast({
-        title: "Telegram Connected",
-        description: "Chat ID validated successfully!",
-      });
+      if (data.demo) {
+        toast({
+          title: "Demo Mode",
+          description: "Chat ID validated in demo mode (Telegram service not configured)",
+        });
+      } else {
+        toast({
+          title: "Telegram Connected",
+          description: "Chat ID validated successfully!",
+        });
+      }
     },
     onError: (error: any) => {
       let errorMessage = "Failed to validate Telegram chat ID";
@@ -119,11 +134,18 @@ export default function NotificationSetup() {
     mutationFn: async (chatId: string) => {
       return await apiRequest('POST', '/api/notifications/telegram/test', { chatId });
     },
-    onSuccess: () => {
-      toast({
-        title: "Test Message Sent",
-        description: "Check your Telegram for the test message!",
-      });
+    onSuccess: (data) => {
+      if (data.demo) {
+        toast({
+          title: "Demo Mode",
+          description: "Test message simulated (Telegram service not configured)",
+        });
+      } else {
+        toast({
+          title: "Test Message Sent",
+          description: "Check your Telegram for the test message!",
+        });
+      }
     },
     onError: (error: any) => {
       let errorMessage = "Failed to send test message";
@@ -213,7 +235,7 @@ export default function NotificationSetup() {
             </div>
 
             <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="email" className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
                   Email
@@ -229,6 +251,10 @@ export default function NotificationSetup() {
                 <TabsTrigger value="advanced" className="flex items-center gap-2">
                   <Settings className="w-4 h-4" />
                   Advanced
+                </TabsTrigger>
+                <TabsTrigger value="setup" className="flex items-center gap-2">
+                  <Info className="w-4 h-4" />
+                  Setup Guide
                 </TabsTrigger>
               </TabsList>
 
@@ -353,7 +379,7 @@ export default function NotificationSetup() {
                           />
                           <Button 
                             onClick={handleSmsVerify}
-                            disabled={!smsStatus?.configured || smsVerifyMutation.isPending}
+                            disabled={smsVerifyMutation.isPending}
                             className="bg-blue-600 hover:bg-blue-700"
                           >
                             {smsVerifyMutation.isPending ? 'Sending...' : 'Verify'}
@@ -361,6 +387,9 @@ export default function NotificationSetup() {
                         </div>
                         <p className="text-xs text-gray-400 mt-1">
                           Include country code (e.g., +1 for US, +44 for UK)
+                          {!smsStatus?.configured && (
+                            <span className="text-blue-400 ml-1">• Demo mode available for testing</span>
+                          )}
                         </p>
                       </div>
 
@@ -597,6 +626,140 @@ export default function NotificationSetup() {
                     </div>
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              {/* Setup Guide Tab */}
+              <TabsContent value="setup">
+                <div className="space-y-6">
+                  <Card className="bg-gray-900/50 border-gray-800">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-3 text-white">
+                        <Info className="w-5 h-5" />
+                        Setup Guide
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* SMS Setup Guide */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                          <Smartphone className="w-5 h-5" />
+                          SMS Setup (Twilio)
+                        </h3>
+                        <div className="bg-gray-800/50 p-4 rounded-lg">
+                          <p className="text-gray-300 mb-4">
+                            To enable SMS notifications, an administrator needs to configure Twilio credentials:
+                          </p>
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
+                              <div>
+                                <p className="text-white">Create a Twilio account at <a href="https://www.twilio.com" target="_blank" className="text-blue-400 hover:text-blue-300">twilio.com</a></p>
+                                <p className="text-gray-400 text-sm">Sign up for a free account to get started</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
+                              <div>
+                                <p className="text-white">Get your Account SID and Auth Token</p>
+                                <p className="text-gray-400 text-sm">Found in your Twilio Console Dashboard</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
+                              <div>
+                                <p className="text-white">Purchase a phone number</p>
+                                <p className="text-gray-400 text-sm">This will be used to send SMS alerts</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">4</div>
+                              <div>
+                                <p className="text-white">Set environment variables:</p>
+                                <div className="bg-gray-900 p-2 rounded mt-1 font-mono text-sm">
+                                  <p className="text-green-400">TWILIO_ACCOUNT_SID=your_account_sid</p>
+                                  <p className="text-green-400">TWILIO_AUTH_TOKEN=your_auth_token</p>
+                                  <p className="text-green-400">TWILIO_PHONE_NUMBER=+1234567890</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Telegram Setup Guide */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                          <Bot className="w-5 h-5" />
+                          Telegram Setup
+                        </h3>
+                        <div className="bg-gray-800/50 p-4 rounded-lg">
+                          <p className="text-gray-300 mb-4">
+                            To enable Telegram notifications, an administrator needs to create a bot:
+                          </p>
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
+                              <div>
+                                <p className="text-white">Message @BotFather on Telegram</p>
+                                <p className="text-gray-400 text-sm">The official bot for creating new bots</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
+                              <div>
+                                <p className="text-white">Send /newbot command</p>
+                                <p className="text-gray-400 text-sm">Follow the prompts to create your bot</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
+                              <div>
+                                <p className="text-white">Get your bot token</p>
+                                <p className="text-gray-400 text-sm">BotFather will provide a token like: 123456789:ABC-DEF1234ghIkl-zyx57W2v1u123ew11</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">4</div>
+                              <div>
+                                <p className="text-white">Set environment variable:</p>
+                                <div className="bg-gray-900 p-2 rounded mt-1 font-mono text-sm">
+                                  <p className="text-green-400">TELEGRAM_BOT_TOKEN=your_bot_token</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* User Instructions */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                          <Bell className="w-5 h-5" />
+                          User Instructions
+                        </h3>
+                        <div className="bg-gray-800/50 p-4 rounded-lg">
+                          <div className="space-y-3">
+                            <div>
+                              <h4 className="font-medium text-white mb-2">For SMS Notifications:</h4>
+                              <p className="text-gray-300 text-sm">
+                                Enter your phone number with country code (e.g., +1234567890) and click Verify to receive a test SMS.
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-white mb-2">For Telegram Notifications:</h4>
+                              <ol className="text-gray-300 text-sm space-y-1">
+                                <li>1. Start a chat with the bot (once configured)</li>
+                                <li>2. Send /start to the bot</li>
+                                <li>3. Get your Chat ID from @userinfobot</li>
+                                <li>4. Enter your Chat ID and validate</li>
+                              </ol>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
             </Tabs>
 

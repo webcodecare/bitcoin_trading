@@ -2473,6 +2473,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Demo mode for testing without real credentials
+      if (!smsService.isConfigured()) {
+        // Simulate successful verification in demo mode
+        const demoCode = Math.floor(100000 + Math.random() * 900000).toString();
+        res.json({ 
+          success: true, 
+          message: 'Demo verification code generated (SMS service not configured)',
+          code: demoCode,
+          demo: true
+        });
+        return;
+      }
+
       const result = await smsService.sendVerificationCode(phoneNumber);
       
       if (result.success) {
@@ -2514,10 +2527,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Chat ID is required' });
       }
 
+      // Demo mode for testing without real credentials
       if (!telegramService.isConfigured()) {
-        return res.status(400).json({ 
-          error: 'Telegram service not configured. Please contact admin to set up bot credentials.' 
-        });
+        // Simulate successful validation in demo mode
+        if (chatId.match(/^\d+$/)) {
+          res.json({ 
+            success: true, 
+            message: 'Demo validation successful (Telegram service not configured)',
+            chatId: chatId,
+            demo: true
+          });
+        } else {
+          res.status(400).json({ 
+            error: 'Invalid chat ID format. Must be numeric (e.g., 123456789)' 
+          });
+        }
+        return;
       }
 
       const result = await telegramService.validateChatId(chatId);
@@ -2562,10 +2587,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Chat ID is required' });
       }
 
+      // Demo mode for testing without real credentials
       if (!telegramService.isConfigured()) {
-        return res.status(400).json({ 
-          error: 'Telegram service not configured. Please contact admin to set up bot credentials.' 
+        // Simulate successful test message in demo mode
+        res.json({ 
+          success: true, 
+          message: 'Demo test message sent (Telegram service not configured)',
+          messageId: `demo_${Date.now()}`,
+          demo: true
         });
+        return;
       }
 
       const result = await telegramService.sendMessage({
