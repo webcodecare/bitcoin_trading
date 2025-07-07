@@ -65,9 +65,19 @@ export default function NotificationSetup() {
       setIsPhoneVerified(true);
     },
     onError: (error: any) => {
+      let errorMessage = "Failed to send verification code";
+      
+      if (error.message.includes("not configured")) {
+        errorMessage = "SMS service is not configured. Please contact admin to set up Twilio credentials.";
+      } else if (error.message.includes("country code")) {
+        errorMessage = "Phone number must include country code (e.g., +1234567890)";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "SMS Error",
-        description: error.message,
+        title: "SMS Verification Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -86,9 +96,19 @@ export default function NotificationSetup() {
       });
     },
     onError: (error: any) => {
+      let errorMessage = "Failed to validate Telegram chat ID";
+      
+      if (error.message.includes("not configured")) {
+        errorMessage = "Telegram bot is not configured. Please contact admin to set up bot credentials.";
+      } else if (error.message.includes("Invalid chat ID")) {
+        errorMessage = "Invalid chat ID format. Please check and try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Telegram Error",
-        description: error.message,
+        title: "Telegram Validation Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -106,9 +126,19 @@ export default function NotificationSetup() {
       });
     },
     onError: (error: any) => {
+      let errorMessage = "Failed to send test message";
+      
+      if (error.message.includes("not configured")) {
+        errorMessage = "Telegram bot is not configured. Please contact admin to set up bot credentials.";
+      } else if (error.message.includes("chat not found")) {
+        errorMessage = "Chat ID not found. Please verify your Chat ID and try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Test Failed",
-        description: error.message,
+        title: "Telegram Test Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     },
