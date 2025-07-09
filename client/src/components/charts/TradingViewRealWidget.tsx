@@ -221,21 +221,24 @@ export default function TradingViewRealWidget({ ticker, onTrade }: TradingViewRe
         </CardContent>
       </Card>
 
-      {/* Advanced Trading Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Order Panel */}
+      {/* Market Information Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Market Stats */}
         <Card className="bg-gray-900 border-gray-700">
           <CardContent className="p-4">
-            <h4 className="font-semibold text-white mb-4">Advanced Order Panel</h4>
-            <div className="space-y-4">
-              {/* Order Type */}
-              <div>
-                <label className="text-sm text-gray-300 mb-2 block">Order Type</label>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" className="flex-1">Market</Button>
-                  <Button variant="ghost" size="sm" className="flex-1">Limit</Button>
-                  <Button variant="ghost" size="sm" className="flex-1">Stop</Button>
-                </div>
+            <h4 className="font-semibold text-white mb-4">Market Statistics</h4>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-300">24h Volume:</span>
+                <span className="text-white font-medium">$2.4B</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-300">Market Cap:</span>
+                <span className="text-white font-medium">$1.37T</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-300">Circulating Supply:</span>
+                <span className="text-white font-medium">19.8M BTC</span>
               </div>
 
               {/* Amount */}
