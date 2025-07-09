@@ -1,21 +1,15 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
+import AlertsView from "@/components/alerts/AlertsView";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { 
   Bell, 
   Mail, 
@@ -23,9 +17,8 @@ import {
   MessageSquare,
   Volume2,
   Settings,
-  Plus,
-  Trash2,
-  Edit
+  Target,
+  Activity
 } from "lucide-react";
 
 export default function Alerts() {
@@ -166,21 +159,32 @@ export default function Alerts() {
         
         {/* Main Content */}
         <div className="ml-64 flex-1">
-          {/* Top Bar */}
-          <header className="bg-card border-b border-border p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Bell className="h-6 w-6" />
-                <h1 className="text-2xl font-bold">Alert Settings</h1>
-              </div>
-              <Badge variant="outline" className="text-emerald-400">
-                {Object.values(alertSettings).filter(Boolean).length} active
-              </Badge>
-            </div>
-          </header>
+          <div className="container mx-auto px-4 py-8">
+            <Tabs defaultValue="signals" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signals" className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Trading Signals
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Alert Settings
+                </TabsTrigger>
+              </TabsList>
 
-          {/* Alert Content */}
-          <div className="p-6 space-y-6">
+              <TabsContent value="signals" className="space-y-6">
+                <AlertsView />
+              </TabsContent>
+
+              <TabsContent value="settings" className="space-y-6">
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold tracking-tight mb-2">Alert Settings</h1>
+                  <p className="text-muted-foreground">
+                    Configure your notification preferences and manage custom alerts
+                  </p>
+                </div>
+
+                <div className="space-y-6">
             {/* Notification Methods */}
             <Card>
               <CardHeader>
@@ -360,6 +364,9 @@ export default function Alerts() {
                 </div>
               </CardContent>
             </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>

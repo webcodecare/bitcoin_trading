@@ -470,6 +470,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all signals with pagination, sorting, and filtering
+  app.get('/api/signals/all', async (req, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const sort = (req.query.sort as string) || 'timestamp_desc';
+      const signalType = req.query.signal_type as string;
+      const search = req.query.search as string;
+      
+      const offset = (page - 1) * limit;
+      
+      // Get all signals from storage
+      const allSignals = await storage.getSignals(1000); // Get more signals for filtering
+      
+      // Apply filters
+      let filteredSignals = allSignals;
+      
+      if (signalType && signalType !== 'all') {
+        filteredSignals = filteredSignals.filter(signal => signal.signalType === signalType);
+      }
+      
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filteredSignals = filteredSignals.filter(signal => 
+          signal.ticker.toLowerCase().includes(searchLower) ||
+          signal.source.toLowerCase().includes(searchLower) ||
+          (signal.strategy && signal.strategy.toLowerCase().includes(searchLower)) ||
+          (signal.note && signal.note.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      // Apply sorting
+      filteredSignals.sort((a, b) => {
+        switch (sort) {
+          case 'timestamp_desc':
+            return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+          case 'timestamp_asc':
+            return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+          case 'price_desc':
+            return b.price - a.price;
+          case 'price_asc':
+            return a.price - b.price;
+          case 'ticker_asc':
+            return a.ticker.localeCompare(b.ticker);
+          case 'ticker_desc':
+            return b.ticker.localeCompare(a.ticker);
+          default:
+            return 0;
+        }
+      });
+      
+      // Apply pagination
+      const paginatedSignals = filteredSignals.slice(offset, offset + limit);
+      
+      res.json({
+        alerts: paginatedSignals,
+        total: filteredSignals.length,
+        page,
+        limit,
+        totalPages: Math.ceil(filteredSignals.length / limit)
+      });
+    } catch (error) {
+      console.error("Error fetching all signals:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Get signals by ticker and timeframe specifically
   app.get('/api/signals/:ticker/:timeframe', requireAuth, async (req: any, res) => {
     try {
