@@ -165,8 +165,16 @@ function Router() {
           <AdvancedPortfolioPage />
         </AuthGuard>
       </Route>
-      <Route path="/test-alerts" component={AlertsTest} />
-      <Route path="/dashboard-widgets" component={DashboardWidgetsPage} />
+      <Route path="/test-alerts">
+        <AuthGuard>
+          <AlertsTest />
+        </AuthGuard>
+      </Route>
+      <Route path="/dashboard-widgets">
+        <AuthGuard>
+          <DashboardWidgetsPage />
+        </AuthGuard>
+      </Route>
       <Route path="/subscription">
         <AuthGuard>
           <Subscription />

@@ -53,31 +53,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   }
 
-  // Authentication middleware
+  // Authentication middleware with session validation
   const requireAuth = async (req: any, res: any, next: any) => {
     try {
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'No token provided' });
+        return res.status(401).json({ 
+          message: 'No token provided',
+          code: 'NO_TOKEN',
+          timestamp: new Date().toISOString()
+        });
       }
       
       const token = authHeader.substring(7);
-      // For demo purposes, the token is the user ID
+      
+      // Validate token and get user
       const user = await storage.getUser(token);
       if (!user) {
-        return res.status(401).json({ message: 'Invalid token' });
+        return res.status(401).json({ 
+          message: 'Invalid or expired token',
+          code: 'INVALID_TOKEN',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Check if user account is active
+      if (!user.isActive) {
+        return res.status(403).json({ 
+          message: 'Account is deactivated',
+          code: 'ACCOUNT_INACTIVE',
+          timestamp: new Date().toISOString()
+        });
       }
       
       req.user = user;
       next();
     } catch (error) {
-      res.status(401).json({ message: 'Authentication failed' });
+      console.error('Authentication middleware error:', error);
+      res.status(401).json({ 
+        message: 'Authentication failed',
+        code: 'AUTH_ERROR',
+        timestamp: new Date().toISOString()
+      });
     }
   };
 
   const requireAdmin = (req: any, res: any, next: any) => {
-    if (req.user?.role !== 'admin') {
-      return res.status(403).json({ message: 'Admin access required' });
+    const userRole = req.user?.role;
+    
+    // Allow admin and superuser roles
+    if (userRole !== 'admin' && userRole !== 'superuser') {
+      return res.status(403).json({ 
+        message: 'Administrative privileges required',
+        code: 'INSUFFICIENT_PRIVILEGES',
+        requiredRole: 'admin',
+        userRole: userRole || 'unknown',
+        timestamp: new Date().toISOString()
+      });
     }
     next();
   };
@@ -130,7 +162,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         language: 'en',
       });
 
-      res.json({ user: { ...user, hashedPassword: undefined }, token: user.id });
+      res.json({ 
+        user: { ...user, hashedPassword: undefined }, 
+        token: user.id,
+        sessionInfo: {
+          loginTime: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+        }
+      });
     } catch (error) {
       res.status(400).json({ message: 'Registration failed', error: error instanceof Error ? error.message : 'Unknown error' });
     }
@@ -154,7 +193,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.updateUser(user.id, { lastLoginAt: new Date() });
 
-      res.json({ user: { ...user, hashedPassword: undefined }, token: user.id });
+      res.json({ 
+        user: { ...user, hashedPassword: undefined }, 
+        token: user.id,
+        sessionInfo: {
+          loginTime: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+        }
+      });
     } catch (error) {
       res.status(400).json({ message: 'Login failed', error: error instanceof Error ? error.message : 'Unknown error' });
     }
