@@ -50,6 +50,8 @@ export default function AdminTickers() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateTickerOpen, setIsCreateTickerOpen] = useState(false);
+  const [isEditTickerOpen, setIsEditTickerOpen] = useState(false);
+  const [editingTicker, setEditingTicker] = useState<Ticker | null>(null);
   const [newTicker, setNewTicker] = useState({
     symbol: "",
     description: "",
@@ -132,6 +134,41 @@ export default function AdminTickers() {
     },
   });
 
+  const editTickerMutation = useMutation({
+    mutationFn: async ({ tickerId, updates }: { tickerId: string; updates: Partial<Ticker> }) => {
+      const response = await fetch(`/api/admin/tickers/${tickerId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(updates),
+      });
+      if (!response.ok) throw new Error("Failed to update ticker");
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tickers"] });
+      setIsEditTickerOpen(false);
+      setEditingTicker(null);
+      toast({ title: "Ticker updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to update ticker", variant: "destructive" });
+    },
+  });
+
+  const handleEditTicker = (ticker: Ticker) => {
+    setEditingTicker(ticker);
+    setIsEditTickerOpen(true);
+  };
+
+  const handleDeleteTicker = (tickerId: string) => {
+    if (confirm("Are you sure you want to delete this ticker? This action cannot be undone.")) {
+      deleteTickerMutation.mutate(tickerId);
+    }
+  };
+
   const filteredTickers = tickers?.filter(ticker => 
     ticker.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticker.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -208,6 +245,66 @@ export default function AdminTickers() {
                       className="crypto-gradient text-white"
                     >
                       Create Ticker
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              {/* Edit Ticker Dialog */}
+              <Dialog open={isEditTickerOpen} onOpenChange={setIsEditTickerOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Ticker</DialogTitle>
+                    <DialogDescription>
+                      Update the ticker information
+                    </DialogDescription>
+                  </DialogHeader>
+                  {editingTicker && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-symbol">Symbol</Label>
+                        <Input
+                          id="edit-symbol"
+                          value={editingTicker.symbol}
+                          onChange={(e) => setEditingTicker({ ...editingTicker, symbol: e.target.value })}
+                          placeholder="BTCUSDT"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-description">Description</Label>
+                        <Input
+                          id="edit-description"
+                          value={editingTicker.description}
+                          onChange={(e) => setEditingTicker({ ...editingTicker, description: e.target.value })}
+                          placeholder="Bitcoin / Tether USD"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <UISwitch
+                          checked={editingTicker.isEnabled}
+                          onCheckedChange={(checked: boolean) => setEditingTicker({ ...editingTicker, isEnabled: checked })}
+                        />
+                        <Label>Enabled</Label>
+                      </div>
+                    </div>
+                  )}
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsEditTickerOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={() => editingTicker && editTickerMutation.mutate({
+                        tickerId: editingTicker.id,
+                        updates: {
+                          symbol: editingTicker.symbol,
+                          description: editingTicker.description,
+                          isEnabled: editingTicker.isEnabled
+                        }
+                      })}
+                      disabled={editTickerMutation.isPending}
+                      className="crypto-gradient text-white"
+                    >
+                      {editTickerMutation.isPending ? "Updating..." : "Update Ticker"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -304,13 +401,17 @@ export default function AdminTickers() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEditTicker(ticker)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => deleteTickerMutation.mutate(ticker.id)}
+                              onClick={() => handleDeleteTicker(ticker.id)}
                               disabled={deleteTickerMutation.isPending}
                             >
                               <Trash2 className="h-4 w-4" />
