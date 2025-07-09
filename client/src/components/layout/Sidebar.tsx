@@ -28,6 +28,7 @@ import {
   Star,
   Target,
   Trophy,
+  UserCheck,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -215,6 +216,11 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
       title: "Permission Management",
       href: "/admin/permissions",
       icon: Shield,
+    },
+    {
+      title: "Admin User Roles",
+      href: "/admin/user-roles",
+      icon: UserCheck,
     },
     {
       title: "Test Users",
