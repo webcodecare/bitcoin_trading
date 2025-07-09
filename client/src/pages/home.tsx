@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import TradingViewWidget from "@/components/charts/TradingViewWidget";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
+import PublicDemoChart from "@/components/charts/PublicDemoChart";
 import MarketWidget from "@/components/widgets/MarketWidget";
 import { 
   Bitcoin, 
@@ -138,13 +139,13 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" asChild className="crypto-gradient text-white">
-                  <Link href="/auth?mode=register">
+                  <Link href="/login">
                     Start Free Trial
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link href="/pricing">Watch Demo</Link>
+                  <Link href="/auth">Sign Up Now</Link>
                 </Button>
               </div>
               
@@ -165,14 +166,12 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Live BTC Chart Preview */}
+            {/* Live BTC Chart Preview with Simulated Alerts */}
             <div className="lg:ml-8">
-              <TradingViewWidget 
-                symbol="BINANCE:BTCUSDT"
-                height={350}
-                enableTrading={true}
-                showSignals={true}
-                theme="dark"
+              <PublicDemoChart 
+                title="Bitcoin Live Chart with Signals"
+                symbol="BTCUSDT"
+                className="shadow-xl"
               />
             </div>
           </div>
@@ -210,29 +209,34 @@ export default function Home() {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
-            {/* Advanced BTC Chart with Buy/Sell Signals */}
-            <TradingViewWidget 
-              symbol="BINANCE:BTCUSDT"
-              height={400}
-              enableTrading={true}
-              showSignals={true}
-              theme="dark"
+            {/* Bitcoin Demo Chart with Live Signals */}
+            <PublicDemoChart 
+              title="Bitcoin Analytics Dashboard"
+              symbol="BTCUSDT"
+              className="border border-border"
             />
 
-            {/* 200-Week Heatmap */}
-            <HeatmapChart 
-              symbol="BTC"
-              height={400}
+            {/* Ethereum Demo Chart */}
+            <PublicDemoChart 
+              title="Ethereum Live Signals"
+              symbol="ETHUSDT"
               className="border border-border"
             />
           </div>
 
-          {/* Cycle Forecaster */}
-          <CycleChart 
-            symbol="BTC"
-            height={300}
-            className="border border-border"
-          />
+          {/* Additional Demo Charts */}
+          <div className="grid md:grid-cols-2 gap-8">
+            <PublicDemoChart 
+              title="Solana Market Analysis"
+              symbol="SOLUSDT"
+              className="border border-border"
+            />
+            <PublicDemoChart 
+              title="Cardano Trading Signals"
+              symbol="ADAUSDT" 
+              className="border border-border"
+            />
+          </div>
         </div>
       </section>
 
@@ -275,7 +279,7 @@ export default function Home() {
                     variant={plan.popular ? "default" : "outline"}
                     asChild
                   >
-                    <Link href="/auth?mode=register">{plan.buttonText}</Link>
+                    <Link href={plan.name === 'Enterprise' ? '/contact' : '/auth'}>{plan.buttonText}</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -342,18 +346,46 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Enhanced CTA Section */}
       <section className="py-16 crypto-gradient">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-4 text-white">Ready to Transform Your Trading?</h2>
           <p className="text-xl mb-8 text-white/90">Join thousands of traders using our professional analytics platform</p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
             <Button size="lg" variant="secondary" asChild>
-              <Link href="/auth?mode=register">Start Free Trial</Link>
+              <Link href="/login">
+                Start Free Trial
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
             <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-primary" asChild>
-              <Link href="/pricing">Schedule Demo</Link>
+              <Link href="/auth">Create New Account</Link>
             </Button>
+          </div>
+
+          <div className="text-sm text-white/70 mb-8">
+            No credit card required • Cancel anytime • 24/7 support
+          </div>
+          
+          {/* Navigation Flow Steps */}
+          <div className="max-w-2xl mx-auto p-6 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
+            <div className="flex items-center justify-center space-x-8 text-sm text-white">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-white text-primary rounded-full flex items-center justify-center font-semibold">1</div>
+                <span>Sign Up</span>
+              </div>
+              <ArrowRight className="h-4 w-4 text-white/70" />
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-white text-primary rounded-full flex items-center justify-center font-semibold">2</div>
+                <span>Choose Plan</span>
+              </div>
+              <ArrowRight className="h-4 w-4 text-white/70" />
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-white text-primary rounded-full flex items-center justify-center font-semibold">3</div>
+                <span>Start Trading</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
