@@ -99,6 +99,11 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
       icon: TrendingUp,
     },
     {
+      title: "Notifications",
+      href: "/notification-center",
+      icon: Bell,
+    },
+    {
       title: "Signal Mood Board",
       href: "/mood-board",
       icon: Smile,
