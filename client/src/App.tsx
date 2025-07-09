@@ -172,6 +172,11 @@ function Router() {
           <Subscription />
         </AuthGuard>
       </Route>
+      <Route path="/subscriptions">
+        <AuthGuard>
+          <Subscription />
+        </AuthGuard>
+      </Route>
       <Route path="/mood-board">
         <AuthGuard>
           <MoodBoard />
