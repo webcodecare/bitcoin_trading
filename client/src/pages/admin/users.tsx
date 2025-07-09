@@ -157,13 +157,13 @@ export default function AdminUsers() {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="ml-64 flex-1">
+        <div className="ml-0 lg:ml-64 flex-1">
           {/* Top Bar */}
-          <header className="bg-card border-b border-border p-6">
-            <div className="flex items-center justify-between">
+          <header className="bg-card border-b border-border p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center space-x-3">
-                <Users className="h-6 w-6" />
-                <h1 className="text-2xl font-bold">User Management</h1>
+                <Users className="h-5 w-5 lg:h-6 lg:w-6" />
+                <h1 className="text-xl lg:text-2xl font-bold">User Management</h1>
               </div>
               <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
                 <DialogTrigger asChild>
@@ -180,7 +180,7 @@ export default function AdminUsers() {
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="firstName">First Name</Label>
                         <Input
@@ -257,32 +257,32 @@ export default function AdminUsers() {
           </header>
 
           {/* Users Content */}
-          <div className="p-6 space-y-6">
+          <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
             {/* Search and Stats */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-full sm:w-64"
                 />
               </div>
-              <div className="flex space-x-4">
-                <Card className="p-4">
-                  <div className="text-sm text-muted-foreground">Total Users</div>
-                  <div className="text-2xl font-bold">{users?.length || 0}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card className="p-3 lg:p-4">
+                  <div className="text-xs lg:text-sm text-muted-foreground">Total Users</div>
+                  <div className="text-xl lg:text-2xl font-bold">{users?.length || 0}</div>
                 </Card>
-                <Card className="p-4">
-                  <div className="text-sm text-muted-foreground">Active Users</div>
-                  <div className="text-2xl font-bold text-emerald-400">
+                <Card className="p-3 lg:p-4">
+                  <div className="text-xs lg:text-sm text-muted-foreground">Active Users</div>
+                  <div className="text-xl lg:text-2xl font-bold text-emerald-400">
                     {users?.filter(u => u.isActive).length || 0}
                   </div>
                 </Card>
-                <Card className="p-4">
-                  <div className="text-sm text-muted-foreground">Admins</div>
-                  <div className="text-2xl font-bold text-blue-400">
+                <Card className="p-3 lg:p-4">
+                  <div className="text-xs lg:text-sm text-muted-foreground">Admins</div>
+                  <div className="text-xl lg:text-2xl font-bold text-blue-400">
                     {users?.filter(u => u.role === 'admin').length || 0}
                   </div>
                 </Card>
@@ -294,17 +294,18 @@ export default function AdminUsers() {
               <CardHeader>
                 <CardTitle>All Users</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Table>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Last Login</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead className="min-w-[150px]">Name</TableHead>
+                      <TableHead className="min-w-[200px]">Email</TableHead>
+                      <TableHead className="min-w-[80px]">Role</TableHead>
+                      <TableHead className="min-w-[100px]">Status</TableHead>
+                      <TableHead className="min-w-[100px] hidden lg:table-cell">Created</TableHead>
+                      <TableHead className="min-w-[100px] hidden xl:table-cell">Last Login</TableHead>
+                      <TableHead className="min-w-[120px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -345,21 +346,22 @@ export default function AdminUsers() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden xl:table-cell">
                           {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : 'Never'}
                         </TableCell>
                         <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm" title="Edit User">
-                              <Edit className="h-4 w-4" />
+                          <div className="flex space-x-1 lg:space-x-2">
+                            <Button variant="outline" size="sm" title="Edit User" className="px-2 lg:px-3">
+                              <Edit className="h-3 w-3 lg:h-4 lg:w-4" />
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               title="Delete User"
+                              className="px-2 lg:px-3"
                               onClick={() => {
                                 if (window.confirm(`Are you sure you want to deactivate ${user.email}?`)) {
                                   deleteUserMutation.mutate(user.id);
@@ -367,14 +369,15 @@ export default function AdminUsers() {
                               }}
                               disabled={deleteUserMutation.isPending}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3 lg:h-4 lg:w-4" />
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </div>

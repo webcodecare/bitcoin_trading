@@ -118,25 +118,25 @@ export default function Dashboard() {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="ml-64 flex-1 bg-background">
+        <div className="ml-0 lg:ml-64 flex-1 bg-background">
           {/* Top Bar */}
-          <header className="bg-card border-b border-border p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-6">
-                <h1 className="text-2xl font-bold">Trading Dashboard</h1>
-                <div className="flex items-center space-x-4">
-                  <div className="bg-muted px-4 py-2 rounded-lg">
-                    <span className="text-sm text-muted-foreground">BTC/USD</span>
-                    <span className={`font-semibold ml-2 ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+          <header className="bg-card border-b border-border p-4 lg:p-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-6 gap-4">
+                <h1 className="text-xl lg:text-2xl font-bold">Trading Dashboard</h1>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <div className="bg-muted px-3 py-2 rounded-lg">
+                    <span className="text-xs lg:text-sm text-muted-foreground">BTC/USD</span>
+                    <span className={`font-semibold ml-2 text-sm lg:text-base ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
                       ${currentBTCPrice.toLocaleString()}
                     </span>
-                    <span className={`text-sm ml-2 ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <span className={`text-xs lg:text-sm ml-2 ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
                       {isPositive ? '+' : ''}{dailyChange}%
                     </span>
                   </div>
-                  <div className="bg-muted px-4 py-2 rounded-lg">
-                    <span className="text-sm text-muted-foreground">24h Vol</span>
-                    <span className="text-foreground font-semibold ml-2">$28.5B</span>
+                  <div className="bg-muted px-3 py-2 rounded-lg">
+                    <span className="text-xs lg:text-sm text-muted-foreground">24h Vol</span>
+                    <span className="text-foreground font-semibold ml-2 text-sm lg:text-base">$28.5B</span>
                   </div>
                 </div>
               </div>
@@ -152,9 +152,9 @@ export default function Dashboard() {
           </header>
 
           {/* Dashboard Content */}
-          <div className="p-6 space-y-6">
+          <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               {quickStats.map((stat, index) => {
                 const IconComponent = stat.icon;
                 return (
@@ -185,7 +185,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
               {/* 200-Week Heatmap Widget */}
               <HeatmapChart 
                 symbol="BTC"

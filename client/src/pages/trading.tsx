@@ -113,36 +113,36 @@ export default function TradingPage() {
     <div className="flex h-screen bg-background">
       <Sidebar />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden ml-0 lg:ml-0">
         {/* Header */}
-        <div className="border-b bg-card/50 backdrop-blur-sm p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="border-b bg-card/50 backdrop-blur-sm p-2 lg:p-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex items-center gap-2 lg:gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">
+                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm lg:text-base">
                   B
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold">BTC-USDT</h1>
-                  <p className="text-sm text-muted-foreground">Bitcoin</p>
+                  <h1 className="text-lg lg:text-xl font-bold">BTC-USDT</h1>
+                  <p className="text-xs lg:text-sm text-muted-foreground">Bitcoin</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-6">
-                <div>
-                  <p className="text-sm text-muted-foreground">Last Price</p>
+              <div className="hidden sm:flex items-center gap-3 lg:gap-6 overflow-x-auto">
+                <div className="min-w-[100px]">
+                  <p className="text-xs lg:text-sm text-muted-foreground">Last Price</p>
                   <motion.div
                     key={priceAnimationKey}
                     initial={{ scale: 0.95, opacity: 0.8 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
-                    className="text-2xl font-bold"
+                    className="text-lg lg:text-2xl font-bold"
                   >
                     ${currentPrice.toLocaleString()}
                   </motion.div>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">24h Change</p>
+                <div className="min-w-[100px]">
+                  <p className="text-xs lg:text-sm text-muted-foreground">24h Change</p>
                   <motion.div 
                     key={`change-${priceAnimationKey}`}
                     initial={{ x: -10, opacity: 0 }}
@@ -154,9 +154,9 @@ export default function TradingPage() {
                       animate={{ rotate: priceChange >= 0 ? 0 : 180 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {priceChange >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                      {priceChange >= 0 ? <TrendingUp className="h-3 w-3 lg:h-4 lg:w-4" /> : <TrendingDown className="h-3 w-3 lg:h-4 lg:w-4" />}
                     </motion.div>
-                    <span className="font-medium">{priceChange > 0 ? '+' : ''}{priceChange.toFixed(2)}%</span>
+                    <span className="font-medium text-sm lg:text-base">{priceChange > 0 ? '+' : ''}{priceChange.toFixed(2)}%</span>
                   </motion.div>
                 </div>
                 <div>
@@ -179,7 +179,7 @@ export default function TradingPage() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col">
           {/* Chart Area */}
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-2 lg:p-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
