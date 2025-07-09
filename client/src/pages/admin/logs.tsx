@@ -163,12 +163,17 @@ export default function AdminLogs() {
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
-        <Sidebar />
+        <Sidebar className="hidden lg:block lg:w-64" />
         
         {/* Main Content */}
-        <div className="ml-64 flex-1">
-          {/* Top Bar */}
-          <header className="bg-card border-b border-border p-6">
+        <div className="flex-1 lg:ml-64">
+          {/* Mobile Header */}
+          <header className="bg-card border-b border-border p-4 lg:hidden">
+            <h1 className="text-xl font-semibold">Admin Activity Logs</h1>
+          </header>
+          
+          {/* Desktop Header */}
+          <header className="hidden lg:block bg-card border-b border-border p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Activity className="h-6 w-6" />
@@ -181,11 +186,19 @@ export default function AdminLogs() {
             </div>
           </header>
 
-          {/* Content */}
-          <div className="p-6 space-y-6">
+          {/* Mobile Export Button */}
+          <div className="p-4 lg:hidden">
+            <Button variant="outline" onClick={exportLogs} className="w-full">
+              <Download className="w-4 h-4 mr-2" />
+              Export CSV
+            </Button>
+          </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Content */}
+          <div className="p-4 lg:p-6 space-y-6">
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Actions</CardTitle>
@@ -236,7 +249,7 @@ export default function AdminLogs() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div>
               <Input
                 placeholder="Search logs..."
@@ -344,7 +357,8 @@ export default function AdminLogs() {
             </div>
           ) : (
             <>
-              <Table>
+              <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Timestamp</TableHead>
@@ -393,6 +407,7 @@ export default function AdminLogs() {
                   )}
                 </TableBody>
               </Table>
+              </div>
 
               {/* Pagination */}
               {totalPages > 1 && (
