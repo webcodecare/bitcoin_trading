@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/Sidebar";
+import Header from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -167,32 +168,16 @@ export default function AdminLogs() {
         
         {/* Main Content */}
         <div className="flex-1 lg:ml-64">
-          {/* Mobile Header */}
-          <header className="bg-card border-b border-border p-4 lg:hidden">
-            <h1 className="text-xl font-semibold">Admin Activity Logs</h1>
-          </header>
-          
-          {/* Desktop Header */}
-          <header className="hidden lg:block bg-card border-b border-border p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Activity className="h-6 w-6" />
-                <h1 className="text-2xl font-bold">Admin Activity Logs</h1>
-              </div>
-              <Button variant="outline" onClick={exportLogs}>
-                <Download className="w-4 h-4 mr-2" />
-                Export CSV
-              </Button>
-            </div>
-          </header>
-
-          {/* Mobile Export Button */}
-          <div className="p-4 lg:hidden">
-            <Button variant="outline" onClick={exportLogs} className="w-full">
+          {/* Header */}
+          <Header 
+            title="Admin Activity Logs" 
+            subtitle="View and export administrative activity logs"
+          >
+            <Button variant="outline" onClick={exportLogs}>
               <Download className="w-4 h-4 mr-2" />
               Export CSV
             </Button>
-          </div>
+          </Header>
 
           {/* Content */}
           <div className="p-4 lg:p-6 space-y-6">
