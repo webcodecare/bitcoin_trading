@@ -2,8 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import Sidebar from "@/components/layout/Sidebar";
-import TradingViewRealWidget from "@/components/charts/TradingViewRealWidget";
-import OrderBook from "@/components/trading/OrderBook";
+
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
 import TickerSelector from "@/components/ui/ticker-selector";
@@ -174,23 +173,26 @@ export default function Dashboard() {
             </div>
 
             {/* Professional Trading Interface */}
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               {/* Main TradingView Chart */}
-              <div className="xl:col-span-3">
-                <TradingViewRealWidget 
-                  ticker="BTCUSDT"
-                  onTrade={(action, price) => {
-                    // Handle trading action
-                    console.log(`${action} order at ${price}`);
-                  }}
-                />
-              </div>
-              
-              {/* Order Book Sidebar */}
-              <div className="xl:col-span-1">
-                <div className="sticky top-6">
-                  <OrderBook symbol="BTCUSDT" />
-                </div>
+              <div className="w-full">
+                <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+                  <CardContent className="p-4">
+                    <div className="h-[600px] flex items-center justify-center bg-muted rounded-lg">
+                      <div className="text-center">
+                        <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">Professional TradingView Chart</h3>
+                        <p className="text-muted-foreground">
+                          Advanced charting with technical indicators and real-time data
+                        </p>
+                        <Button className="mt-4" onClick={() => window.location.href = '/trading'}>
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Open Trading Terminal
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
 
