@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 interface HeaderProps {
   title: string;
@@ -36,13 +37,7 @@ export default function Header({ title, subtitle, children }: HeaderProps) {
           {children}
           
           {/* Notifications Button */}
-          <Link href="/alerts">
-            <Button variant="ghost" size="icon" title="View Alerts" className="relative">
-              <Bell className="h-4 w-4" />
-              {/* Optional: Add notification badge */}
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-xs"></span>
-            </Button>
-          </Link>
+          <NotificationBell />
           
           {/* User Profile Dropdown */}
           <DropdownMenu>

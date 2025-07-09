@@ -4586,5 +4586,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Notification API Routes
+  app.get('/api/notifications', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      // Return sample notifications for now
+      const sampleNotifications = [
+        {
+          id: '1',
+          userId,
+          type: 'signal',
+          title: 'BTC Buy Signal',
+          message: 'Strong buy signal detected for Bitcoin at $67,543',
+          priority: 'high',
+          isRead: false,
+          isArchived: false,
+          timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+          metadata: {
+            symbol: 'BTCUSDT',
+            price: 67543,
+            change: 2.4,
+            signalType: 'buy'
+          }
+        },
+        {
+          id: '2',
+          userId,
+          type: 'price',
+          title: 'Price Alert',
+          message: 'Ethereum reached your target price of $3,400',
+          priority: 'medium',
+          isRead: false,
+          isArchived: false,
+          timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+          metadata: {
+            symbol: 'ETHUSDT',
+            price: 3400,
+            change: 1.8
+          }
+        },
+        {
+          id: '3',
+          userId,
+          type: 'system',
+          title: 'System Update',
+          message: 'New features have been added to your dashboard',
+          priority: 'low',
+          isRead: true,
+          isArchived: false,
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+        }
+      ];
+      res.json(sampleNotifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).json({ message: 'Failed to fetch notifications' });
+    }
+  });
+
+  app.patch('/api/notifications/:id/read', requireAuth, async (req: any, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      res.status(500).json({ message: 'Failed to mark notification as read' });
+    }
+  });
+
+  app.patch('/api/notifications/:id/archive', requireAuth, async (req: any, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error archiving notification:', error);
+      res.status(500).json({ message: 'Failed to archive notification' });
+    }
+  });
+
+  app.patch('/api/notifications/mark-all-read', requireAuth, async (req: any, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      res.status(500).json({ message: 'Failed to mark all notifications as read' });
+    }
+  });
+
+  app.get('/api/user/notification-preferences', requireAuth, async (req: any, res) => {
+    try {
+      const preferences = {
+        enableSound: true,
+        enableBrowser: true,
+        enableContextual: true,
+        categories: {
+          signals: true,
+          price: true,
+          news: true,
+          system: true,
+          achievements: true,
+        },
+        priorities: {
+          low: true,
+          medium: true,
+          high: true,
+          critical: true,
+        },
+      };
+      res.json(preferences);
+    } catch (error) {
+      console.error('Error fetching notification preferences:', error);
+      res.status(500).json({ message: 'Failed to fetch notification preferences' });
+    }
+  });
+
+  app.put('/api/user/notification-preferences', requireAuth, async (req: any, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating notification preferences:', error);
+      res.status(500).json({ message: 'Failed to update notification preferences' });
+    }
+  });
+
+  app.post('/api/notifications/test', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { type = 'system' } = req.body;
+      
+      const testNotification = {
+        id: `test-${Date.now()}`,
+        userId,
+        type,
+        title: `Test ${type} notification`,
+        message: `This is a test ${type} notification to verify the system is working correctly.`,
+        priority: 'medium' as const,
+        isRead: false,
+        isArchived: false,
+        timestamp: new Date().toISOString(),
+        metadata: type === 'signal' ? {
+          symbol: 'BTCUSDT',
+          price: 45000,
+          change: 2.5,
+          signalType: 'buy' as const,
+        } : null,
+      };
+      
+      // Broadcast to connected clients
+      broadcast({
+        type: 'notification',
+        notification: testNotification,
+      });
+      
+      res.json(testNotification);
+    } catch (error) {
+      console.error('Error creating test notification:', error);
+      res.status(500).json({ message: 'Failed to create test notification' });
+    }
+  });
+
   return httpServer;
 }

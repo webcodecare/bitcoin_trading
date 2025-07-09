@@ -56,6 +56,7 @@ const LiveStreaming = lazy(() => import("@/pages/live-streaming"));
 const HistoricalOHLC = lazy(() => import("@/pages/historical-ohlc"));
 const Achievements = lazy(() => import("@/pages/achievements"));
 const UserProgress = lazy(() => import("@/pages/user-progress"));
+const NotificationCenter = lazy(() => import("@/pages/notification-center"));
 import AuthGuard from "@/components/auth/AuthGuard";
 
 function Router() {
@@ -172,6 +173,13 @@ function Router() {
       <Route path="/notification-dashboard">
         <AuthGuard>
           <NotificationDashboard />
+        </AuthGuard>
+      </Route>
+      <Route path="/notification-center">
+        <AuthGuard>
+          <LazyLoader>
+            <NotificationCenter />
+          </LazyLoader>
         </AuthGuard>
       </Route>
       <Route path="/advanced-alerts">
