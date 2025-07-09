@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { Link } from "wouter";
 import Sidebar from "@/components/layout/Sidebar";
+import TopBar from "@/components/layout/TopBar";
 
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
@@ -13,13 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -30,11 +24,7 @@ import {
   Activity,
   BarChart3,
   LineChart,
-  PieChart,
-  Settings,
-  User,
-  LogOut,
-  AlertTriangle
+  PieChart
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -53,6 +43,7 @@ export default function Dashboard() {
   const [recentSignals, setRecentSignals] = useState<AlertSignal[]>([]);
   const [selectedTickers, setSelectedTickers] = useState<string[]>(["BTCUSDT", "ETHUSDT"]);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Handle ticker selection
   const handleTickerToggle = (symbol: string) => {
@@ -78,11 +69,6 @@ export default function Dashboard() {
       return await response.json();
     },
   });
-
-  // Mock current price for demo
-  const currentBTCPrice = 67234.56;
-  const dailyChange = 2.34;
-  const isPositive = dailyChange > 0;
 
   // WebSocket for real-time signal updates
   useWebSocket((message) => {
@@ -127,105 +113,35 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
-        <Sidebar />
+        <Sidebar 
+          isOpen={isMobileMenuOpen} 
+          onClose={() => setIsMobileMenuOpen(false)} 
+        />
         
         {/* Main Content */}
-        <div className="ml-0 lg:ml-64 flex-1 bg-background">
-          {/* Top Bar */}
-          <header className="bg-card border-b border-border p-4 lg:p-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-6 gap-4">
-                <h1 className="text-xl lg:text-2xl font-bold">Trading Dashboard</h1>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <div className="bg-muted px-3 py-2 rounded-lg">
-                    <span className="text-xs lg:text-sm text-muted-foreground">BTC/USD</span>
-                    <span className={`font-semibold ml-2 text-sm lg:text-base ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
-                      ${currentBTCPrice.toLocaleString()}
-                    </span>
-                    <span className={`text-xs lg:text-sm ml-2 ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {isPositive ? '+' : ''}{dailyChange}%
-                    </span>
-                  </div>
-                  <div className="bg-muted px-3 py-2 rounded-lg">
-                    <span className="text-xs lg:text-sm text-muted-foreground">24h Vol</span>
-                    <span className="text-foreground font-semibold ml-2 text-sm lg:text-base">$28.5B</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {/* Notifications Button */}
-                <Link href="/alerts">
-                  <Button variant="ghost" size="icon" title="View Alerts">
-                    <Bell className="h-4 w-4" />
-                  </Button>
-                </Link>
-                
-                {/* User Profile Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
-                        {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-                      </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <div className="flex items-center justify-start gap-2 p-2">
-                      <div className="flex flex-col space-y-1 leading-none">
-                        <p className="font-medium">{user?.firstName || 'User'}</p>
-                        <p className="w-[200px] truncate text-sm text-muted-foreground">
-                          {user?.email}
-                        </p>
-                      </div>
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/settings" className="w-full">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Settings
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/preferences" className="w-full">
-                        <User className="mr-2 h-4 w-4" />
-                        Preferences
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/advanced-alerts" className="w-full">
-                        <AlertTriangle className="mr-2 h-4 w-4" />
-                        Advanced Alerts
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={logout}
-                      className="text-red-600 focus:text-red-600"
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </header>
-
+        <div className="w-full lg:ml-64 flex-1 bg-background">
+          {/* Enhanced Top Bar */}
+          <TopBar 
+            title="Trading Dashboard"
+            onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            showMobileMenu={isMobileMenuOpen}
+          />
+          
           {/* Dashboard Content */}
-          <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          <div className="p-4 lg:p-6 space-y-6">
+            {/* Quick Stats - Responsive Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               {quickStats.map((stat, index) => {
                 const IconComponent = stat.icon;
                 return (
                   <Card key={index}>
-                    <CardContent className="p-6">
+                    <CardContent className="p-4 lg:p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-muted-foreground">{stat.title}</p>
-                          <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                          <p className="text-xs lg:text-sm text-muted-foreground">{stat.title}</p>
+                          <p className={`text-lg lg:text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                         </div>
-                        <IconComponent className={`h-8 w-8 ${stat.color}`} />
+                        <IconComponent className={`h-6 w-6 lg:h-8 lg:w-8 ${stat.color}`} />
                       </div>
                     </CardContent>
                   </Card>
@@ -233,93 +149,202 @@ export default function Dashboard() {
               })}
             </div>
 
-            {/* Professional Trading Interface */}
-            <div className="grid grid-cols-1 gap-6">
-              {/* Main TradingView Chart */}
-              <div className="w-full">
-                <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-                  <CardContent className="p-4">
-                    <TradingViewRealWidget ticker="BTCUSDT" />
+            {/* Enhanced Dashboard Tabs */}
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-6">
+                <TabsTrigger value="overview" className="flex items-center space-x-2 text-xs lg:text-sm">
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Overview</span>
+                  <span className="sm:hidden">Home</span>
+                </TabsTrigger>
+                <TabsTrigger value="charts" className="flex items-center space-x-2 text-xs lg:text-sm">
+                  <LineChart className="h-4 w-4" />
+                  <span>Charts</span>
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="flex items-center space-x-2 text-xs lg:text-sm">
+                  <PieChart className="h-4 w-4" />
+                  <span className="hidden sm:inline">Analytics</span>
+                  <span className="sm:hidden">Data</span>
+                </TabsTrigger>
+                <TabsTrigger value="alerts" className="flex items-center space-x-2 text-xs lg:text-sm">
+                  <Bell className="h-4 w-4" />
+                  <span>Alerts</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-6">
+                {/* Ticker Selection */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Activity className="h-5 w-5" />
+                      <span>Active Tickers</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <TickerSelector 
+                      selectedTickers={selectedTickers}
+                      onTickerToggle={handleTickerToggle}
+                      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+                    />
                   </CardContent>
                 </Card>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-              {/* 200-Week Heatmap Widget */}
-              <HeatmapChart 
-                symbol="BTC"
-                height={300}
-              />
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Price Chart</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-2">
+                      <TradingViewRealWidget symbol="BTCUSDT" height={300} />
+                    </CardContent>
+                  </Card>
 
-              {/* 2-Year Cycle Indicator */}
-              <CycleChart 
-                symbol="BTC"
-                height={300}
-              />
-            </div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>200-Week Heatmap</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <HeatmapChart symbol="BTC" height={300} />
+                    </CardContent>
+                  </Card>
+                </div>
 
-            {/* Recent Alerts Feed */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Activity className="mr-2 h-5 w-5" />
-                  Recent Alerts
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoadingSignals ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 3 }, (_, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <Skeleton className="w-3 h-3 rounded-full" />
-                          <div>
-                            <Skeleton className="h-4 w-32 mb-1" />
-                            <Skeleton className="h-3 w-48" />
-                          </div>
-                        </div>
-                        <Skeleton className="w-4 h-4" />
+                {/* Recent Signals */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Recent Signals</span>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/alerts">View All</Link>
+                      </Button>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingSignals ? (
+                      <div className="space-y-3">
+                        {[...Array(3)].map((_, i) => (
+                          <Skeleton key={i} className="h-16 w-full" />
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : recentSignals.length > 0 ? (
-                  <div className="space-y-3">
-                    {recentSignals.map((signal) => (
-                      <div key={signal.id} className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-3 h-3 rounded-full ${
-                            signal.signalType === 'buy' ? 'bg-emerald-400' : 'bg-red-400'
-                          }`} />
-                          <div>
-                            <div className="font-semibold flex items-center space-x-2">
-                              <span>{signal.signalType.toUpperCase()} Signal - {signal.ticker}</span>
-                              <Badge variant={signal.signalType === 'buy' ? 'default' : 'destructive'} className="text-xs">
-                                {signal.signalType === 'buy' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    ) : recentSignals.length > 0 ? (
+                      <div className="space-y-3">
+                        {recentSignals.slice(0, 5).map((signal) => (
+                          <div
+                            key={signal.id}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
+                            <div className="flex items-center space-x-3">
+                              {signal.signalType === "buy" ? (
+                                <TrendingUp className="h-5 w-5 text-green-400" />
+                              ) : (
+                                <TrendingDown className="h-5 w-5 text-red-400" />
+                              )}
+                              <div>
+                                <p className="font-medium">{signal.ticker}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {signal.signalType.toUpperCase()} at ${signal.price}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(signal.timestamp).toLocaleTimeString()}
+                              </p>
+                              <Badge variant="outline" className="text-xs mt-1">
+                                {signal.source}
                               </Badge>
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              Price: ${parseFloat(signal.price).toLocaleString()} | 
-                              Time: {new Date(signal.timestamp).toLocaleString()}
-                              {signal.note && ` | ${signal.note}`}
-                            </div>
                           </div>
-                        </div>
-                        <Button variant="ghost" size="icon">
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No recent signals found</p>
-                    <p className="text-sm text-muted-foreground">Signals will appear here when they're generated</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-8">
+                        No recent signals. Signals will appear here when available.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="charts" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <HeatmapChart symbol="BTC" height={400} />
+                  <CycleChart symbol="BTC" height={400} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="analytics" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Cycle Analysis</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CycleChart symbol="BTC" height={300} />
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Performance Metrics</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex justify-between">
+                        <span>Win Rate</span>
+                        <span className="font-semibold text-green-400">87.5%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Avg. Hold Time</span>
+                        <span className="font-semibold">2.3 days</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Best Performer</span>
+                        <span className="font-semibold">BTCUSDT</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="alerts" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Alert Settings</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Button className="w-full" asChild>
+                        <Link href="/alerts">Manage Alerts</Link>
+                      </Button>
+                      <Button variant="outline" className="w-full" asChild>
+                        <Link href="/advanced-alerts">Advanced Alerts</Link>
+                      </Button>
+                      <Button variant="outline" className="w-full" asChild>
+                        <Link href="/notification-setup">Notification Setup</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Recent Alerts</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {recentSignals.slice(0, 3).map((signal) => (
+                        <div key={signal.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                          <span className="text-sm">{signal.ticker} {signal.signalType.toUpperCase()}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(signal.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
