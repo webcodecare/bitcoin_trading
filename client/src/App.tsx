@@ -54,6 +54,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/auth" component={Auth} />
+      <Route path="/signup" component={Auth} />
       <Route path="/login" component={Login} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/dashboard">
