@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 import {
   TrendingUp,
   TrendingDown,
@@ -38,11 +35,6 @@ export default function ProfessionalTradingInterface({
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Trading form state
-  const [amount, setAmount] = useState('');
-  const [price, setPrice] = useState('');
-  const [orderSide, setOrderSide] = useState<'buy' | 'sell'>('buy');
 
   // Check TradingView timeframe support for current symbol
   const { data: timeframeConfig } = useQuery({
@@ -72,63 +64,6 @@ export default function ProfessionalTradingInterface({
   };
 
   const [recentTrades] = useState(generateRecentTrades());
-
-  // Update price when current price changes
-  useEffect(() => {
-    if (!price && currentPrice > 0) {
-      setPrice(currentPrice.toFixed(2));
-    }
-  }, [currentPrice, price]);
-
-  // Place order mutation
-  const placeOrderMutation = useMutation({
-    mutationFn: async (orderData: any) => {
-      return apiRequest('POST', '/api/trading/order', orderData);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Order Placed",
-        description: `${orderSide.toUpperCase()} order for ${amount} ${symbol} placed successfully`,
-      });
-      setAmount('');
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Order Failed",
-        description: error.message || "Failed to place order",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handlePlaceOrder = (side: 'buy' | 'sell') => {
-    if (!amount || parseFloat(amount) <= 0) {
-      toast({
-        title: "Invalid Amount",
-        description: "Please enter a valid amount",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!price || parseFloat(price) <= 0) {
-      toast({
-        title: "Invalid Price", 
-        description: "Please enter a valid price",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const orderData = {
-      symbol,
-      side,
-      amount: parseFloat(amount),
-      price: parseFloat(price),
-    };
-
-    placeOrderMutation.mutate(orderData);
-  };
 
   return (
     <div className="space-y-6">
@@ -268,170 +203,35 @@ export default function ProfessionalTradingInterface({
         </Card>
       </div>
 
-      {/* Buy/Sell Trading Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        {/* Buy Panel */}
-        <Card className="border-green-500/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-green-600">
-              <TrendingUp className="h-4 w-4" />
-              Buy {symbol.replace('USDT', '')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="buy-price" className="text-xs">Price (USDT)</Label>
-              <Input
-                id="buy-price"
-                type="number"
-                placeholder="0.00"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="buy-amount" className="text-xs">Amount ({symbol.replace('USDT', '')})</Label>
-              <Input
-                id="buy-amount" 
-                type="number"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="text-sm"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="flex-1 text-xs"
-                onClick={() => setAmount((parseFloat(amount || '0') + 0.001).toFixed(6))}
-              >
-                25%
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="flex-1 text-xs"
-                onClick={() => setAmount((parseFloat(amount || '0') + 0.002).toFixed(6))}
-              >
-                50%
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="flex-1 text-xs"
-                onClick={() => setAmount((parseFloat(amount || '0') + 0.003).toFixed(6))}
-              >
-                75%
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="flex-1 text-xs"
-                onClick={() => setAmount((parseFloat(amount || '0') + 0.004).toFixed(6))}
-              >
-                Max
-              </Button>
-            </div>
-            <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
-              onClick={() => handlePlaceOrder('buy')}
-              disabled={placeOrderMutation.isPending}
-            >
-              <TrendingUp className="h-4 w-4 mr-2" />
-              {placeOrderMutation.isPending ? 'Placing...' : 'BUY BTC'}
-            </Button>
-            {amount && price && (
-              <div className="text-xs text-muted-foreground">
-                Total: {(parseFloat(amount) * parseFloat(price)).toFixed(2)} USDT
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Sell Panel */}
-        <Card className="border-red-500/20 bg-gradient-to-br from-red-500/5 to-pink-500/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-red-600">
-              <TrendingDown className="h-4 w-4" />
-              Sell {symbol.replace('USDT', '')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="sell-price" className="text-xs">Price (USDT)</Label>
-              <Input
-                id="sell-price"
-                type="number"
-                placeholder="0.00"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sell-amount" className="text-xs">Amount ({symbol.replace('USDT', '')})</Label>
-              <Input
-                id="sell-amount"
-                type="number"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="text-sm"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="flex-1 text-xs"
-                onClick={() => setAmount((parseFloat(amount || '0') + 0.001).toFixed(6))}
-              >
-                25%
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="flex-1 text-xs"
-                onClick={() => setAmount((parseFloat(amount || '0') + 0.002).toFixed(6))}
-              >
-                50%
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="flex-1 text-xs"
-                onClick={() => setAmount((parseFloat(amount || '0') + 0.003).toFixed(6))}
-              >
-                75%
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="flex-1 text-xs"
-                onClick={() => setAmount((parseFloat(amount || '0') + 0.004).toFixed(6))}
-              >
-                Max
-              </Button>
-            </div>
-            <Button
-              variant="outline"
-              className="w-full border-red-600 text-red-600 hover:bg-red-600 hover:text-white font-semibold"
-              onClick={() => handlePlaceOrder('sell')}
-              disabled={placeOrderMutation.isPending}
-            >
-              <TrendingDown className="h-4 w-4 mr-2" />
-              {placeOrderMutation.isPending ? 'Placing...' : 'SELL BTC'}
-            </Button>
-            {amount && price && (
-              <div className="text-xs text-muted-foreground">
-                Total: {(parseFloat(amount) * parseFloat(price)).toFixed(2)} USDT
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Trading Action Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <Button
+          size="lg"
+          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-4"
+          onClick={() => {
+            toast({
+              title: "Buy Order",
+              description: `Preparing to buy ${symbol}`,
+            });
+          }}
+        >
+          <TrendingUp className="h-5 w-5 mr-2" />
+          BUY BTC
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white font-semibold py-4"
+          onClick={() => {
+            toast({
+              title: "Sell Order",
+              description: `Preparing to sell ${symbol}`,
+            });
+          }}
+        >
+          <TrendingDown className="h-5 w-5 mr-2" />
+          SELL BTC
+        </Button>
       </div>
 
       {/* Recent Trades - Kept as single section */}
