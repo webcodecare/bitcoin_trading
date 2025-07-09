@@ -249,8 +249,7 @@ export default function AdminSubscriptions() {
 
           {/* Content */}
           <div className="p-4 lg:p-6 space-y-6">
-
-      <Tabs defaultValue="plans" className="space-y-4">
+            <Tabs defaultValue="plans" className="space-y-4">
         <TabsList>
           <TabsTrigger value="plans">Subscription Plans</TabsTrigger>
           <TabsTrigger value="users">User Subscriptions</TabsTrigger>
@@ -468,7 +467,7 @@ export default function AdminSubscriptions() {
         </TabsContent>
       </Tabs>
 
-      {/* Edit Plan Dialog */}
+            {/* Edit Plan Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -703,9 +702,9 @@ export default function AdminSubscriptions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
 }

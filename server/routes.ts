@@ -4707,6 +4707,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Subscription Management API Routes
+  app.get('/api/admin/subscriptions', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      // Return sample subscription data
+      const sampleSubscriptions = [
+        {
+          id: '1',
+          userId: 'user1',
+          userEmail: 'john@example.com',
+          userName: 'John Doe',
+          planTier: 'premium',
+          planName: 'Premium Plan',
+          status: 'active',
+          startDate: '2024-01-01',
+          endDate: '2024-12-31',
+          amount: 2999,
+          lastPayment: '2024-01-01',
+          nextPayment: '2024-02-01'
+        }
+      ];
+      res.json(sampleSubscriptions);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch subscriptions' });
+    }
+  });
+
+  app.get('/api/subscription-plans', async (req, res) => {
+    try {
+      // Return sample subscription plans
+      const samplePlans = [
+        {
+          id: '1',
+          name: 'Basic Plan',
+          tier: 'basic',
+          monthlyPrice: 999,
+          yearlyPrice: 9999,
+          features: ['5 Trading Signals', '3 Tickers', 'Email Notifications'],
+          maxSignals: 5,
+          maxTickers: 3,
+          isActive: true
+        },
+        {
+          id: '2',
+          name: 'Premium Plan',
+          tier: 'premium',
+          monthlyPrice: 2999,
+          yearlyPrice: 29999,
+          features: ['Unlimited Signals', '15 Tickers', 'SMS + Email Alerts', 'Advanced Analytics'],
+          maxSignals: -1,
+          maxTickers: 15,
+          isActive: true
+        }
+      ];
+      res.json(samplePlans);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch subscription plans' });
+    }
+  });
+
+  app.post('/api/admin/subscription-plans', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const planData = req.body;
+      const newPlan = {
+        id: Date.now().toString(),
+        ...planData,
+        isActive: true
+      };
+      res.json(newPlan);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to create subscription plan' });
+    }
+  });
+
+  app.put('/api/admin/subscription-plans/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      res.json({ id, ...updates });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update subscription plan' });
+    }
+  });
+
+  app.delete('/api/admin/subscription-plans/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to delete subscription plan' });
+    }
+  });
+
+  app.post('/api/admin/subscriptions/:id/cancel', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to cancel subscription' });
+    }
+  });
+
   app.post('/api/notifications/test', requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
