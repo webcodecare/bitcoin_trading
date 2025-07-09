@@ -115,11 +115,20 @@ export class SessionManager {
     });
 
     // Check session validity periodically
-    setInterval(() => {
+    const sessionCheckInterval = setInterval(() => {
       if (!this.isValidSession()) {
+        clearInterval(sessionCheckInterval);
+        // Store current path for redirect after login
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/login' && currentPath !== '/auth' && currentPath !== '/') {
+          sessionStorage.setItem('redirectAfterLogin', currentPath);
+        }
         window.location.href = '/login';
       }
     }, 60000); // Check every minute
+
+    // Store interval ID for cleanup
+    (window as any).sessionCheckInterval = sessionCheckInterval;
   }
 
   // Stop activity tracking
@@ -130,6 +139,12 @@ export class SessionManager {
     events.forEach(event => {
       document.removeEventListener(event, activityHandler, true);
     });
+
+    // Clear session check interval
+    if ((window as any).sessionCheckInterval) {
+      clearInterval((window as any).sessionCheckInterval);
+      delete (window as any).sessionCheckInterval;
+    }
   }
 
   // Get session info for display

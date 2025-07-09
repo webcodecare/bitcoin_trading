@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authAPI, tokenStorage, User, UserSettings } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { SessionManager } from "@/lib/sessionManager";
+import { AuthUtils } from "@/lib/authUtils";
 
 interface AuthContextType {
   user: User | null;
@@ -13,6 +14,10 @@ interface AuthContextType {
   register: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
   logout: () => void;
   updateSettings: (settings: Partial<UserSettings>) => Promise<void>;
+  extendSession: () => void;
+  hasPermission: (requiredRole?: string) => boolean;
+  getUserDisplayName: () => string;
+  getUserInitials: () => string;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -134,9 +139,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    AuthUtils.logSecurityEvent('USER_LOGOUT', { userId: profileData?.user?.id });
     setToken(null);
-    SessionManager.clearSession();
-    tokenStorage.remove();
+    AuthUtils.clearAllAuthData();
     queryClient.clear();
     toast({
       title: "Logged out",
@@ -144,6 +149,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     // Redirect to login page
     window.location.href = '/login';
+  };
+
+  const extendSession = () => {
+    SessionManager.extendSession();
+    AuthUtils.logSecurityEvent('SESSION_EXTENDED', { userId: profileData?.user?.id });
+    toast({
+      title: "Session extended",
+      description: "Your session has been extended",
+    });
+  };
+
+  const hasPermission = (requiredRole?: string) => {
+    return AuthUtils.hasPermission(profileData?.user, requiredRole);
+  };
+
+  const getUserDisplayName = () => {
+    return AuthUtils.getUserDisplayName(profileData?.user);
+  };
+
+  const getUserInitials = () => {
+    return AuthUtils.getUserInitials(profileData?.user);
   };
 
   const updateSettings = async (settings: Partial<UserSettings>) => {
@@ -159,6 +185,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     updateSettings,
+    extendSession,
+    hasPermission,
+    getUserDisplayName,
+    getUserInitials,
   };
 
   return (
