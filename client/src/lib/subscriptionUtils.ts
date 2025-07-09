@@ -221,7 +221,12 @@ export function hasAccess(
   requiredFeature: keyof FeatureAccess
 ): boolean {
   const access = getFeatureAccess(userTier);
-  return Boolean(access[requiredFeature]);
+  const hasFeature = Boolean(access[requiredFeature]);
+  
+  // Debug logging
+  console.log(`hasAccess DEBUG: userTier=${userTier}, feature=${requiredFeature}, hasFeature=${hasFeature}`, access);
+  
+  return hasFeature;
 }
 
 export function getUpgradeMessage(feature: string): string {

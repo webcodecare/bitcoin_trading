@@ -23,7 +23,12 @@ export default function SubscriptionGuard({
   const { user } = useAuth();
   const userTier = user?.subscriptionTier || "free";
   
+  // Debug logging
+  console.log(`SubscriptionGuard DEBUG: feature=${feature}, userTier=${userTier}, user=`, user);
+  
   const hasFeatureAccess = hasAccess(userTier, feature as any);
+  
+  console.log(`SubscriptionGuard DEBUG: hasFeatureAccess=${hasFeatureAccess} for ${feature}`);
   
   if (hasFeatureAccess) {
     return <>{children}</>;
