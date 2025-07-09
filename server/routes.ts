@@ -9,6 +9,8 @@ import { cycleForecastingService } from "./services/cycleForecasting";
 import { notificationService } from "./services/notificationService";
 import { smsService } from "./services/smsService";
 import { telegramService } from "./services/telegramService";
+import { notificationQueueService } from "./services/notificationQueue";
+import { scheduledProcessor } from "./services/scheduledProcessor";
 import { smartTimingOptimizer } from "./services/smartTimingOptimizer";
 import { z } from "zod";
 
@@ -912,6 +914,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         signal: signal,
         source: 'admin'
       });
+
+      // Queue notifications for subscribed users
+      try {
+        const subscribedUsers = await storage.getUserSubscriptions();
+        const relevantSubscriptions = subscribedUsers.filter(sub => sub.symbol === signal.ticker);
+        
+        for (const subscription of relevantSubscriptions) {
+          await notificationQueueService.queueSignalNotification(signal.id, subscription.userId);
+        }
+      } catch (error) {
+        console.error('Error queuing signal notifications:', error);
+      }
       
       res.json({ 
         success: true, 
@@ -1107,13 +1121,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         signal,
       });
 
-      // Send notifications to all users
-      await notificationService.broadcastSignalToAllUsers({
-        ticker: signal.ticker,
-        signalType: signal.signalType as 'buy' | 'sell',
-        price: parseFloat(signal.price),
-        confidence: 85, // Default confidence for webhook signals
-      });
+      // Queue notifications for subscribed users via new notification engine
+      try {
+        const subscribedUsers = await storage.getUserSubscriptions();
+        const relevantSubscriptions = subscribedUsers.filter(sub => sub.symbol === signal.ticker);
+        
+        for (const subscription of relevantSubscriptions) {
+          await notificationQueueService.queueSignalNotification(signal.id, subscription.userId);
+        }
+      } catch (error) {
+        console.error('Error queuing signal notifications:', error);
+      }
 
       res.json({ success: true, signal });
     } catch (error) {
@@ -1150,13 +1168,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         signal,
       });
 
-      // Send notifications to all users for manual signals
-      await notificationService.broadcastSignalToAllUsers({
-        ticker: signal.ticker,
-        signalType: signal.signalType as 'buy' | 'sell',
-        price: parseFloat(signal.price),
-        confidence: 90, // Higher confidence for manual admin signals
-      });
+      // Queue notifications for subscribed users via new notification engine
+      try {
+        const subscribedUsers = await storage.getUserSubscriptions();
+        const relevantSubscriptions = subscribedUsers.filter(sub => sub.symbol === signal.ticker);
+        
+        for (const subscription of relevantSubscriptions) {
+          await notificationQueueService.queueSignalNotification(signal.id, subscription.userId);
+        }
+      } catch (error) {
+        console.error('Error queuing signal notifications:', error);
+      }
 
       res.json(signal);
     } catch (error) {
@@ -3682,6 +3704,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error validating Telegram chat ID:', error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Notification Queue Management - Admin Endpoints
+  app.get('/api/admin/notification-queue', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const queue = await notificationQueueService.getQueueForAdmin(100);
+      res.json(queue);
+    } catch (error) {
+      console.error('Error fetching notification queue:', error);
+      res.status(500).json({ error: 'Failed to fetch notification queue' });
+    }
+  });
+
+  app.get('/api/admin/notification-queue/stats', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const stats = await notificationQueueService.getQueueStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching queue stats:', error);
+      res.status(500).json({ error: 'Failed to fetch queue statistics' });
+    }
+  });
+
+  app.post('/api/admin/notification-queue/:id/retry', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await notificationQueueService.retryNotification(id);
+      res.json({ success: true, message: 'Notification queued for retry' });
+    } catch (error) {
+      console.error('Error retrying notification:', error);
+      res.status(500).json({ error: 'Failed to retry notification' });
+    }
+  });
+
+  app.post('/api/admin/notification-queue/test', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { channel, recipient, message } = req.body;
+      
+      const notificationId = await notificationQueueService.queueNotification({
+        userId: req.user.id,
+        channel,
+        recipient,
+        subject: 'Test Notification',
+        message: message || 'This is a test notification from the admin panel.',
+        priority: 10, // High priority for tests
+      });
+
+      res.json({ 
+        success: true, 
+        message: 'Test notification queued successfully',
+        notificationId
+      });
+    } catch (error) {
+      console.error('Error queuing test notification:', error);
+      res.status(500).json({ error: 'Failed to queue test notification' });
+    }
+  });
+
+  // Scheduled Processor Management (Admin Only)
+  app.get('/api/admin/notification-processor/status', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const health = await scheduledProcessor.healthCheck();
+      res.json(health);
+    } catch (error) {
+      console.error('Error getting processor status:', error);
+      res.status(500).json({ error: 'Failed to get processor status' });
+    }
+  });
+
+  app.post('/api/admin/notification-processor/force-process', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      await scheduledProcessor.forceProcess();
+      res.json({ success: true, message: 'Force processing initiated' });
+    } catch (error) {
+      console.error('Error forcing notification processing:', error);
+      res.status(500).json({ error: 'Failed to force process notifications' });
+    }
+  });
+
+  app.post('/api/admin/notification-processor/update-interval', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { intervalMs } = req.body;
+      
+      if (!intervalMs || intervalMs < 10000) {
+        return res.status(400).json({ error: 'Interval must be at least 10 seconds (10000ms)' });
+      }
+
+      scheduledProcessor.updateInterval(intervalMs);
+      res.json({ 
+        success: true, 
+        message: `Processing interval updated to ${intervalMs / 1000} seconds` 
+      });
+    } catch (error) {
+      console.error('Error updating processor interval:', error);
+      res.status(500).json({ error: 'Failed to update processing interval' });
     }
   });
 
