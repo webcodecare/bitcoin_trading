@@ -211,6 +211,11 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
       href: "/admin/content",
       icon: Edit,
     },
+    {
+      title: "Test Users",
+      href: "/admin/test-users",
+      icon: Users,
+    },
   ];
 
   const navItems = user?.role === 'admin' ? adminNavItems : userNavItems;

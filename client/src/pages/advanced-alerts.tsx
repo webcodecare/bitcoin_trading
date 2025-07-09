@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
 import AlertSystem from '@/components/advanced/AlertSystem';
+import SubscriptionGuard from "@/components/auth/SubscriptionGuard";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bell } from "lucide-react";
@@ -86,9 +87,11 @@ export default function AdvancedAlertsPage() {
 
           {/* Alert System Content with Suspense */}
           <div className="p-6">
-            <Suspense fallback={<AlertSystemSkeleton />}>
-              <AlertSystem />
-            </Suspense>
+            <SubscriptionGuard feature="multiChannelAlerts">
+              <Suspense fallback={<AlertSystemSkeleton />}>
+                <AlertSystem />
+              </Suspense>
+            </SubscriptionGuard>
           </div>
         </div>
       </div>

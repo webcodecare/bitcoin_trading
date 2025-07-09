@@ -31,6 +31,7 @@ const AdminSubscriptions = lazy(() => import("@/pages/admin/subscriptions"));
 const AdminPayments = lazy(() => import("@/pages/admin/payments"));
 const AdminIntegrations = lazy(() => import("@/pages/admin/integrations"));
 const AdminContent = lazy(() => import("@/pages/admin/content"));
+const AdminTestUsers = lazy(() => import("@/pages/admin/test-users"));
 const Alerts = lazy(() => import("@/pages/alerts"));
 const AdvancedAlertsPage = lazy(() => import("@/pages/advanced-alerts"));
 const AdvancedPortfolioPage = lazy(() => import("@/pages/advanced-portfolio"));
@@ -148,6 +149,13 @@ function Router() {
       <Route path="/admin/content">
         <AuthGuard requiredRole="admin">
           <AdminContent />
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/test-users">
+        <AuthGuard requiredRole="admin">
+          <LazyLoader>
+            <AdminTestUsers />
+          </LazyLoader>
         </AuthGuard>
       </Route>
       <Route path="/alerts">
