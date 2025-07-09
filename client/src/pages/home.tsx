@@ -6,7 +6,7 @@ import Footer from "@/components/layout/Footer";
 import TradingViewWidget from "@/components/charts/TradingViewWidget";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
-import ProfessionalDemoChart from "@/components/charts/ProfessionalDemoChart";
+import SimpleDemoChart from "@/components/charts/SimpleDemoChart";
 import MarketWidget from "@/components/widgets/MarketWidget";
 import { 
   Bitcoin, 
@@ -166,12 +166,12 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Live BTC Chart Preview with Simulated Alerts */}
+            {/* Live BTC Chart Preview */}
             <div className="lg:ml-8">
-              <ProfessionalDemoChart 
-                title="Bitcoin Professional Chart"
+              <SimpleDemoChart 
+                title="Bitcoin Live Chart"
                 symbol="BTCUSDT"
-                className="shadow-2xl"
+                className="shadow-xl"
               />
             </div>
           </div>
@@ -233,124 +233,37 @@ export default function Home() {
             className="border border-border"
           />
 
-          {/* Enhanced Live Demo Charts Section */}
-          <div className="mt-16">
-            <div className="text-center mb-12">
-              <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
-                Live Demo Charts
-              </h3>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Experience our professional trading platform with real-time price data, advanced analytics, and intelligent trading signals. Watch live signals generate automatically on authentic market data.
-              </p>
-              <div className="flex justify-center items-center mt-4 space-x-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-green-600 font-medium">Live Market Data</span>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-sm text-blue-600 font-medium">Real-time Signals</span>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-sm text-orange-600 font-medium">Professional Analytics</span>
-              </div>
+          {/* Simple Live Demo Charts */}
+          <div className="mt-12">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold mb-2">Live Demo Charts</h3>
+              <p className="text-muted-foreground">See our platform in action with real-time market data</p>
             </div>
             
-            {/* Primary Demo Charts */}
-            <div className="grid lg:grid-cols-2 gap-8 mb-12">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xl font-semibold">Bitcoin Professional Chart</h4>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs text-muted-foreground">LIVE UPDATES</span>
-                  </div>
-                </div>
-                <ProfessionalDemoChart 
-                  title="Bitcoin Professional Analytics"
-                  symbol="BTCUSDT"
-                  className="shadow-2xl border-2 border-orange-500/20 hover:border-orange-500/40 transition-all duration-300"
-                />
-                <div className="text-sm text-muted-foreground text-center">
-                  Advanced candlestick charts with volume analysis, trend indicators, and automated signal detection
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xl font-semibold">Ethereum Live Signals</h4>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs text-muted-foreground">SIGNAL ACTIVE</span>
-                  </div>
-                </div>
-                <ProfessionalDemoChart 
-                  title="Ethereum Trading Terminal"
-                  symbol="ETHUSDT"
-                  className="shadow-2xl border-2 border-blue-500/20 hover:border-blue-500/40 transition-all duration-300"
-                />
-                <div className="text-sm text-muted-foreground text-center">
-                  Real-time buy/sell signal generation with confidence scoring and strategy attribution
-                </div>
-              </div>
+            <div className="grid lg:grid-cols-2 gap-6 mb-8">
+              <SimpleDemoChart 
+                title="Bitcoin"
+                symbol="BTCUSDT"
+                className="shadow-lg"
+              />
+              <SimpleDemoChart 
+                title="Ethereum"
+                symbol="ETHUSDT"
+                className="shadow-lg"
+              />
             </div>
 
-            {/* Secondary Demo Charts */}
-            <div className="grid md:grid-cols-2 gap-8 mb-8">
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-center">Solana Market Analysis</h4>
-                <ProfessionalDemoChart 
-                  title="Solana Professional Chart"
-                  symbol="SOLUSDT"
-                  className="shadow-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300"
-                />
-              </div>
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-center">Cardano Trading Signals</h4>
-                <ProfessionalDemoChart 
-                  title="Cardano Advanced Analytics"
-                  symbol="ADAUSDT" 
-                  className="shadow-xl border border-green-500/20 hover:border-green-500/40 transition-all duration-300"
-                />
-              </div>
-            </div>
-
-            {/* Demo Features Showcase */}
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 mt-12">
-              <div className="grid md:grid-cols-3 gap-8 text-center">
-                <div className="space-y-3">
-                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto">
-                    <BarChart3 className="h-6 w-6 text-white" />
-                  </div>
-                  <h5 className="font-semibold">Advanced Analytics</h5>
-                  <p className="text-sm text-muted-foreground">
-                    Volume analysis, trend detection, and multi-timeframe support with professional-grade visualization
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto">
-                    <TrendingUp className="h-6 w-6 text-white" />
-                  </div>
-                  <h5 className="font-semibold">Smart Signals</h5>
-                  <p className="text-sm text-muted-foreground">
-                    AI-powered trading signals with confidence scoring, strategy attribution, and real-time execution alerts
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mx-auto">
-                    <Zap className="h-6 w-6 text-white" />
-                  </div>
-                  <h5 className="font-semibold">Live Market Data</h5>
-                  <p className="text-sm text-muted-foreground">
-                    Real-time price feeds, volume tracking, and market sentiment analysis updated every second
-                  </p>
-                </div>
-              </div>
-              
-              <div className="text-center mt-8">
-                <Button size="lg" className="crypto-gradient text-white" asChild>
-                  <Link href="/login">
-                    Try Live Trading Dashboard
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <SimpleDemoChart 
+                title="Solana"
+                symbol="SOLUSDT"
+                className="shadow-lg"
+              />
+              <SimpleDemoChart 
+                title="Cardano"
+                symbol="ADAUSDT" 
+                className="shadow-lg"
+              />
             </div>
           </div>
         </div>
