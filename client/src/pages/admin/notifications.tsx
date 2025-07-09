@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Sidebar from "@/components/layout/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -192,14 +193,23 @@ export default function AdminNotifications() {
   const pushConfig = configs?.find(c => c.type === "push");
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Notification System</h1>
-          <p className="text-muted-foreground">Manage email, SMS, and push notification delivery</p>
-        </div>
-      </div>
+    <div className="flex h-screen bg-background">
+      <Sidebar className="w-64 hidden lg:block" />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white shadow-sm border-b lg:hidden">
+          <div className="px-4 py-4">
+            <h1 className="text-xl font-semibold">Notification Management</h1>
+          </div>
+        </header>
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold">Notification System</h1>
+                <p className="text-muted-foreground">Manage email, SMS, and push notification delivery</p>
+              </div>
+            </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -590,6 +600,9 @@ export default function AdminNotifications() {
           </CardContent>
         </Card>
       )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
