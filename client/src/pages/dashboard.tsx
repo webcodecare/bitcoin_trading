@@ -173,7 +173,7 @@ export default function Dashboard() {
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
-                {/* Ticker Selection */}
+                {/* Active Tickers Display */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
@@ -182,11 +182,33 @@ export default function Dashboard() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <TickerSelector 
-                      selectedTickers={selectedTickers}
-                      onTickerToggle={handleTickerToggle}
-                      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
-                    />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {selectedTickers.map((ticker) => (
+                        <div key={ticker} className="flex items-center justify-between p-3 border rounded-lg bg-card">
+                          <div>
+                            <div className="font-medium text-sm">{ticker.replace('USDT', '')}</div>
+                            <div className="text-xs text-muted-foreground">Active</div>
+                          </div>
+                          <Badge variant="secondary" className="text-xs">
+                            {ticker.includes('BTC') ? '₿' : ticker.includes('ETH') ? 'Ξ' : '●'}
+                          </Badge>
+                        </div>
+                      ))}
+                      {selectedTickers.length === 0 && (
+                        <div className="col-span-full text-center py-6 text-muted-foreground">
+                          <p>No active tickers selected</p>
+                          <p className="text-xs mt-1">Add tickers to monitor price movements</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="mt-4">
+                      <TickerSelector 
+                        selectedTickers={selectedTickers}
+                        onTickerToggle={handleTickerToggle}
+                        className=""
+                      />
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -197,7 +219,7 @@ export default function Dashboard() {
                       <CardTitle>Price Chart</CardTitle>
                     </CardHeader>
                     <CardContent className="p-2">
-                      <TradingViewRealWidget symbol="BTCUSDT" height={300} />
+                      <TradingViewRealWidget ticker={selectedTickers[0] || "BTCUSDT"} />
                     </CardContent>
                   </Card>
 

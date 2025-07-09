@@ -16,7 +16,7 @@ export default function TradingViewRealWidget({ ticker, onTrade }: TradingViewRe
   const { user } = useAuth();
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !ticker) return;
 
     // Clear previous widget
     containerRef.current.innerHTML = '';
@@ -37,12 +37,14 @@ export default function TradingViewRealWidget({ ticker, onTrade }: TradingViewRe
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
     script.async = true;
 
-    // Convert our ticker format to TradingView format
-    const tradingViewSymbol = ticker === 'BTCUSDT' ? 'BINANCE:BTCUSDT' :
-                             ticker === 'ETHUSDT' ? 'BINANCE:ETHUSDT' :
-                             ticker === 'SOLUSDT' ? 'BINANCE:SOLUSDT' :
-                             ticker === 'ADAUSDT' ? 'BINANCE:ADAUSDT' :
-                             `BINANCE:${ticker}`;
+    // Convert our ticker format to TradingView format - ensure ticker is valid
+    const safeTicker = ticker || 'BTCUSDT';
+    const tradingViewSymbol = safeTicker === 'BTCUSDT' ? 'BINANCE:BTCUSDT' :
+                             safeTicker === 'ETHUSDT' ? 'BINANCE:ETHUSDT' :
+                             safeTicker === 'SOLUSDT' ? 'BINANCE:SOLUSDT' :
+                             safeTicker === 'ADAUSDT' ? 'BINANCE:ADAUSDT' :
+                             safeTicker.includes('USDT') ? `BINANCE:${safeTicker}` :
+                             `BINANCE:${safeTicker}USDT`;
 
     // Advanced TradingView widget configuration with professional features
     const widgetConfig = {
@@ -151,6 +153,32 @@ export default function TradingViewRealWidget({ ticker, onTrade }: TradingViewRe
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
+    };
+  }, [ticker]);
+
+  if (!ticker) {
+    return (
+      <div ref={containerRef} className="w-full h-[400px] bg-card border rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">No ticker selected</p>
+          <p className="text-xs mt-1">Select a ticker to view chart</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className="w-full h-[400px] bg-card border rounded-lg overflow-hidden">
+      {/* Loading state while TradingView loads */}
+      <div className="w-full h-full flex items-center justify-center bg-muted">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-sm text-muted-foreground">Loading {ticker} chart...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
     };
   }, [ticker]);
 
