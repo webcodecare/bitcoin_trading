@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
 import {
   Bitcoin,
   TrendingUp,
@@ -21,6 +22,8 @@ import {
   AlertTriangle,
   PieChart,
   Smile,
+  Menu,
+  X,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -30,6 +33,7 @@ interface SidebarProps {
 export default function Sidebar({ className }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
     if (path === "/admin" && location === "/admin") return true;
@@ -166,43 +170,69 @@ export default function Sidebar({ className }: SidebarProps) {
   const navItems = user?.role === 'admin' ? adminNavItems : userNavItems;
 
   return (
-    <div className={cn("w-64 bg-card h-screen border-r border-border fixed left-0 top-0", className)}>
-      <div className="p-6">
-        <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-primary mb-8">
-          {user?.role === 'admin' ? (
-            <>
-              <Shield className="h-6 w-6" />
-              <span>Admin Panel</span>
-            </>
-          ) : (
-            <>
-              <Bitcoin className="h-6 w-6" />
-              <span>CryptoStrategy Pro</span>
-            </>
-          )}
-        </Link>
-        
-        <nav className="space-y-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center space-x-3 p-3 rounded-lg transition-colors",
-                  isActive(item.href)
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{item.title}</span>
-              </Link>
-            );
-          })}
-        </nav>
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-card border border-border rounded-lg shadow-lg"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      >
+        {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </button>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={cn(
+        "w-64 bg-card h-screen border-r border-border fixed left-0 top-0 z-40 transition-transform duration-300",
+        "lg:translate-x-0",
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full",
+        className
+      )}>
+        <div className="p-4 lg:p-6">
+          <Link href="/" className="flex items-center space-x-2 text-lg lg:text-xl font-bold text-primary mb-6 lg:mb-8">
+            {user?.role === 'admin' ? (
+              <>
+                <Shield className="h-5 w-5 lg:h-6 lg:w-6" />
+                <span>Admin Panel</span>
+              </>
+            ) : (
+              <>
+                <Bitcoin className="h-5 w-5 lg:h-6 lg:w-6" />
+                <span className="hidden sm:block">CryptoStrategy Pro</span>
+                <span className="sm:hidden">CryptoPro</span>
+              </>
+            )}
+          </Link>
+          
+          <nav className="space-y-1 lg:space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center space-x-3 p-2 lg:p-3 rounded-lg transition-colors text-sm lg:text-base",
+                    isActive(item.href)
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Icon className="h-4 w-4 lg:h-5 lg:w-5 flex-shrink-0" />
+                  <span className="truncate">{item.title}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
