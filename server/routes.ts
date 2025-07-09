@@ -1901,12 +1901,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { period = '7d' } = req.query;
       
+      // Generate volume data for chart
+      const volumeData = Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        volume: Math.floor(Math.random() * 500000) + 200000
+      }));
+      
       // Mock trading analytics - would come from actual trades table
       const tradingAnalytics = {
         totalTrades: 156789,
         volume: 2458792.34,
         avgTradeSize: 15.67,
+        successRate: 73.4,
         growth: 23.7,
+        volumeData: volumeData,
         topPairs: [
           { symbol: 'BTCUSDT', trades: 45234, volume: 892345.67 },
           { symbol: 'ETHUSDT', trades: 32187, volume: 634521.89 },
@@ -1932,28 +1940,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const signals = await storage.getSignals(1000);
       const successfulSignals = signals.filter(s => s.signalType === 'buy' || s.signalType === 'sell').length;
-      const accuracy = signals.length > 0 ? (successfulSignals / signals.length) * 100 : 0;
-
+      const failedSignals = signals.length - successfulSignals;
+      const accuracy = signals.length > 0 ? Math.round((successfulSignals / signals.length) * 100) : 0;
+      
+      // Generate accuracy data for chart
+      const accuracyData = Array.from({ length: 7 }, (_, i) => ({
+        date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        accuracy: Math.floor(Math.random() * 20) + 70 // 70-90% accuracy range
+      }));
+      
       const signalAnalytics = {
         totalSignals: signals.length,
-        successfulSignals: Math.floor(signals.length * 0.784),
-        failedSignals: Math.floor(signals.length * 0.216),
-        accuracy: Math.round(accuracy * 10) / 10,
-        improvement: 2.1,
-        performance: {
-          buy: { total: Math.floor(signals.length / 2), successful: Math.floor(signals.length * 0.4), accuracy: 81.2 },
-          sell: { total: Math.floor(signals.length / 2), successful: Math.floor(signals.length * 0.38), accuracy: 75.7 }
-        },
-        byTicker: [
-          { symbol: 'BTCUSDT', signals: Math.floor(signals.length * 0.3), accuracy: 82.3 },
-          { symbol: 'ETHUSDT', signals: Math.floor(signals.length * 0.25), accuracy: 79.1 },
-          { symbol: 'SOLUSDT', signals: Math.floor(signals.length * 0.2), accuracy: 75.8 },
-          { symbol: 'ADAUSDT', signals: Math.floor(signals.length * 0.15), accuracy: 73.5 }
-        ],
-        trends: Array.from({ length: 7 }, (_, i) => ({
-          date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          accuracy: 76 + Math.random() * 6
-        }))
+        successfulSignals: successfulSignals,
+        failedSignals: failedSignals,
+        accuracy: accuracy,
+        accuracyData: accuracyData
       };
 
       res.json(signalAnalytics);

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Sidebar from "@/components/layout/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,7 @@ import {
   LineChart,
   BarChart2
 } from "lucide-react";
-import { AnalyticsChart } from "@/components/charts/AnalyticsChart";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart as RechartsLineChart, Line, PieChart as RechartsPieChart, Cell } from "recharts";
 
 export default function AdminAnalytics() {
   const [selectedPeriod, setSelectedPeriod] = useState('7d');
@@ -103,95 +104,113 @@ export default function AdminAnalytics() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Analytics & Reporting</h1>
-          <p className="text-muted-foreground">
-            Comprehensive platform analytics and performance metrics
-          </p>
-        </div>
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        <Sidebar />
         
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={exportReport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export Report
-          </Button>
-          
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {periods.map((period) => (
-                <SelectItem key={period.value} value={period.value}>
-                  {period.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Key Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockOverviewData.totalUsers.toLocaleString()}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-              +{mockOverviewData.userGrowth}% from last period
+        {/* Main Content */}
+        <div className="ml-0 lg:ml-64 flex-1">
+          {/* Header */}
+          <header className="bg-card border-b border-border p-4 lg:p-6">
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+              <div>
+                <h1 className="text-2xl lg:text-3xl font-bold">Analytics & Reporting</h1>
+                <p className="text-muted-foreground">
+                  Comprehensive platform analytics and performance metrics
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <Button variant="outline" onClick={exportReport}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Report
+                </Button>
+                
+                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {periods.map((period) => (
+                      <SelectItem key={period.value} value={period.value}>
+                        {period.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </header>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${mockOverviewData.monthlyRevenue.toLocaleString()}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-              +{mockOverviewData.revenueGrowth}% from last month
-            </div>
-          </CardContent>
-        </Card>
+          {/* Content */}
+          <div className="p-4 lg:p-6 space-y-6">
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Trades</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockOverviewData.totalTrades.toLocaleString()}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-              +{mockOverviewData.tradesGrowth}% from last period
-            </div>
-          </CardContent>
-        </Card>
+            {/* Key Metrics Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {isLoading ? "..." : (analyticsData?.overview?.totalUsers || 0).toLocaleString()}
+                  </div>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                    +{analyticsData?.overview?.userGrowth || 0}% from last period
+                  </div>
+                </CardContent>
+              </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Signal Accuracy</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockOverviewData.signalAccuracy}%</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-              +{mockOverviewData.accuracyChange}% improvement
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {isLoading ? "..." : `$${(analyticsData?.overview?.monthlyRevenue || 0).toLocaleString()}`}
+                  </div>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                    +{analyticsData?.overview?.revenueGrowth || 0}% from last month
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Trades</CardTitle>
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {isLoading ? "..." : (analyticsData?.overview?.totalTrades || 0).toLocaleString()}
+                  </div>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                    +{analyticsData?.overview?.tradesGrowth || 0}% from last period
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Signal Accuracy</CardTitle>
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {isLoading ? "..." : `${analyticsData?.overview?.signalAccuracy || 0}%`}
+                  </div>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                    +{analyticsData?.overview?.accuracyChange || 0}% improvement
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Analytics Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
@@ -339,11 +358,16 @@ export default function AdminAnalytics() {
                 <CardTitle>Revenue Analytics</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80 flex items-center justify-center bg-muted/20 rounded-lg">
-                  <div className="text-center">
-                    <BarChart2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground">Monthly revenue trends</p>
-                  </div>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={revenueData?.monthlyRevenue || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`$${value}`, "Revenue"]} />
+                      <Bar dataKey="revenue" fill="#3B82F6" />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
@@ -385,36 +409,41 @@ export default function AdminAnalytics() {
                 <CardTitle>Trading Volume</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80 flex items-center justify-center bg-muted/20 rounded-lg">
-                  <div className="text-center">
-                    <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground">Daily trading volume trends</p>
-                  </div>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsLineChart data={tradingMetrics?.volumeData || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`$${value?.toLocaleString()}`, "Volume"]} />
+                      <Line type="monotone" dataKey="volume" stroke="#10B981" strokeWidth={2} />
+                    </RechartsLineChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Top Trading Pairs</CardTitle>
+                <CardTitle>Trading Statistics</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span>BTC/USDT</span>
-                    <Badge variant="outline">45,234 trades</Badge>
+                    <span>Total Trades</span>
+                    <Badge variant="outline">{tradingMetrics?.totalTrades?.toLocaleString() || 0}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span>ETH/USDT</span>
-                    <Badge variant="outline">32,187 trades</Badge>
+                    <span>Total Volume</span>
+                    <Badge variant="outline">${tradingMetrics?.volume?.toLocaleString() || 0}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span>SOL/USDT</span>
-                    <Badge variant="outline">18,945 trades</Badge>
+                    <span>Average Trade Size</span>
+                    <Badge variant="outline">${tradingMetrics?.avgTradeSize?.toLocaleString() || 0}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span>ADA/USDT</span>
-                    <Badge variant="outline">12,743 trades</Badge>
+                    <span>Success Rate</span>
+                    <Badge variant="outline" className="text-green-600">{tradingMetrics?.successRate || 0}%</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -429,11 +458,16 @@ export default function AdminAnalytics() {
                 <CardTitle>Signal Performance</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-80 flex items-center justify-center bg-muted/20 rounded-lg">
-                  <div className="text-center">
-                    <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground">Signal accuracy over time</p>
-                  </div>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsLineChart data={signalPerformance?.accuracyData || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis domain={[0, 100]} />
+                      <Tooltip formatter={(value) => [`${value}%`, "Accuracy"]} />
+                      <Line type="monotone" dataKey="accuracy" stroke="#8B5CF6" strokeWidth={2} />
+                    </RechartsLineChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
@@ -446,19 +480,19 @@ export default function AdminAnalytics() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span>Total Signals</span>
-                    <Badge variant="outline">2,847</Badge>
+                    <Badge variant="outline">{signalPerformance?.totalSignals || 0}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Successful Signals</span>
-                    <Badge variant="outline" className="text-green-600">2,234</Badge>
+                    <Badge variant="outline" className="text-green-600">{signalPerformance?.successfulSignals || 0}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Failed Signals</span>
-                    <Badge variant="outline" className="text-red-600">613</Badge>
+                    <Badge variant="outline" className="text-red-600">{signalPerformance?.failedSignals || 0}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Accuracy Rate</span>
-                    <Badge variant="outline">{mockOverviewData.signalAccuracy}%</Badge>
+                    <Badge variant="outline">{signalPerformance?.accuracy || 0}%</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -466,6 +500,9 @@ export default function AdminAnalytics() {
           </div>
         </TabsContent>
       </Tabs>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
