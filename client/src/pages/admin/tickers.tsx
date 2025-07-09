@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,53 +59,32 @@ export default function AdminTickers() {
     isEnabled: true,
   });
 
-  const authToken = localStorage.getItem("token");
-
   const { data: tickers, isLoading: isLoadingTickers } = useQuery({
     queryKey: ["/api/admin/tickers"],
-    queryFn: async () => {
-      const response = await fetch("/api/admin/tickers", {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      if (!response.ok) throw new Error("Failed to fetch tickers");
-      return await response.json() as Ticker[];
-    },
   });
 
   const updateTickerMutation = useMutation({
     mutationFn: async ({ tickerId, updates }: { tickerId: string; updates: Partial<Ticker> }) => {
-      const response = await fetch(`/api/admin/tickers/${tickerId}`, {
+      return await apiRequest(`/api/admin/tickers/${tickerId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
         body: JSON.stringify(updates),
       });
-      if (!response.ok) throw new Error("Failed to update ticker");
-      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tickers"] });
       toast({ title: "Ticker updated successfully" });
     },
-    onError: () => {
-      toast({ title: "Failed to update ticker", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ title: error.message || "Failed to update ticker", variant: "destructive" });
     },
   });
 
   const createTickerMutation = useMutation({
     mutationFn: async (tickerData: typeof newTicker) => {
-      const response = await fetch("/api/admin/tickers", {
+      return await apiRequest("/api/admin/tickers", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
         body: JSON.stringify(tickerData),
       });
-      if (!response.ok) throw new Error("Failed to create ticker");
-      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tickers"] });
@@ -112,40 +92,32 @@ export default function AdminTickers() {
       setIsCreateTickerOpen(false);
       toast({ title: "Ticker created successfully" });
     },
-    onError: () => {
-      toast({ title: "Failed to create ticker", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ title: error.message || "Failed to create ticker", variant: "destructive" });
     },
   });
 
   const deleteTickerMutation = useMutation({
     mutationFn: async (tickerId: string) => {
-      const response = await fetch(`/api/admin/tickers/${tickerId}`, {
+      return await apiRequest(`/api/admin/tickers/${tickerId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${authToken}` },
       });
-      if (!response.ok) throw new Error("Failed to delete ticker");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tickers"] });
       toast({ title: "Ticker deleted successfully" });
     },
-    onError: () => {
-      toast({ title: "Failed to delete ticker", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ title: error.message || "Failed to delete ticker", variant: "destructive" });
     },
   });
 
   const editTickerMutation = useMutation({
     mutationFn: async ({ tickerId, updates }: { tickerId: string; updates: Partial<Ticker> }) => {
-      const response = await fetch(`/api/admin/tickers/${tickerId}`, {
+      return await apiRequest(`/api/admin/tickers/${tickerId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
         body: JSON.stringify(updates),
       });
-      if (!response.ok) throw new Error("Failed to update ticker");
-      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tickers"] });
@@ -153,8 +125,8 @@ export default function AdminTickers() {
       setEditingTicker(null);
       toast({ title: "Ticker updated successfully" });
     },
-    onError: () => {
-      toast({ title: "Failed to update ticker", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ title: error.message || "Failed to update ticker", variant: "destructive" });
     },
   });
 
@@ -186,9 +158,19 @@ export default function AdminTickers() {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="ml-64 flex-1">
-          {/* Top Bar */}
-          <header className="bg-card border-b border-border p-6">
+        <div className="lg:ml-64 flex-1">
+          {/* Mobile Header */}
+          <div className="lg:hidden bg-card border-b border-border p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Coins className="h-5 w-5" />
+                <h1 className="text-lg font-bold">Ticker Management</h1>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Header */}
+          <header className="hidden lg:block bg-card border-b border-border p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Coins className="h-6 w-6" />
@@ -313,19 +295,19 @@ export default function AdminTickers() {
           </header>
 
           {/* Tickers Content */}
-          <div className="p-6 space-y-6">
+          <div className="p-4 lg:p-6 space-y-6">
             {/* Search and Stats */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search tickers..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-full lg:w-64"
                 />
               </div>
-              <div className="flex space-x-4">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                 <Card className="p-4">
                   <div className="text-sm text-muted-foreground">Total Tickers</div>
                   <div className="text-2xl font-bold">{tickerStats.total}</div>
@@ -431,7 +413,7 @@ export default function AdminTickers() {
                 <CardTitle>Quick Add Popular Tickers</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
                   {[
                     { symbol: "BTCUSDT", name: "Bitcoin" },
                     { symbol: "ETHUSDT", name: "Ethereum" },

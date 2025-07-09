@@ -43,6 +43,7 @@ import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import Subscription from "@/pages/subscription";
 import Trading from "@/pages/trading";
+import BitcoinAnalytics from "@/pages/bitcoin-analytics";
 import AuthGuard from "@/components/auth/AuthGuard";
 
 function Router() {
@@ -177,6 +178,11 @@ function Router() {
       <Route path="/trading">
         <AuthGuard>
           <Trading />
+        </AuthGuard>
+      </Route>
+      <Route path="/bitcoin-analytics">
+        <AuthGuard>
+          <BitcoinAnalytics />
         </AuthGuard>
       </Route>
       <Route path="/mood-board">
