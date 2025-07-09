@@ -69,10 +69,10 @@ export default function Navigation() {
 
         <div className="flex items-center space-x-4">
           {/* Live BTC Price */}
-          <div className="hidden lg:flex items-center space-x-4 bg-muted px-4 py-2 rounded-lg">
-            <span className="text-sm text-muted-foreground">BTC/USD</span>
-            <span className="text-emerald-400 font-semibold">$67,234.56</span>
-            <span className="text-emerald-400 text-sm">+2.34%</span>
+          <div className="hidden sm:flex items-center space-x-2 lg:space-x-4 bg-muted px-2 lg:px-4 py-2 rounded-lg">
+            <span className="text-xs lg:text-sm text-muted-foreground">BTC/USD</span>
+            <span className="text-emerald-400 font-semibold text-sm lg:text-base">$67,234.56</span>
+            <span className="text-emerald-400 text-xs lg:text-sm">+2.34%</span>
           </div>
 
           {isAuthenticated ? (
