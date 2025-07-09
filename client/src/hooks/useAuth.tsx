@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authAPI, tokenStorage, User, UserSettings } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { SessionManager } from "@/lib/sessionManager";
 
 interface AuthContextType {
   user: User | null;
@@ -17,9 +18,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(tokenStorage.get());
+  const [token, setToken] = useState<string | null>(() => {
+    // Try session manager first, fallback to legacy token storage
+    return SessionManager.getToken() || tokenStorage.get();
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Initialize session on mount
+  useEffect(() => {
+    const session = SessionManager.getSession();
+    if (session) {
+      setToken(session.token);
+    } else if (token) {
+      // Migrate legacy token to session
+      const user = SessionManager.getUser();
+      if (user) {
+        SessionManager.createSession(token, user);
+      }
+    }
+  }, []);
 
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["/api/user/profile", token],
@@ -33,8 +51,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authAPI.login(email, password),
     onSuccess: (data) => {
       setToken(data.token);
-      tokenStorage.set(data.token);
+      // Create session with user data
+      SessionManager.createSession(data.token, data.user);
+      tokenStorage.set(data.token); // Keep legacy support
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
+      
+      // Redirect to stored URL or dashboard
+      const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
+      sessionStorage.removeItem('redirectAfterLogin');
+      window.location.href = redirectUrl;
+      
       toast({
         title: "Login successful",
         description: "Welcome back!",
@@ -58,8 +84,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }) => authAPI.register(email, password, firstName, lastName),
     onSuccess: (data) => {
       setToken(data.token);
-      tokenStorage.set(data.token);
+      // Create session with user data
+      SessionManager.createSession(data.token, data.user);
+      tokenStorage.set(data.token); // Keep legacy support
       queryClient.invalidateQueries({ queryKey: ["/api/user/profile"] });
+      
+      // Redirect to dashboard after registration
+      window.location.href = '/dashboard';
+      
       toast({
         title: "Registration successful",
         description: "Welcome to CryptoStrategy Pro!",
@@ -103,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     setToken(null);
+    SessionManager.clearSession();
     tokenStorage.remove();
     queryClient.clear();
     toast({
@@ -118,10 +151,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const contextValue: AuthContextType = {
-    user: profileData?.user || null,
+    user: profileData?.user || SessionManager.getUser(),
     settings: profileData?.settings || null,
     isLoading: isLoading || loginMutation.isPending || registerMutation.isPending,
-    isAuthenticated: !!token && !!profileData?.user,
+    isAuthenticated: !!token && (!!profileData?.user || !!SessionManager.getUser()),
     login,
     register,
     logout,
