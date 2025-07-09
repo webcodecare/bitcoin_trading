@@ -125,6 +125,20 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Webhook secrets table for secure webhook authentication
+export const webhookSecrets = pgTable("webhook_secrets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  secret: text("secret").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  allowedSources: text("allowed_sources").array().default([]), // e.g., ['tradingview', 'tradingbot']
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  lastUsed: timestamp("last_used"),
+  usageCount: integer("usage_count").default(0),
+});
+
 export const alertSignals = pgTable("alert_signals", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id),
@@ -370,6 +384,14 @@ export const insertUserAlertSchema = createInsertSchema(userAlerts).omit({
   lastTriggered: true,
 });
 
+export const insertWebhookSecretSchema = createInsertSchema(webhookSecrets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastUsed: true,
+  usageCount: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -393,6 +415,8 @@ export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
 export type UserSubscription = typeof userSubscriptions.$inferSelect;
 export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
+export type WebhookSecret = typeof webhookSecrets.$inferSelect;
+export type InsertWebhookSecret = z.infer<typeof insertWebhookSecretSchema>;
 
 // Trading types
 export type UserTrade = typeof userTrades.$inferSelect;

@@ -116,6 +116,13 @@ export interface IStorage {
   getDashboardLayout(userId: string): Promise<DashboardLayout | undefined>;
   saveDashboardLayout(layout: InsertDashboardLayout): Promise<DashboardLayout>;
   updateDashboardLayout(id: string, updates: Partial<DashboardLayout>): Promise<DashboardLayout | undefined>;
+  
+  // Webhook Secrets
+  getWebhookSecrets(): Promise<WebhookSecret[]>;
+  getWebhookSecret(name: string): Promise<WebhookSecret | undefined>;
+  createWebhookSecret(secret: InsertWebhookSecret): Promise<WebhookSecret>;
+  updateWebhookSecret(id: string, updates: Partial<WebhookSecret>): Promise<WebhookSecret | undefined>;
+  deleteWebhookSecret(id: string): Promise<boolean>;
 }
 
 export class MemoryStorage implements IStorage {
@@ -542,6 +549,20 @@ export class MemoryStorage implements IStorage {
   private tradingSettings: TradingSettings[] = [];
   private userAlerts: UserAlert[] = [];
   private dashboardLayouts: DashboardLayout[] = [];
+  private webhookSecrets: WebhookSecret[] = [
+    {
+      id: 'default-webhook-1',
+      name: 'tradingview-primary',
+      secret: 'tradingview_webhook_secret_2025',
+      description: 'Primary TradingView webhook secret',
+      isActive: true,
+      allowedSources: ['tradingview'],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastUsed: null,
+      usageCount: 0
+    }
+  ];
 
   async getUserTrades(userId: string, limit = 100): Promise<UserTrade[]> {
     return this.trades
@@ -701,6 +722,47 @@ export class MemoryStorage implements IStorage {
       updatedAt: new Date(),
     };
     return this.dashboardLayouts[layoutIndex];
+  }
+
+  async getWebhookSecrets(): Promise<WebhookSecret[]> {
+    return this.webhookSecrets.filter(s => s.isActive);
+  }
+
+  async getWebhookSecret(name: string): Promise<WebhookSecret | undefined> {
+    return this.webhookSecrets.find(s => s.name === name && s.isActive);
+  }
+
+  async createWebhookSecret(secret: InsertWebhookSecret): Promise<WebhookSecret> {
+    const newSecret: WebhookSecret = {
+      ...secret,
+      id: Math.random().toString(36).substr(2, 9),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastUsed: null,
+      usageCount: 0,
+    };
+    this.webhookSecrets.push(newSecret);
+    return newSecret;
+  }
+
+  async updateWebhookSecret(id: string, updates: Partial<WebhookSecret>): Promise<WebhookSecret | undefined> {
+    const index = this.webhookSecrets.findIndex(s => s.id === id);
+    if (index === -1) return undefined;
+    
+    this.webhookSecrets[index] = { 
+      ...this.webhookSecrets[index], 
+      ...updates, 
+      updatedAt: new Date() 
+    };
+    return this.webhookSecrets[index];
+  }
+
+  async deleteWebhookSecret(id: string): Promise<boolean> {
+    const index = this.webhookSecrets.findIndex(s => s.id === id);
+    if (index === -1) return false;
+    
+    this.webhookSecrets.splice(index, 1);
+    return true;
   }
 }
 
@@ -1041,6 +1103,51 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schema.dashboardLayouts.id, id))
       .returning();
     return updated;
+  }
+
+  async getWebhookSecrets(): Promise<WebhookSecret[]> {
+    try {
+      return await db.select().from(schema.webhookSecrets)
+        .where(eq(schema.webhookSecrets.isActive, true))
+        .orderBy(schema.webhookSecrets.createdAt);
+    } catch (error) {
+      console.log('Webhook secrets table not found, creating...');
+      return [];
+    }
+  }
+
+  async getWebhookSecret(name: string): Promise<WebhookSecret | undefined> {
+    try {
+      const result = await db.select().from(schema.webhookSecrets)
+        .where(and(
+          eq(schema.webhookSecrets.name, name),
+          eq(schema.webhookSecrets.isActive, true)
+        ))
+        .limit(1);
+      return result[0];
+    } catch (error) {
+      console.log('Webhook secrets table not found');
+      return undefined;
+    }
+  }
+
+  async createWebhookSecret(secret: InsertWebhookSecret): Promise<WebhookSecret> {
+    const result = await db.insert(schema.webhookSecrets).values(secret).returning();
+    return result[0];
+  }
+
+  async updateWebhookSecret(id: string, updates: Partial<WebhookSecret>): Promise<WebhookSecret | undefined> {
+    const result = await db.update(schema.webhookSecrets)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.webhookSecrets.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteWebhookSecret(id: string): Promise<boolean> {
+    const result = await db.delete(schema.webhookSecrets)
+      .where(eq(schema.webhookSecrets.id, id));
+    return result.rowCount > 0;
   }
 }
 
