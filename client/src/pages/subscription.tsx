@@ -1,300 +1,191 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
-import { TrendingUp, Calendar, Zap, BarChart3 } from "lucide-react";
+import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import SubscriptionManager from '@/components/subscription/SubscriptionManager';
+import InteractiveChart from '@/components/charts/InteractiveChart';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Star, 
+  Activity,
+  TrendingUp,
+  Zap,
+  BarChart3
+} from 'lucide-react';
 
-interface SubscriptionUsage {
-  currentPlan: {
-    name: string;
-    tier: string;
-    monthlyPrice: number;
-    features: string[];
-    maxSignals: number;
-    maxTickers: number;
+export default function SubscriptionPage() {
+  const { user } = useAuth();
+  const [selectedTicker, setSelectedTicker] = useState<string>('BTCUSDT');
+
+  const handleTickerSelect = (symbol: string) => {
+    setSelectedTicker(symbol);
   };
-  usage: {
-    signalsUsed: number;
-    signalsLimit: number;
-    signalsRemaining: string | number;
-    usagePercentage: number;
-    resetDate: string;
-    renewalDate: string;
-    dailyTrend: Array<{ date: string; signals: number }>;
-  };
-  analytics: {
-    totalSignalsReceived: number;
-    averageSignalsPerDay: number;
-    mostActiveDay: { date: string; signals: number };
-  };
-}
 
-export default function Subscription() {
-  const { user, isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState("overview");
-
-  const { data: usageData, isLoading } = useQuery<SubscriptionUsage>({
-    queryKey: ["/api/subscription-usage"],
-    enabled: isAuthenticated,
-  });
-
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Please log in to view your subscription</h1>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount / 100);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Subscription Management</h1>
-          <p className="text-muted-foreground">Manage your CryptoStrategy Pro subscription</p>
-        </div>
-        <Badge variant={usageData?.currentPlan.tier === "free" ? "secondary" : "default"} className="text-sm">
-          {usageData?.currentPlan.name} Plan
-        </Badge>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="flex space-x-1 border-b mb-6">
-        {[
-          { id: "overview", label: "Overview" },
-          { id: "usage", label: "Usage Analytics" },
-          { id: "billing", label: "Billing & Payment" }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
-              activeTab === tab.id
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Overview Tab */}
-      {activeTab === "overview" && usageData && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Current Plan */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Current Plan</CardTitle>
-              <Zap className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{usageData.currentPlan.name}</div>
-              <p className="text-xs text-muted-foreground">
-                {formatCurrency(usageData.currentPlan.monthlyPrice)}/month
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Usage This Month */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Signals Used</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {usageData.usage.signalsUsed}
-                {usageData.usage.signalsLimit !== -1 && (
-                  <span className="text-sm text-muted-foreground">
-                    /{usageData.usage.signalsLimit}
-                  </span>
-                )}
-              </div>
-              {usageData.usage.signalsLimit !== -1 && (
-                <Progress 
-                  value={usageData.usage.usagePercentage} 
-                  className="mt-2" 
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Next Renewal */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Next Renewal</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatDate(usageData.usage.renewalDate)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Usage resets on {formatDate(usageData.usage.resetDate)}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Usage Analytics Tab */}
-      {activeTab === "usage" && usageData && (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Usage Analytics</CardTitle>
-              <CardDescription>Track your subscription usage and trends</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-primary">{usageData.analytics.totalSignalsReceived}</div>
-                  <div className="text-sm text-muted-foreground">Total Signals</div>
-                </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-primary">{usageData.analytics.averageSignalsPerDay}</div>
-                  <div className="text-sm text-muted-foreground">Avg per Day</div>
-                </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <div className="text-2xl font-bold text-primary">{usageData.analytics.mostActiveDay.signals}</div>
-                  <div className="text-sm text-muted-foreground">Most Active Day</div>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <h4 className="text-sm font-medium mb-3">Last 7 Days Signal Activity</h4>
-                <div className="flex space-x-2">
-                  {usageData.usage.dailyTrend.map((day, index) => (
-                    <div key={index} className="flex-1 text-center">
-                      <div 
-                        className="bg-primary rounded-t" 
-                        style={{ 
-                          height: `${Math.max(4, (day.signals / Math.max(...usageData.usage.dailyTrend.map(d => d.signals), 1)) * 60)}px` 
-                        }}
-                      ></div>
-                      <div className="text-xs mt-1">{new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}</div>
-                      <div className="text-xs text-muted-foreground">{day.signals}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Billing Tab */}
-      {activeTab === "billing" && usageData && (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Billing & Payment Information</CardTitle>
-              <CardDescription>Manage your subscription and payment methods</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 border rounded-lg">
-                  <div>
-                    <div className="font-medium">{usageData.currentPlan.name} Plan</div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatCurrency(usageData.currentPlan.monthlyPrice)} billed monthly
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      Change Plan
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Cancel Subscription
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Payment Method</h4>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-5 bg-gradient-to-r from-blue-600 to-blue-400 rounded text-white text-xs flex items-center justify-center">
-                      VISA
-                    </div>
-                    <span className="text-sm">•••• •••• •••• 4242</span>
-                    <Button variant="ghost" size="sm">Update</Button>
-                  </div>
-                </div>
-
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Billing History</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Jan 2025 - {usageData.currentPlan.name} Plan</span>
-                      <span>{formatCurrency(usageData.currentPlan.monthlyPrice)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Dec 2024 - {usageData.currentPlan.name} Plan</span>
-                      <span>{formatCurrency(usageData.currentPlan.monthlyPrice)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Plan Features */}
-      {usageData && (
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Plan Features</CardTitle>
-            <CardDescription>What's included in your {usageData.currentPlan.name} plan</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {usageData.currentPlan.features?.map((feature, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span className="text-sm">{feature}</span>
-                </div>
-              ))}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-muted-foreground">Please log in to manage your subscriptions.</p>
             </div>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Subscription Center</h1>
+          <p className="text-muted-foreground">
+            Manage your cryptocurrency subscriptions and monitor real-time charts
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Star className="h-3 w-3" />
+            {user.subscriptionTier || 'Free'} Plan
+          </Badge>
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <Activity className="h-3 w-3" />
+            Active User
+          </Badge>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Main Content */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Subscription Management - Takes up 2 columns on XL screens */}
+        <div className="xl:col-span-2">
+          <SubscriptionManager 
+            onTickerSelect={handleTickerSelect}
+            selectedTicker={selectedTicker}
+          />
+        </div>
+
+        {/* Interactive Chart - Takes up 1 column on XL screens */}
+        <div className="space-y-6">
+          {/* Quick Stats */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Quick Stats
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Active Ticker:</span>
+                <Badge variant="default">{selectedTicker}</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Plan Type:</span>
+                <span className="text-sm font-medium">{user.subscriptionTier || 'Free'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Status:</span>
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Zap className="h-3 w-3" />
+                  Live Data
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Features Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Available Features
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span>Real-time Price Updates</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span>Trading Signal Alerts</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span>Interactive Charts</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span>Multiple Timeframes</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full" />
+                  <span>SMS Notifications</span>
+                  <Badge variant="outline" className="text-xs">Pro</Badge>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full" />
+                  <span>Advanced Analytics</span>
+                  <Badge variant="outline" className="text-xs">Pro</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Interactive Chart Section */}
+      {selectedTicker && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold">Live Chart</h2>
+            <Badge variant="outline">{selectedTicker}</Badge>
+          </div>
+          
+          <InteractiveChart 
+            symbol={selectedTicker}
+            height={600}
+            onSymbolChange={handleTickerSelect}
+            className="w-full"
+          />
+        </div>
       )}
+
+      {/* Help Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Getting Started</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="space-y-2">
+              <h4 className="font-medium">1. Subscribe to Tickers</h4>
+              <p className="text-muted-foreground">
+                Use the search box to find and subscribe to your favorite cryptocurrencies.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-medium">2. Monitor Charts</h4>
+              <p className="text-muted-foreground">
+                Click on any subscribed ticker to view its interactive chart with real-time data.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-medium">3. Receive Alerts</h4>
+              <p className="text-muted-foreground">
+                Get notified instantly when trading signals are generated for your subscribed tickers.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

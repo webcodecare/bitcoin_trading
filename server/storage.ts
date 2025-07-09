@@ -35,6 +35,8 @@ import type {
   InsertUserAlert,
   DashboardLayout,
   InsertDashboardLayout,
+  WebhookSecret,
+  InsertWebhookSecret,
 } from "@shared/schema";
 
 // Initialize database connection if URL is provided
@@ -95,7 +97,10 @@ export interface IStorage {
   getSubscriptionPlan(tier: string): Promise<SubscriptionPlan | undefined>;
   createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
   
-  // User Subscriptions
+  // User Subscriptions (Ticker Subscriptions)
+  getUserSubscriptions(userId: string): Promise<UserSubscription[]>;
+  createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription>;
+  deleteUserSubscription(id: string): Promise<boolean>;
   updateUserSubscription(userId: string, updates: Partial<User>): Promise<User | undefined>;
   
   // Trading System
@@ -548,6 +553,33 @@ export class MemoryStorage implements IStorage {
   private portfolios: UserPortfolio[] = [];
   private tradingSettings: TradingSettings[] = [];
   private userAlerts: UserAlert[] = [];
+  private userSubscriptions: UserSubscription[] = [
+    // Sample user subscriptions for demo user
+    {
+      id: 'sub-1',
+      userId: 'test-user-123',
+      tickerSymbol: 'BTCUSDT',
+      subscribedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    },
+    {
+      id: 'sub-2',
+      userId: 'test-user-123',
+      tickerSymbol: 'ETHUSDT',
+      subscribedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+    },
+    {
+      id: 'sub-3',
+      userId: 'test-user-123',
+      tickerSymbol: 'SOLUSDT',
+      subscribedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+    }
+  ];
   private dashboardLayouts: DashboardLayout[] = [];
   private webhookSecrets: WebhookSecret[] = [
     {
@@ -722,6 +754,31 @@ export class MemoryStorage implements IStorage {
       updatedAt: new Date(),
     };
     return this.dashboardLayouts[layoutIndex];
+  }
+
+  // User Subscriptions implementation (Ticker Subscriptions)
+  async getUserSubscriptions(userId: string): Promise<UserSubscription[]> {
+    return this.userSubscriptions.filter(sub => sub.userId === userId);
+  }
+
+  async createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription> {
+    const newSubscription: UserSubscription = {
+      id: `sub-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      ...subscription,
+      subscribedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.userSubscriptions.push(newSubscription);
+    return newSubscription;
+  }
+
+  async deleteUserSubscription(id: string): Promise<boolean> {
+    const subscriptionIndex = this.userSubscriptions.findIndex(sub => sub.id === id);
+    if (subscriptionIndex === -1) return false;
+
+    this.userSubscriptions.splice(subscriptionIndex, 1);
+    return true;
   }
 
   async getWebhookSecrets(): Promise<WebhookSecret[]> {
@@ -1147,6 +1204,34 @@ export class DatabaseStorage implements IStorage {
   async deleteWebhookSecret(id: string): Promise<boolean> {
     const result = await db.delete(schema.webhookSecrets)
       .where(eq(schema.webhookSecrets.id, id));
+    return result.rowCount > 0;
+  }
+
+  // User Subscriptions implementation (Ticker Subscriptions)
+  async getUserSubscriptions(userId: string): Promise<UserSubscription[]> {
+    try {
+      const subscriptions = await db.select().from(schema.userSubscriptions)
+        .where(eq(schema.userSubscriptions.userId, userId))
+        .orderBy(desc(schema.userSubscriptions.subscribedAt));
+      return subscriptions;
+    } catch (error) {
+      console.log('User subscriptions table not found, returning empty array');
+      return [];
+    }
+  }
+
+  async createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription> {
+    const [newSubscription] = await db
+      .insert(schema.userSubscriptions)
+      .values(subscription)
+      .returning();
+    return newSubscription;
+  }
+
+  async deleteUserSubscription(id: string): Promise<boolean> {
+    const result = await db
+      .delete(schema.userSubscriptions)
+      .where(eq(schema.userSubscriptions.id, id));
     return result.rowCount > 0;
   }
 }

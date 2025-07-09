@@ -1239,6 +1239,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return normalizedData;
   }
 
+  // User Subscription Management Routes
+  app.get('/api/user/subscriptions', requireAuth, async (req: any, res) => {
+    try {
+      const subscriptions = await storage.getUserSubscriptions(req.user.id);
+      res.json(subscriptions);
+    } catch (error) {
+      console.error('Error fetching user subscriptions:', error);
+      res.status(500).json({ message: 'Failed to fetch subscriptions' });
+    }
+  });
+
+  app.post('/api/user/subscriptions', requireAuth, async (req: any, res) => {
+    try {
+      const { tickerSymbol } = req.body;
+      
+      if (!tickerSymbol) {
+        return res.status(400).json({ message: 'Ticker symbol is required' });
+      }
+
+      // Validate ticker exists and is enabled
+      const availableTickers = await storage.getAllTickers();
+      const validTicker = availableTickers.find(t => 
+        t.symbol === tickerSymbol && t.isEnabled
+      );
+      
+      if (!validTicker) {
+        return res.status(400).json({ message: `Invalid or disabled ticker: ${tickerSymbol}` });
+      }
+
+      // Check if user already subscribed to this ticker
+      const existingSubscriptions = await storage.getUserSubscriptions(req.user.id);
+      const alreadySubscribed = existingSubscriptions.some(sub => sub.tickerSymbol === tickerSymbol);
+      
+      if (alreadySubscribed) {
+        return res.status(400).json({ message: 'Already subscribed to this ticker' });
+      }
+
+      const subscription = await storage.createUserSubscription({
+        userId: req.user.id,
+        tickerSymbol,
+      });
+
+      res.json(subscription);
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      res.status(500).json({ message: 'Failed to create subscription' });
+    }
+  });
+
+  app.delete('/api/user/subscriptions/:id', requireAuth, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify subscription belongs to user
+      const userSubscriptions = await storage.getUserSubscriptions(req.user.id);
+      const subscription = userSubscriptions.find(sub => sub.id === id);
+      
+      if (!subscription) {
+        return res.status(404).json({ message: 'Subscription not found' });
+      }
+
+      const success = await storage.deleteUserSubscription(id);
+      
+      if (success) {
+        res.json({ message: 'Subscription removed successfully' });
+      } else {
+        res.status(500).json({ message: 'Failed to remove subscription' });
+      }
+    } catch (error) {
+      console.error('Error removing subscription:', error);
+      res.status(500).json({ message: 'Failed to remove subscription' });
+    }
+  });
+
+  // Bulk price endpoint for subscribed tickers
+  app.post('/api/market/prices', async (req, res) => {
+    try {
+      const { symbols } = req.body;
+      
+      if (!Array.isArray(symbols) || symbols.length === 0) {
+        return res.status(400).json({ message: 'Symbols array is required' });
+      }
+
+      const prices: Record<string, any> = {};
+      
+      // Fetch prices for all requested symbols
+      await Promise.all(
+        symbols.map(async (symbol: string) => {
+          try {
+            // Use existing price endpoint logic
+            const mockPrices: Record<string, number> = {
+              'BTCUSDT': 67543.21,
+              'ETHUSDT': 3421.89,
+              'SOLUSDT': 98.34,
+              'ADAUSDT': 0.4567,
+              'BNBUSDT': 342.15,
+              'XRPUSDT': 0.6234,
+              'DOTUSDT': 7.89,
+              'MATICUSDT': 0.8923,
+              'AVAXUSDT': 23.45,
+              'LINKUSDT': 12.67
+            };
+
+            const basePrice = mockPrices[symbol] || 100;
+            const variation = (Math.random() - 0.5) * 0.04;
+            const price = basePrice * (1 + variation);
+
+            prices[symbol] = {
+              symbol,
+              price: parseFloat(price.toFixed(6)),
+              change24h: (Math.random() - 0.5) * 10,
+              volume24h: Math.random() * 1000000000
+            };
+          } catch (error) {
+            console.error(`Failed to fetch price for ${symbol}:`, error);
+          }
+        })
+      );
+
+      res.json(prices);
+    } catch (error) {
+      console.error('Error fetching bulk prices:', error);
+      res.status(500).json({ message: 'Failed to fetch prices' });
+    }
+  });
+
   // Chart data routes (legacy support)
   app.get('/api/chart/ohlc/:ticker', async (req, res) => {
     try {

@@ -25,6 +25,7 @@ import {
   Menu,
   X,
   LogOut,
+  Star,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -53,6 +54,11 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
       title: "Multi-Ticker",
       href: "/multi-ticker",
       icon: BarChart3,
+    },
+    {
+      title: "Subscriptions",
+      href: "/subscription",
+      icon: Star,
     },
     {
       title: "Trading",
