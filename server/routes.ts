@@ -889,7 +889,195 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Chart data routes
+  // Historical OHLC Service - Edge Function Implementation
+  app.get('/api/ohlc', async (req, res) => {
+    try {
+      const { symbol, interval = '1h', limit = 1000, startTime, endTime } = req.query;
+      
+      if (!symbol) {
+        return res.status(400).json({ 
+          message: 'Symbol parameter is required',
+          example: '/api/ohlc?symbol=BTCUSDT&interval=1h&limit=100'
+        });
+      }
+
+      // Enforce Ticker Validation Against available_tickers
+      const availableTickers = await storage.getAllTickers();
+      const validTicker = availableTickers.find(t => 
+        t.symbol === symbol && t.enabled
+      );
+      
+      if (!validTicker) {
+        return res.status(400).json({ 
+          message: `Invalid or disabled ticker: ${symbol}`,
+          availableTickers: availableTickers.filter(t => t.enabled).map(t => t.symbol)
+        });
+      }
+
+      const symbolStr = symbol as string;
+      const intervalStr = interval as string;
+      const limitNum = Math.min(parseInt(limit as string) || 1000, 5000); // Max 5000 candles
+
+      // OHLC Cache Lookup with Fallback Strategy
+      let ohlcData = await getOHLCWithCacheFallback(
+        symbolStr, 
+        intervalStr, 
+        limitNum, 
+        startTime as string, 
+        endTime as string
+      );
+
+      // Add metadata to response
+      const response = {
+        symbol: symbolStr,
+        interval: intervalStr,
+        count: ohlcData.length,
+        cached: ohlcData.some(d => d.source === 'cache'),
+        external: ohlcData.some(d => d.source === 'binance'),
+        data: ohlcData.map(d => ({
+          time: d.time,
+          open: parseFloat(d.open),
+          high: parseFloat(d.high), 
+          low: parseFloat(d.low),
+          close: parseFloat(d.close),
+          volume: parseFloat(d.volume),
+          source: d.source
+        }))
+      };
+
+      res.json(response);
+    } catch (error: any) {
+      console.error('OHLC Service Error:', error);
+      res.status(500).json({ 
+        message: 'Historical OHLC service error',
+        error: error.message 
+      });
+    }
+  });
+
+  // OHLC Cache Lookup with Fallback to Binance REST API
+  async function getOHLCWithCacheFallback(
+    symbol: string, 
+    interval: string, 
+    limit: number,
+    startTime?: string,
+    endTime?: string
+  ) {
+    try {
+      // Step 1: Check cache first
+      console.log(`Checking OHLC cache for ${symbol} ${interval}`);
+      let cachedData = await storage.getOhlcData(symbol, interval, limit);
+      
+      // Step 2: Determine if we need fresh data
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      
+      const needsFreshData = cachedData.length === 0 || 
+        (cachedData.length > 0 && new Date(cachedData[0].time) < oneHourAgo);
+
+      if (needsFreshData) {
+        console.log(`Fetching fresh OHLC data from Binance for ${symbol}`);
+        
+        try {
+          // Fetch from Binance REST API with timeout
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+          
+          let binanceUrl = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+          
+          if (startTime) {
+            binanceUrl += `&startTime=${new Date(startTime).getTime()}`;
+          }
+          if (endTime) {
+            binanceUrl += `&endTime=${new Date(endTime).getTime()}`;
+          }
+
+          const response = await fetch(binanceUrl, {
+            signal: controller.signal,
+            headers: {
+              'User-Agent': 'CryptoStrategy-OHLC-Service/1.0'
+            }
+          });
+          
+          clearTimeout(timeout);
+
+          if (response.ok) {
+            const binanceData = await response.json();
+            
+            // Normalize and Upsert OHLC Data
+            const normalizedData = await normalizeAndUpsertOHLC(binanceData, symbol, interval);
+            
+            return normalizedData.map(d => ({ ...d, source: 'binance' }));
+          } else {
+            console.log(`Binance API error ${response.status}, using cached data`);
+          }
+        } catch (fetchError) {
+          console.log(`Binance fetch failed: ${fetchError.message}, using cached data`);
+        }
+      }
+
+      // Return cached data with source indicator
+      return cachedData.map(d => ({ ...d, source: 'cache' }));
+      
+    } catch (error) {
+      console.error('OHLC Cache Fallback Error:', error);
+      throw error;
+    }
+  }
+
+  // Normalize and Upsert OHLC Data into ohlc_cache Table
+  async function normalizeAndUpsertOHLC(binanceData: any[], symbol: string, interval: string) {
+    const normalizedData = [];
+    
+    for (const kline of binanceData) {
+      const [
+        openTime,
+        open,
+        high,
+        low,
+        close,
+        volume,
+        closeTime,
+        quoteAssetVolume,
+        numberOfTrades,
+        takerBuyBaseAssetVolume,
+        takerBuyQuoteAssetVolume,
+        ignore
+      ] = kline;
+
+      const normalizedCandle = {
+        tickerSymbol: symbol,
+        interval: interval,
+        time: new Date(openTime),
+        open: open.toString(),
+        high: high.toString(),
+        low: low.toString(),
+        close: close.toString(),
+        volume: volume.toString()
+      };
+
+      try {
+        // Upsert: Insert if not exists, update if exists
+        const existingCandle = await storage.getOhlcData(symbol, interval, 1);
+        const exists = existingCandle.some(c => 
+          new Date(c.time).getTime() === new Date(normalizedCandle.time).getTime()
+        );
+
+        if (!exists) {
+          await storage.createOhlcData(normalizedCandle);
+        }
+        
+        normalizedData.push(normalizedCandle);
+      } catch (upsertError) {
+        console.error(`OHLC Upsert Error for ${symbol}:`, upsertError);
+      }
+    }
+
+    console.log(`Normalized and cached ${normalizedData.length} OHLC candles for ${symbol}`);
+    return normalizedData;
+  }
+
+  // Chart data routes (legacy support)
   app.get('/api/chart/ohlc/:ticker', async (req, res) => {
     try {
       const { ticker } = req.params;

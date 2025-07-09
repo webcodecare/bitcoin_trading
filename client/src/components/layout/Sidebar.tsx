@@ -69,6 +69,11 @@ export default function Sidebar({ className }: SidebarProps) {
       icon: Activity,
     },
     {
+      title: "Historical OHLC",
+      href: "/historical-ohlc",
+      icon: BarChart,
+    },
+    {
       title: "Signal Mood Board",
       href: "/mood-board",
       icon: Smile,
