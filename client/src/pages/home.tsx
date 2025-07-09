@@ -205,37 +205,70 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">Advanced Bitcoin Analytics</h2>
-            <p className="text-xl text-muted-foreground">Professional-grade charts and indicators for serious traders</p>
+            <p className="text-xl text-muted-foreground">Professional-grade charts, heatmaps, cycle forecasting, and live demo trading signals</p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
-            {/* Bitcoin Demo Chart with Live Signals */}
-            <PublicDemoChart 
-              title="Bitcoin Analytics Dashboard"
-              symbol="BTCUSDT"
-              className="border border-border"
+            {/* Advanced BTC Chart with Buy/Sell Signals */}
+            <TradingViewWidget 
+              symbol="BINANCE:BTCUSDT"
+              height={400}
+              enableTrading={true}
+              showSignals={true}
+              theme="dark"
             />
 
-            {/* Ethereum Demo Chart */}
-            <PublicDemoChart 
-              title="Ethereum Live Signals"
-              symbol="ETHUSDT"
+            {/* 200-Week Heatmap */}
+            <HeatmapChart 
+              symbol="BTC"
+              height={400}
               className="border border-border"
             />
           </div>
 
-          {/* Additional Demo Charts */}
-          <div className="grid md:grid-cols-2 gap-8">
-            <PublicDemoChart 
-              title="Solana Market Analysis"
-              symbol="SOLUSDT"
-              className="border border-border"
-            />
-            <PublicDemoChart 
-              title="Cardano Trading Signals"
-              symbol="ADAUSDT" 
-              className="border border-border"
-            />
+          {/* Cycle Forecaster */}
+          <CycleChart 
+            symbol="BTC"
+            height={300}
+            className="border border-border"
+          />
+
+          {/* Demo Charts Section with Static OHLC Data */}
+          <div className="mt-12">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold mb-2">Live Demo Charts</h3>
+              <p className="text-muted-foreground">Experience our platform with real-time OHLC data and simulated trading signals</p>
+            </div>
+            
+            <div className="grid lg:grid-cols-2 gap-8 mb-8">
+              {/* Bitcoin Demo Chart with Live Signals */}
+              <PublicDemoChart 
+                title="Bitcoin Analytics Dashboard"
+                symbol="BTCUSDT"
+                className="border border-border"
+              />
+
+              {/* Ethereum Demo Chart */}
+              <PublicDemoChart 
+                title="Ethereum Live Signals"
+                symbol="ETHUSDT"
+                className="border border-border"
+              />
+            </div>
+
+            {/* Additional Demo Charts */}
+            <div className="grid md:grid-cols-2 gap-8">
+              <PublicDemoChart 
+                title="Solana Market Analysis"
+                symbol="SOLUSDT"
+                className="border border-border"
+              />
+              <PublicDemoChart 
+                title="Cardano Trading Signals"
+                symbol="ADAUSDT" 
+                className="border border-border"
+              />
+            </div>
           </div>
         </div>
       </section>
