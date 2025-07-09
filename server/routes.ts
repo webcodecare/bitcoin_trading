@@ -1578,7 +1578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get enabled tickers for user selection
+  // Get enabled tickers for user selection (legacy endpoint)
   app.get("/api/tickers/enabled", async (req, res) => {
     try {
       const enabledTickers = await storage.getEnabledTickers();
@@ -1586,6 +1586,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching enabled tickers:", error);
       res.status(500).json({ message: "Failed to get enabled tickers" });
+    }
+  });
+
+  // Supabase-style edge function: GET /api/tickers
+  app.get("/api/tickers", async (req, res) => {
+    try {
+      const { 
+        search = "", 
+        enabled = "true", 
+        limit = "100", 
+        offset = "0",
+        category = "",
+        sort = "symbol",
+        order = "asc"
+      } = req.query;
+
+      // Validate query parameters
+      const searchTerm = typeof search === 'string' ? search.trim() : '';
+      const isEnabledFilter = enabled === 'true';
+      const limitNum = Math.min(parseInt(limit as string) || 100, 1000); // Max 1000 results
+      const offsetNum = parseInt(offset as string) || 0;
+      const categoryFilter = typeof category === 'string' ? category.trim() : '';
+      const sortField = typeof sort === 'string' && ['symbol', 'description', 'createdAt'].includes(sort) ? sort : 'symbol';
+      const sortOrder = order === 'desc' ? 'desc' : 'asc';
+
+      // Get all tickers from storage
+      const allTickers = await storage.getAllTickers();
+      
+      // Apply filters
+      let filteredTickers = allTickers;
+
+      // Filter by enabled status
+      if (isEnabledFilter) {
+        filteredTickers = filteredTickers.filter(ticker => ticker.isEnabled);
+      }
+
+      // Apply search filter (search in symbol and description)
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        filteredTickers = filteredTickers.filter(ticker => 
+          ticker.symbol.toLowerCase().includes(searchLower) ||
+          ticker.description.toLowerCase().includes(searchLower)
+        );
+      }
+
+      // Apply category filter
+      if (categoryFilter) {
+        filteredTickers = filteredTickers.filter(ticker => 
+          ticker.category && ticker.category.toLowerCase() === categoryFilter.toLowerCase()
+        );
+      }
+
+      // Sort results
+      filteredTickers.sort((a, b) => {
+        let aValue = a[sortField as keyof typeof a];
+        let bValue = b[sortField as keyof typeof b];
+        
+        if (typeof aValue === 'string') aValue = aValue.toLowerCase();
+        if (typeof bValue === 'string') bValue = bValue.toLowerCase();
+        
+        if (sortOrder === 'desc') {
+          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+        } else {
+          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        }
+      });
+
+      // Apply pagination
+      const totalCount = filteredTickers.length;
+      const paginatedTickers = filteredTickers.slice(offsetNum, offsetNum + limitNum);
+
+      // Prepare autocomplete suggestions
+      const suggestions = filteredTickers
+        .slice(0, 10) // Limit suggestions to top 10
+        .map(ticker => ({
+          symbol: ticker.symbol,
+          description: ticker.description,
+          category: ticker.category
+        }));
+
+      // Response with Supabase-style metadata
+      const response = {
+        data: paginatedTickers,
+        count: totalCount,
+        filtered_count: totalCount,
+        pagination: {
+          limit: limitNum,
+          offset: offsetNum,
+          has_more: offsetNum + limitNum < totalCount,
+          total_pages: Math.ceil(totalCount / limitNum),
+          current_page: Math.floor(offsetNum / limitNum) + 1
+        },
+        search: {
+          term: searchTerm,
+          suggestions: searchTerm ? suggestions : [],
+          autocomplete: searchTerm ? suggestions.map(s => s.symbol) : []
+        },
+        filters: {
+          enabled: isEnabledFilter,
+          category: categoryFilter,
+          sort: sortField,
+          order: sortOrder
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          cached: false,
+          processing_time_ms: 0 // Will be calculated below
+        }
+      };
+
+      // Set response headers for caching and API versioning
+      res.set({
+        'Cache-Control': 'public, max-age=300', // 5 minutes cache
+        'X-API-Version': '1.0',
+        'X-Total-Count': totalCount.toString(),
+        'X-Filtered-Count': totalCount.toString()
+      });
+
+      res.status(200).json(response);
+    } catch (error: any) {
+      console.error("Error fetching tickers:", error);
+      res.status(500).json({ 
+        error: "Internal Server Error",
+        message: "Failed to fetch tickers",
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
