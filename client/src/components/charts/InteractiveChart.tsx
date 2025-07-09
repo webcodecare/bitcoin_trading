@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useRealtimeChartMarkers, type RealtimeAlert } from '@/hooks/useSupabaseRealtime';
+import ChartTooltip from './ChartTooltip';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -102,6 +103,12 @@ export default function InteractiveChart({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [alertMarkers, setAlertMarkers] = useState<RealtimeAlert[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected');
+  
+  // Tooltip state
+  const [tooltipSignal, setTooltipSignal] = useState<any>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{x: number, y: number} | null>(null);
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const [availableSignals, setAvailableSignals] = useState<any[]>([]);
 
   // Fetch historical OHLC data
   const { data: ohlcData, isLoading: isLoadingOHLC, refetch: refetchOHLC } = useQuery<OHLCResponse>({
@@ -116,6 +123,19 @@ export default function InteractiveChart({
     enabled: !!currentSymbol,
     refetchInterval: 5000, // Update price every 5 seconds
   });
+
+  // Fetch signals for tooltip data
+  const { data: signalsData } = useQuery({
+    queryKey: [`/api/signals/${currentSymbol}`],
+    enabled: !!currentSymbol,
+    refetchInterval: 30000, // Refresh signals every 30 seconds
+  });
+
+  useEffect(() => {
+    if (signalsData) {
+      setAvailableSignals(signalsData);
+    }
+  }, [signalsData]);
 
   // WebSocket connection for live price streaming
   const { 
@@ -208,6 +228,31 @@ export default function InteractiveChart({
     });
 
     chartRef.current = chart;
+
+    // Add chart click event handler for markers
+    chart.subscribeClick((param) => {
+      if (param.time && param.point) {
+        const timestamp = param.time as number;
+        const price = param.seriesData?.get(candlestickSeriesRef.current || lineSeriesRef.current || areaSeriesRef.current) as any;
+        
+        if (price) {
+          const actualPrice = typeof price === 'object' ? (price.close || price.value) : price;
+          const matchingSignal = findSignalForTooltip(timestamp, actualPrice);
+          
+          if (matchingSignal) {
+            const rect = chartContainerRef.current?.getBoundingClientRect();
+            if (rect && param.point) {
+              setTooltipSignal(matchingSignal);
+              setTooltipPosition({
+                x: rect.left + param.point.x,
+                y: rect.top + param.point.y
+              });
+              setIsTooltipVisible(true);
+            }
+          }
+        }
+      }
+    });
 
     // Create volume series if enabled
     if (showVolume) {
@@ -421,6 +466,25 @@ export default function InteractiveChart({
     setIsFullscreen(!isFullscreen);
   };
 
+  // Handle tooltip events
+  const handleTooltipClose = () => {
+    setIsTooltipVisible(false);
+    setTooltipSignal(null);
+    setTooltipPosition(null);
+  };
+
+  // Find signal by timestamp and price for tooltip
+  const findSignalForTooltip = (timestamp: number, price: number) => {
+    return availableSignals.find(signal => {
+      const signalTimestamp = new Date(signal.timestamp).getTime() / 1000;
+      const timeDiff = Math.abs(signalTimestamp - timestamp);
+      const priceDiff = Math.abs(signal.price - price);
+      
+      // Match within 1 hour and $100 range (adjust as needed)
+      return timeDiff < 3600 && priceDiff < 100;
+    });
+  };
+
   return (
     <Card className={`${className} ${isFullscreen ? 'fixed inset-4 z-50' : ''}`}>
       <CardHeader className="pb-4">
@@ -591,6 +655,15 @@ export default function InteractiveChart({
           </div>
         </div>
       </CardContent>
+
+      {/* Interactive Chart Tooltip */}
+      <ChartTooltip
+        signal={tooltipSignal}
+        position={tooltipPosition}
+        isVisible={isTooltipVisible}
+        onClose={handleTooltipClose}
+        currentPrice={currentPrice?.price}
+      />
     </Card>
   );
 }
