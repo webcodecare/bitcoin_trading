@@ -31,9 +31,12 @@ import {
   BarChart3,
   Settings,
   Award,
-  AlertTriangle
+  AlertTriangle,
+  Activity,
+  PieChart
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import AdvancedSimulationChart from "@/components/trading/AdvancedSimulationChart";
 
 interface SimulationSettings {
   initialBalance: number;
@@ -42,6 +45,11 @@ interface SimulationSettings {
   signalFrequency: number; // minutes
   marketCondition: 'bull' | 'bear' | 'sideways' | 'volatile';
   simulationSpeed: number; // 1x, 2x, 5x, 10x
+  enableStopLoss: boolean;
+  stopLossPercentage: number;
+  enableTakeProfit: boolean;
+  takeProfitPercentage: number;
+  tradingPairs: string[];
 }
 
 interface TradingPosition {
@@ -94,7 +102,12 @@ export default function TradingPlayground() {
     autoTrade: true,
     signalFrequency: 5,
     marketCondition: 'bull',
-    simulationSpeed: 1
+    simulationSpeed: 1,
+    enableStopLoss: true,
+    stopLossPercentage: 5,
+    enableTakeProfit: true,
+    takeProfitPercentage: 10,
+    tradingPairs: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT']
   });
 
   // Trading state
@@ -115,8 +128,14 @@ export default function TradingPlayground() {
     profitFactor: 0
   });
 
-  // Selected trading pairs
-  const [selectedPairs] = useState(['BTCUSDT', 'ETHUSDT', 'SOLUSDT']);
+  // Performance tracking
+  const [balanceHistory, setBalanceHistory] = useState<{time: number, balance: number, pnl: number}[]>([]);
+  const [riskMetrics, setRiskMetrics] = useState({
+    sharpeRatio: 0,
+    maxDrawdown: 0,
+    volatility: 0,
+    profitFactor: 0
+  });
 
   // Fetch available tickers
   const { data: tickers } = useQuery({
@@ -126,16 +145,18 @@ export default function TradingPlayground() {
 
   // Fetch market prices for selected pairs
   const { data: marketPrices } = useQuery({
-    queryKey: ['/api/market/prices', selectedPairs],
+    queryKey: ['/api/market/prices', simulationSettings.tradingPairs],
     queryFn: async () => {
       const prices: Record<string, number> = {};
-      for (const pair of selectedPairs) {
+      for (const pair of simulationSettings.tradingPairs) {
         try {
           const data = await apiRequest(`/api/market/price/${pair}`);
           prices[pair] = data.price;
         } catch (error) {
           console.error(`Error fetching price for ${pair}:`, error);
-          prices[pair] = Math.random() * 50000 + 20000; // Fallback
+          // Add realistic price simulation based on pair
+          const basePrice = pair.includes('BTC') ? 65000 : pair.includes('ETH') ? 3400 : 100;
+          prices[pair] = basePrice * (0.95 + Math.random() * 0.1); // ±5% variation
         }
       }
       return prices;
@@ -144,14 +165,38 @@ export default function TradingPlayground() {
     enabled: isSimulationRunning
   });
 
-  // Generate random trading signals
+  // Generate random trading signals with market condition influence
   const generateSignal = (): LiveSignal => {
-    const symbol = selectedPairs[Math.floor(Math.random() * selectedPairs.length)];
-    const action = Math.random() > 0.5 ? 'buy' : 'sell';
-    const price = marketPrices?.[symbol] || Math.random() * 50000 + 20000;
+    const symbol = simulationSettings.tradingPairs[Math.floor(Math.random() * simulationSettings.tradingPairs.length)];
+    
+    // Market condition influences signal direction
+    let action: 'buy' | 'sell';
+    switch (simulationSettings.marketCondition) {
+      case 'bull':
+        action = Math.random() > 0.3 ? 'buy' : 'sell'; // 70% buy signals
+        break;
+      case 'bear':
+        action = Math.random() > 0.7 ? 'buy' : 'sell'; // 30% buy signals
+        break;
+      case 'volatile':
+        action = Math.random() > 0.5 ? 'buy' : 'sell'; // 50/50 with rapid changes
+        break;
+      default: // sideways
+        action = Math.random() > 0.45 ? 'buy' : 'sell'; // Slightly more buys
+    }
+    
+    const basePrice = marketPrices?.[symbol] || 50000;
+    // Add market condition volatility
+    const volatilityMultiplier = simulationSettings.marketCondition === 'volatile' ? 0.02 : 0.005;
+    const price = basePrice * (1 + (Math.random() - 0.5) * volatilityMultiplier);
+    
     const confidence = Math.floor(Math.random() * 40) + 60; // 60-100%
     
-    const strategies = ['RSI Divergence', 'MACD Cross', 'Support/Resistance', 'Trend Following', 'Volume Spike'];
+    const strategies = [
+      'RSI Divergence', 'MACD Cross', 'Support/Resistance', 
+      'Trend Following', 'Volume Spike', 'Bollinger Bands',
+      'Fibonacci Retracement', 'Moving Average Cross'
+    ];
     const strategy = strategies[Math.floor(Math.random() * strategies.length)];
 
     return {
@@ -222,7 +267,15 @@ export default function TradingPlayground() {
     );
 
     // Update balance
-    setCurrentBalance(prev => prev + pnl);
+    const newBalance = currentBalance + pnl;
+    setCurrentBalance(newBalance);
+
+    // Update balance history for chart
+    setBalanceHistory(prev => [...prev, {
+      time: Date.now(),
+      balance: newBalance,
+      pnl: newBalance - simulationSettings.initialBalance
+    }].slice(-50)); // Keep last 50 data points
 
     // Update stats
     updateSimulationStats(updatedPosition);
@@ -266,6 +319,11 @@ export default function TradingPlayground() {
     setCurrentBalance(simulationSettings.initialBalance);
     setPositions([]);
     setLiveSignals([]);
+    setBalanceHistory([{
+      time: Date.now(),
+      balance: simulationSettings.initialBalance,
+      pnl: 0
+    }]);
     setSimulationStats({
       totalTrades: 0,
       winningTrades: 0,
@@ -321,12 +379,19 @@ export default function TradingPlayground() {
       
       const pnlPercentage = (priceDiff / position.entryPrice) * 100;
 
-      // Auto close at +10% profit or -5% loss
-      if (pnlPercentage >= 10 || pnlPercentage <= -5) {
+      // Check take profit
+      if (simulationSettings.enableTakeProfit && pnlPercentage >= simulationSettings.takeProfitPercentage) {
         setTimeout(() => closePosition(position.id), 100);
+        return;
+      }
+
+      // Check stop loss
+      if (simulationSettings.enableStopLoss && pnlPercentage <= -simulationSettings.stopLossPercentage) {
+        setTimeout(() => closePosition(position.id), 100);
+        return;
       }
     });
-  }, [marketPrices, positions, isSimulationRunning]);
+  }, [marketPrices, positions, isSimulationRunning, simulationSettings]);
 
   const openPositions = positions.filter(p => p.status === 'open');
   const closedPositions = positions.filter(p => p.status === 'closed').slice(0, 10);
@@ -447,9 +512,46 @@ export default function TradingPlayground() {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Performance Chart */}
+              <Card className="bg-gray-800 border-gray-700 lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center">
+                    <BarChart3 className="w-5 h-5 mr-2" />
+                    Portfolio Performance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <AdvancedSimulationChart 
+                    data={balanceHistory}
+                    width={400}
+                    height={200}
+                  />
+                  <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-sm text-gray-400">Max Drawdown</p>
+                      <p className="text-lg font-semibold text-red-400">
+                        {simulationStats.maxDrawdown.toFixed(2)}%
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400">Profit Factor</p>
+                      <p className="text-lg font-semibold text-green-400">
+                        {riskMetrics.profitFactor.toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400">Volatility</p>
+                      <p className="text-lg font-semibold text-yellow-400">
+                        {riskMetrics.volatility.toFixed(2)}%
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Simulation Settings */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-gray-800 border-gray-700 lg:col-span-1">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center">
                     <Settings className="w-5 h-5 mr-2" />
@@ -489,6 +591,27 @@ export default function TradingPlayground() {
                   </div>
 
                   <div>
+                    <Label className="text-gray-300">Market Condition</Label>
+                    <Select
+                      value={simulationSettings.marketCondition}
+                      onValueChange={(value: 'bull' | 'bear' | 'sideways' | 'volatile') => 
+                        setSimulationSettings(prev => ({ ...prev, marketCondition: value }))
+                      }
+                      disabled={isSimulationRunning}
+                    >
+                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bull">Bull Market</SelectItem>
+                        <SelectItem value="bear">Bear Market</SelectItem>
+                        <SelectItem value="sideways">Sideways/Range</SelectItem>
+                        <SelectItem value="volatile">High Volatility</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
                     <Label className="text-gray-300">Simulation Speed</Label>
                     <Select
                       value={simulationSettings.simulationSpeed.toString()}
@@ -510,21 +633,83 @@ export default function TradingPlayground() {
                     </Select>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <Label className="text-gray-300">Auto-Trade Signals</Label>
-                    <Switch
-                      checked={simulationSettings.autoTrade}
-                      onCheckedChange={(checked) => setSimulationSettings(prev => ({ 
-                        ...prev, 
-                        autoTrade: checked 
-                      }))}
-                    />
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-300">Auto-Trade Signals</Label>
+                      <Switch
+                        checked={simulationSettings.autoTrade}
+                        onCheckedChange={(checked) => setSimulationSettings(prev => ({ 
+                          ...prev, 
+                          autoTrade: checked 
+                        }))}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-300">Enable Stop Loss</Label>
+                      <Switch
+                        checked={simulationSettings.enableStopLoss}
+                        onCheckedChange={(checked) => setSimulationSettings(prev => ({ 
+                          ...prev, 
+                          enableStopLoss: checked 
+                        }))}
+                      />
+                    </div>
+
+                    {simulationSettings.enableStopLoss && (
+                      <div>
+                        <Label className="text-gray-300">Stop Loss (%)</Label>
+                        <Slider
+                          value={[simulationSettings.stopLossPercentage]}
+                          onValueChange={(value) => setSimulationSettings(prev => ({ 
+                            ...prev, 
+                            stopLossPercentage: value[0] 
+                          }))}
+                          max={20}
+                          min={1}
+                          step={1}
+                          className="mt-2"
+                          disabled={isSimulationRunning}
+                        />
+                        <span className="text-sm text-gray-400">{simulationSettings.stopLossPercentage}%</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <Label className="text-gray-300">Enable Take Profit</Label>
+                      <Switch
+                        checked={simulationSettings.enableTakeProfit}
+                        onCheckedChange={(checked) => setSimulationSettings(prev => ({ 
+                          ...prev, 
+                          enableTakeProfit: checked 
+                        }))}
+                      />
+                    </div>
+
+                    {simulationSettings.enableTakeProfit && (
+                      <div>
+                        <Label className="text-gray-300">Take Profit (%)</Label>
+                        <Slider
+                          value={[simulationSettings.takeProfitPercentage]}
+                          onValueChange={(value) => setSimulationSettings(prev => ({ 
+                            ...prev, 
+                            takeProfitPercentage: value[0] 
+                          }))}
+                          max={50}
+                          min={5}
+                          step={5}
+                          className="mt-2"
+                          disabled={isSimulationRunning}
+                        />
+                        <span className="text-sm text-gray-400">{simulationSettings.takeProfitPercentage}%</span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
               {/* Live Signals */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-gray-800 border-gray-700 lg:col-span-1">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center">
                     <AlertTriangle className="w-5 h-5 mr-2" />
@@ -606,6 +791,9 @@ export default function TradingPlayground() {
                 </CardContent>
               </Card>
 
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Open Positions */}
               <Card className="bg-gray-800 border-gray-700">
                 <CardHeader>
