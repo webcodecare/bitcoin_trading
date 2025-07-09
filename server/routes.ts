@@ -2183,29 +2183,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Mock report data - in production this would come from a reports table
       const mockReports = [
         {
-          id: "report_1",
+          id: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
           name: "User Activity Report - December 2024",
           type: "user_activity",
           generatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          downloadUrl: "/api/admin/reports/report_1/download",
+          downloadUrl: "/api/admin/reports/f47ac10b-58cc-4372-a567-0e02b2c3d479/download",
           status: "ready",
           fileSize: "2.3 MB",
         },
         {
-          id: "report_2", 
+          id: "550e8400-e29b-41d4-a716-446655440000", 
           name: "Signal Effectiveness - November 2024",
           type: "signal_effectiveness",
           generatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          downloadUrl: "/api/admin/reports/report_2/download",
+          downloadUrl: "/api/admin/reports/550e8400-e29b-41d4-a716-446655440000/download",
           status: "ready",
           fileSize: "1.8 MB",
         },
         {
-          id: "report_3",
+          id: "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
           name: "Revenue Analytics - Q4 2024", 
           type: "revenue_analytics",
           generatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          downloadUrl: "/api/admin/reports/report_3/download",
+          downloadUrl: "/api/admin/reports/6ba7b810-9dad-11d1-80b4-00c04fd430c8/download",
           status: "expired",
           fileSize: "3.1 MB",
         },
@@ -2230,7 +2230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }).parse(req.body);
 
       // Mock report generation - in production this would trigger background job
-      const reportId = `report_${Date.now()}`;
+      const reportId = crypto.randomUUID();
       const reportName = `${reportConfig.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} - ${new Date().toLocaleDateString()}`;
       
       // Create admin log
