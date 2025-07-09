@@ -45,6 +45,7 @@ import Subscription from "@/pages/subscription";
 import Trading from "@/pages/trading";
 import BitcoinAnalytics from "@/pages/bitcoin-analytics";
 import LiveStreaming from "@/pages/live-streaming";
+import HistoricalOHLC from "@/pages/historical-ohlc";
 import AuthGuard from "@/components/auth/AuthGuard";
 
 function Router() {
@@ -189,6 +190,11 @@ function Router() {
       <Route path="/live-streaming">
         <AuthGuard>
           <LiveStreaming />
+        </AuthGuard>
+      </Route>
+      <Route path="/historical-ohlc">
+        <AuthGuard>
+          <HistoricalOHLC />
         </AuthGuard>
       </Route>
       <Route path="/mood-board">
