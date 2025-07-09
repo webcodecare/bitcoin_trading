@@ -39,6 +39,7 @@ interface SidebarProps {
 export default function Sidebar({ className, isOpen = false, onClose }: SidebarProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
     if (path === "/admin" && location === "/admin") return true;
