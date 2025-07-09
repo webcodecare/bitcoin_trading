@@ -24,6 +24,7 @@ import {
   Smile,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -32,7 +33,7 @@ interface SidebarProps {
 
 export default function Sidebar({ className }: SidebarProps) {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
@@ -210,7 +211,7 @@ export default function Sidebar({ className }: SidebarProps) {
             )}
           </Link>
           
-          <nav className="space-y-1 lg:space-y-2 max-h-[calc(100vh-120px)] overflow-y-auto">
+          <nav className="space-y-1 lg:space-y-2 max-h-[calc(100vh-180px)] overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -231,6 +232,33 @@ export default function Sidebar({ className }: SidebarProps) {
               );
             })}
           </nav>
+
+          {/* User Info and Logout */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-6 border-t border-border bg-card">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2 text-sm">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                </div>
+                <div className="hidden lg:block">
+                  <p className="font-medium text-foreground">{user?.firstName || 'User'}</p>
+                  <p className="text-xs text-muted-foreground truncate max-w-[120px]">
+                    {user?.email}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                logout();
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center space-x-3 p-2 lg:p-3 rounded-lg transition-colors text-sm lg:text-base text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+            >
+              <LogOut className="h-4 w-4 lg:h-5 lg:w-5 flex-shrink-0" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
     </>

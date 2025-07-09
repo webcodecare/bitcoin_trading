@@ -109,6 +109,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       title: "Logged out",
       description: "You have been logged out successfully",
     });
+    // Redirect to login page
+    window.location.href = '/login';
   };
 
   const updateSettings = async (settings: Partial<UserSettings>) => {
