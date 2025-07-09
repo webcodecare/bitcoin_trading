@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CreditCard, RefreshCw, AlertCircle, CheckCircle, XCircle, Clock, Search, Filter } from "lucide-react";
+import Sidebar from "@/components/layout/Sidebar";
 
 interface PaymentLog {
   id: string;
@@ -153,13 +154,22 @@ export default function AdminPayments() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Payment Logs</h1>
-          <p className="text-muted-foreground">Monitor payment transactions and gateway responses</p>
-        </div>
-      </div>
+    <div className="flex h-screen bg-background">
+      <Sidebar className="w-64 hidden lg:block" />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white shadow-sm border-b lg:hidden">
+          <div className="px-4 py-4">
+            <h1 className="text-xl font-semibold">Payment Management</h1>
+          </div>
+        </header>
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold">Payment Logs</h1>
+                <p className="text-muted-foreground">Monitor payment transactions and gateway responses</p>
+              </div>
+            </div>
 
       <Tabs defaultValue="logs" className="space-y-4">
         <TabsList>
@@ -480,6 +490,9 @@ export default function AdminPayments() {
           )}
         </DialogContent>
       </Dialog>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
