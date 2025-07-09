@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { Link } from "wouter";
 import Sidebar from "@/components/layout/Sidebar";
 
 import HeatmapChart from "@/components/charts/HeatmapChart";
@@ -12,6 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -22,7 +30,11 @@ import {
   Activity,
   BarChart3,
   LineChart,
-  PieChart
+  PieChart,
+  Settings,
+  User,
+  LogOut,
+  AlertTriangle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -37,7 +49,7 @@ interface AlertSignal {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [recentSignals, setRecentSignals] = useState<AlertSignal[]>([]);
   const [selectedTickers, setSelectedTickers] = useState<string[]>(["BTCUSDT", "ETHUSDT"]);
   const [activeTab, setActiveTab] = useState("overview");
@@ -140,13 +152,61 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="icon">
-                  <Bell className="h-4 w-4" />
-                </Button>
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
-                  {user?.firstName?.[0] || user?.email[0].toUpperCase()}
-                </div>
+              <div className="flex items-center space-x-2">
+                {/* Notifications Button */}
+                <Link href="/alerts">
+                  <Button variant="ghost" size="icon" title="View Alerts">
+                    <Bell className="h-4 w-4" />
+                  </Button>
+                </Link>
+                
+                {/* User Profile Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
+                        {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <div className="flex items-center justify-start gap-2 p-2">
+                      <div className="flex flex-col space-y-1 leading-none">
+                        <p className="font-medium">{user?.firstName || 'User'}</p>
+                        <p className="w-[200px] truncate text-sm text-muted-foreground">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings" className="w-full">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/preferences" className="w-full">
+                        <User className="mr-2 h-4 w-4" />
+                        Preferences
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/advanced-alerts" className="w-full">
+                        <AlertTriangle className="mr-2 h-4 w-4" />
+                        Advanced Alerts
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={logout}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </header>
