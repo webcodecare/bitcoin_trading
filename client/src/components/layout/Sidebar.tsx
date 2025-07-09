@@ -64,6 +64,11 @@ export default function Sidebar({ className }: SidebarProps) {
       icon: Bitcoin,
     },
     {
+      title: "Live Streaming",
+      href: "/live-streaming",
+      icon: Activity,
+    },
+    {
       title: "Signal Mood Board",
       href: "/mood-board",
       icon: Smile,

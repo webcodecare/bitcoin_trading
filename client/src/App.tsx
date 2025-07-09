@@ -44,6 +44,7 @@ import Terms from "@/pages/terms";
 import Subscription from "@/pages/subscription";
 import Trading from "@/pages/trading";
 import BitcoinAnalytics from "@/pages/bitcoin-analytics";
+import LiveStreaming from "@/pages/live-streaming";
 import AuthGuard from "@/components/auth/AuthGuard";
 
 function Router() {
@@ -183,6 +184,11 @@ function Router() {
       <Route path="/bitcoin-analytics">
         <AuthGuard>
           <BitcoinAnalytics />
+        </AuthGuard>
+      </Route>
+      <Route path="/live-streaming">
+        <AuthGuard>
+          <LiveStreaming />
         </AuthGuard>
       </Route>
       <Route path="/mood-board">
