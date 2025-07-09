@@ -10,6 +10,7 @@ import CycleChart from "@/components/charts/CycleChart";
 import AdvancedForecastChart from "@/components/charts/AdvancedForecastChart";
 import TickerSelector from "@/components/ui/ticker-selector";
 import CategoryFilter from "@/components/ui/category-filter";
+import SubscriptionGuard, { useFeatureAccess } from "@/components/auth/SubscriptionGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -400,30 +401,36 @@ export default function MultiTickerDashboard() {
               <TabsContent value="analytics" className="space-y-6">
                 <div className="space-y-6">
                   {/* Advanced Cycle Forecasting */}
-                  {selectedChart && (
-                    <AdvancedForecastChart ticker={selectedChart} />
-                  )}
+                  <SubscriptionGuard feature="cycleForecasting">
+                    {selectedChart && (
+                      <AdvancedForecastChart ticker={selectedChart} />
+                    )}
+                  </SubscriptionGuard>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Heatmap */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>200-Week SMA Heatmap</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <HeatmapChart />
-                      </CardContent>
-                    </Card>
+                    <SubscriptionGuard feature="heatmapAnalysis">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>200-Week SMA Heatmap</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <HeatmapChart />
+                        </CardContent>
+                      </Card>
+                    </SubscriptionGuard>
 
                     {/* Cycle Analysis */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Cycle Analysis</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <CycleChart />
-                      </CardContent>
-                    </Card>
+                    <SubscriptionGuard feature="advancedAnalytics">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Cycle Analysis</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <CycleChart />
+                        </CardContent>
+                      </Card>
+                    </SubscriptionGuard>
                   </div>
                 </div>
               </TabsContent>

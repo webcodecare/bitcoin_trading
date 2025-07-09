@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
+import SubscriptionGuard from "@/components/auth/SubscriptionGuard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -403,6 +404,7 @@ export default function TradingPlayground() {
         <div className="flex-1">
           <Header />
           <div className="p-6 space-y-6">
+            <SubscriptionGuard feature="tradingPlayground">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
@@ -930,6 +932,7 @@ export default function TradingPlayground() {
                 )}
               </CardContent>
             </Card>
+            </SubscriptionGuard>
           </div>
         </div>
       </div>

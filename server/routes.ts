@@ -2834,6 +2834,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create test users for different subscription levels (development only)
+  app.post("/api/admin/create-test-users", requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const testUsers = [
+        {
+          email: "free@test.com",
+          password: "password123",
+          firstName: "Free",
+          lastName: "User",
+          subscriptionTier: "free",
+          subscriptionStatus: null,
+        },
+        {
+          email: "basic@test.com", 
+          password: "password123",
+          firstName: "Basic",
+          lastName: "User",
+          subscriptionTier: "basic",
+          subscriptionStatus: "active",
+        },
+        {
+          email: "premium@test.com",
+          password: "password123", 
+          firstName: "Premium",
+          lastName: "User",
+          subscriptionTier: "premium",
+          subscriptionStatus: "active",
+        },
+        {
+          email: "pro@test.com",
+          password: "password123",
+          firstName: "Pro", 
+          lastName: "User",
+          subscriptionTier: "pro",
+          subscriptionStatus: "active",
+        },
+      ];
+
+      const createdUsers = [];
+      
+      for (const testUser of testUsers) {
+        // Check if user already exists
+        const existingUser = await storage.getUserByEmail(testUser.email);
+        if (!existingUser) {
+          const hashedPassword = await bcrypt.hash(testUser.password, 10);
+          const user = await storage.createUser({
+            email: testUser.email,
+            hashedPassword,
+            firstName: testUser.firstName,
+            lastName: testUser.lastName,
+            subscriptionTier: testUser.subscriptionTier as any,
+            subscriptionStatus: testUser.subscriptionStatus as any,
+            role: "user",
+            isActive: true,
+          });
+          createdUsers.push({
+            email: user.email,
+            subscriptionTier: user.subscriptionTier,
+            id: user.id,
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Created ${createdUsers.length} test users`,
+        users: createdUsers,
+        credentials: testUsers.map(u => ({
+          email: u.email,
+          password: u.password,
+          tier: u.subscriptionTier,
+        })),
+      });
+    } catch (error) {
+      console.error("Error creating test users:", error);
+      res.status(500).json({ message: "Failed to create test users" });
+    }
+  });
+
   // Upgrade subscription
   app.post("/api/subscription/upgrade", requireAuth, async (req: any, res) => {
     try {

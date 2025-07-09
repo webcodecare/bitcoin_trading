@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
 import AdvancedPortfolio from '@/components/advanced/AdvancedPortfolio';
+import SubscriptionGuard from "@/components/auth/SubscriptionGuard";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3 } from "lucide-react";
 
@@ -30,7 +31,9 @@ export default function AdvancedPortfolioPage() {
 
           {/* Portfolio Content */}
           <div className="p-6">
-            <AdvancedPortfolio />
+            <SubscriptionGuard feature="portfolioManagement">
+              <AdvancedPortfolio />
+            </SubscriptionGuard>
           </div>
         </div>
       </div>
