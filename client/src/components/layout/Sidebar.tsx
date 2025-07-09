@@ -26,6 +26,7 @@ import {
   X,
   LogOut,
   Star,
+  Target,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -64,6 +65,11 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
       title: "Trading",
       href: "/trading",
       icon: Activity,
+    },
+    {
+      title: "Trading Playground",
+      href: "/trading-playground",
+      icon: Target,
     },
     {
       title: "Bitcoin Analytics",
