@@ -492,6 +492,149 @@ export const notificationTimingPreferences = pgTable("notification_timing_prefer
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Notification Queue Table for Alert Events
+export const notificationQueue = pgTable("notification_queue", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  alertId: uuid("alert_id").references(() => alertSignals.id),
+  
+  // Channel Information
+  channel: text("channel", { enum: ["email", "sms", "push", "telegram", "discord"] }).notNull(),
+  recipient: text("recipient").notNull(), // email address, phone number, chat_id, etc.
+  
+  // Message Content
+  subject: text("subject"),
+  message: text("message").notNull(),
+  messageHtml: text("message_html"), // HTML version for email
+  templateId: uuid("template_id"), // Optional template reference
+  templateVariables: jsonb("template_variables"), // Variables for template rendering
+  
+  // Status and Processing
+  status: text("status", { 
+    enum: ["pending", "processing", "sent", "delivered", "failed", "cancelled"] 
+  }).notNull().default("pending"),
+  
+  // Retry Logic
+  priority: integer("priority").notNull().default(5), // 1-10, higher = more important
+  maxRetries: integer("max_retries").notNull().default(3),
+  currentAttempts: integer("current_attempts").notNull().default(0),
+  lastAttemptAt: timestamp("last_attempt_at"),
+  nextRetryAt: timestamp("next_retry_at"),
+  
+  // Scheduling
+  scheduledFor: timestamp("scheduled_for").defaultNow(), // When to send
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at"),
+  
+  // Error Handling
+  lastError: text("last_error"),
+  errorDetails: jsonb("error_details"), // Full error info for debugging
+  
+  // Metadata
+  metadata: jsonb("metadata"), // Additional channel-specific data
+  providerMessageId: text("provider_message_id"), // External provider's message ID
+  
+  // Timestamps
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Notification Templates for Different Alert Types
+export const notificationTemplates = pgTable("notification_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  type: text("type", { enum: ["email", "sms", "push", "telegram", "discord"] }).notNull(),
+  category: text("category", { enum: ["signal", "price_alert", "portfolio", "system", "marketing"] }).notNull(),
+  
+  // Template Content
+  subject: text("subject"), // For email and push
+  bodyText: text("body_text").notNull(),
+  bodyHtml: text("body_html"), // For email
+  
+  // Template Variables
+  variables: jsonb("variables").notNull().default('[]'), // Array of variable names
+  
+  // Configuration
+  isActive: boolean("is_active").notNull().default(true),
+  isSystem: boolean("is_system").notNull().default(false), // System templates can't be deleted
+  
+  // Metadata
+  description: text("description"),
+  tags: jsonb("tags").default('[]'),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Notification Delivery Logs
+export const notificationLogs = pgTable("notification_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  queueId: uuid("queue_id").references(() => notificationQueue.id).notNull(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  
+  // Delivery Information
+  channel: text("channel").notNull(),
+  recipient: text("recipient").notNull(),
+  status: text("status", { 
+    enum: ["sent", "delivered", "failed", "bounced", "spam", "unsubscribed"] 
+  }).notNull(),
+  
+  // Provider Information
+  provider: text("provider"), // "twilio", "sendgrid", "firebase", etc.
+  providerMessageId: text("provider_message_id"),
+  providerResponse: jsonb("provider_response"),
+  
+  // Performance Metrics
+  processingTimeMs: integer("processing_time_ms"),
+  deliveryTimeMs: integer("delivery_time_ms"),
+  
+  // Error Details
+  errorCode: text("error_code"),
+  errorMessage: text("error_message"),
+  errorDetails: jsonb("error_details"),
+  
+  // Timestamps
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Notification Channel Configurations
+export const notificationChannels = pgTable("notification_channels", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  type: text("type", { enum: ["email", "sms", "push", "telegram", "discord"] }).notNull(),
+  
+  // Channel Status
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  isHealthy: boolean("is_healthy").notNull().default(true),
+  lastHealthCheck: timestamp("last_health_check"),
+  
+  // Configuration
+  config: jsonb("config").notNull(), // Provider-specific configuration
+  rateLimitPerMinute: integer("rate_limit_per_minute").default(60),
+  rateLimitPerHour: integer("rate_limit_per_hour").default(1000),
+  
+  // Provider Information
+  provider: text("provider").notNull(), // "twilio", "sendgrid", "firebase", etc.
+  providerConfig: jsonb("provider_config").notNull(),
+  
+  // Performance Metrics
+  totalSent: integer("total_sent").notNull().default(0),
+  totalDelivered: integer("total_delivered").notNull().default(0),
+  totalFailed: integer("total_failed").notNull().default(0),
+  avgDeliveryTimeMs: integer("avg_delivery_time_ms").default(0),
+  
+  // Error Handling
+  consecutiveFailures: integer("consecutive_failures").notNull().default(0),
+  lastError: text("last_error"),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const notificationTimingAnalytics = pgTable("notification_timing_analytics", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id).notNull(),
@@ -542,3 +685,13 @@ export type NotificationTimingAnalytic = typeof notificationTimingAnalytics.$inf
 export type InsertNotificationTimingAnalytic = z.infer<typeof insertNotificationTimingAnalyticSchema>;
 export type SmartTimingOptimization = typeof smartTimingOptimizations.$inferSelect;
 export type InsertSmartTimingOptimization = z.infer<typeof insertSmartTimingOptimizationSchema>;
+
+// Notification Queue Types
+export type NotificationQueue = typeof notificationQueue.$inferSelect;
+export type InsertNotificationQueue = typeof notificationQueue.$inferInsert;
+export type NotificationTemplate = typeof notificationTemplates.$inferSelect;
+export type InsertNotificationTemplate = typeof notificationTemplates.$inferInsert;
+export type NotificationLog = typeof notificationLogs.$inferSelect;
+export type InsertNotificationLog = typeof notificationLogs.$inferInsert;
+export type NotificationChannel = typeof notificationChannels.$inferSelect;
+export type InsertNotificationChannel = typeof notificationChannels.$inferInsert;

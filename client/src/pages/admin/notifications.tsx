@@ -84,7 +84,7 @@ interface NotificationTemplate {
 export default function AdminNotifications() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedTab, setSelectedTab] = useState<"queue" | "config" | "templates">("queue");
+  const [selectedTab, setSelectedTab] = useState<"queue" | "processor" | "config" | "templates">("queue");
 
   // Fetch notification configurations
   const { data: configs, isLoading: isLoadingConfigs } = useQuery({
@@ -103,6 +103,26 @@ export default function AdminNotifications() {
       return response as NotificationQueue[];
     },
     refetchInterval: 5000 // Refresh every 5 seconds
+  });
+
+  // Fetch notification queue stats
+  const { data: queueStats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ["/api/admin/notification-queue/stats"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/admin/notification-queue/stats");
+      return response;
+    },
+    refetchInterval: 10000 // Refresh every 10 seconds
+  });
+
+  // Fetch processor status
+  const { data: processorStatus, isLoading: isLoadingProcessor } = useQuery({
+    queryKey: ["/api/admin/notification-processor/status"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/admin/notification-processor/status");
+      return response;
+    },
+    refetchInterval: 15000 // Refresh every 15 seconds
   });
 
   // Fetch notification templates
