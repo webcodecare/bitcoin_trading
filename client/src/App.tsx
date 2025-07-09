@@ -32,6 +32,7 @@ const AdminPayments = lazy(() => import("@/pages/admin/payments"));
 const AdminIntegrations = lazy(() => import("@/pages/admin/integrations"));
 const AdminContent = lazy(() => import("@/pages/admin/content"));
 const AdminPermissions = lazy(() => import("@/pages/admin/permissions"));
+const AdminUserRoles = lazy(() => import("@/pages/admin/user-roles"));
 const AdminTestUsers = lazy(() => import("@/pages/admin/test-users"));
 const Alerts = lazy(() => import("@/pages/alerts"));
 const AdvancedAlertsPage = lazy(() => import("@/pages/advanced-alerts"));
@@ -156,6 +157,13 @@ function Router() {
         <AuthGuard requiredRole="admin">
           <LazyLoader>
             <AdminPermissions />
+          </LazyLoader>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/user-roles">
+        <AuthGuard requiredRole="admin">
+          <LazyLoader>
+            <AdminUserRoles />
           </LazyLoader>
         </AuthGuard>
       </Route>

@@ -1917,6 +1917,200 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return normalizedData;
   }
 
+  // Admin User Management Routes
+  app.get('/api/admin/users', requireAuth, requirePermission('users.view'), async (req: any, res: any) => {
+    try {
+      const { roles } = req.query;
+      let users = await storage.getAllUsers();
+      
+      // Filter by roles if specified
+      if (roles) {
+        const roleList = roles.split(',');
+        users = users.filter((user: any) => roleList.includes(user.role));
+      }
+      
+      // Remove sensitive data
+      const sanitizedUsers = users.map((user: any) => ({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName || 'Admin',
+        lastName: user.lastName || 'User',
+        role: user.role,
+        subscriptionTier: user.subscriptionTier,
+        isActive: user.isActive !== false,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin
+      }));
+      
+      res.json(sanitizedUsers);
+    } catch (error) {
+      console.error('Error fetching admin users:', error);
+      res.status(500).json({ 
+        message: 'Failed to fetch admin users',
+        code: 'ADMIN_USERS_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  app.post('/api/admin/users', requireAuth, requirePermission('users.create'), async (req: any, res: any) => {
+    try {
+      const { email, firstName, lastName, role, subscriptionTier } = req.body;
+      
+      // Validate required fields
+      if (!email || !role) {
+        return res.status(400).json({ 
+          message: 'Email and role are required',
+          code: 'VALIDATION_ERROR'
+        });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ 
+          message: 'User with this email already exists',
+          code: 'USER_EXISTS'
+        });
+      }
+      
+      // Create admin user
+      const newUser = await storage.createUser({
+        email,
+        firstName: firstName || 'Admin',
+        lastName: lastName || 'User',
+        role: role,
+        subscriptionTier: subscriptionTier || 'pro',
+        password: 'temp123', // Temporary password - should trigger password reset
+        isActive: true,
+        createdAt: new Date().toISOString()
+      });
+      
+      res.status(201).json({
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: newUser.role,
+        subscriptionTier: newUser.subscriptionTier,
+        isActive: newUser.isActive
+      });
+    } catch (error) {
+      console.error('Error creating admin user:', error);
+      res.status(500).json({ 
+        message: 'Failed to create admin user',
+        code: 'CREATE_USER_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  app.patch('/api/admin/users/:userId/role', requireAuth, requirePermission('users.manage_roles'), async (req: any, res: any) => {
+    try {
+      const { userId } = req.params;
+      const { role } = req.body;
+      
+      if (!role) {
+        return res.status(400).json({ 
+          message: 'Role is required',
+          code: 'VALIDATION_ERROR'
+        });
+      }
+      
+      // Validate role
+      const validRoles = ['user', 'admin', 'superuser'];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ 
+          message: 'Invalid role specified',
+          code: 'INVALID_ROLE'
+        });
+      }
+      
+      const updatedUser = await storage.updateUser(userId, { role });
+      
+      res.json({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        message: 'User role updated successfully'
+      });
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      res.status(500).json({ 
+        message: 'Failed to update user role',
+        code: 'UPDATE_ROLE_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  app.patch('/api/admin/users/:userId/status', requireAuth, requirePermission('users.edit'), async (req: any, res: any) => {
+    try {
+      const { userId } = req.params;
+      const { isActive } = req.body;
+      
+      if (typeof isActive !== 'boolean') {
+        return res.status(400).json({ 
+          message: 'isActive must be a boolean',
+          code: 'VALIDATION_ERROR'
+        });
+      }
+      
+      const updatedUser = await storage.updateUser(userId, { isActive });
+      
+      res.json({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        isActive: updatedUser.isActive,
+        message: `User ${isActive ? 'activated' : 'deactivated'} successfully`
+      });
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      res.status(500).json({ 
+        message: 'Failed to update user status',
+        code: 'UPDATE_STATUS_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  app.get('/api/admin/roles', requireAuth, requirePermission('admin.dashboard'), async (req: any, res: any) => {
+    try {
+      const users = await storage.getAllUsers();
+      
+      const roles = [
+        {
+          id: 'admin',
+          name: 'Administrator',
+          description: 'Full system administration access with user management',
+          permissions: [
+            'users.view', 'users.create', 'users.edit', 'users.delete', 'users.manage_roles',
+            'signals.create', 'signals.manage', 'alerts.manage', 'admin.dashboard',
+            'admin.logs', 'admin.system', 'admin.tickers', 'admin.webhooks',
+            'subscriptions.manage', 'api.admin'
+          ],
+          userCount: users.filter((u: any) => u.role === 'admin').length
+        },
+        {
+          id: 'superuser',
+          name: 'Super Administrator',
+          description: 'Complete system control with all permissions',
+          permissions: ['*'], // All permissions
+          userCount: users.filter((u: any) => u.role === 'superuser').length
+        }
+      ];
+      
+      res.json(roles);
+    } catch (error) {
+      console.error('Error fetching admin roles:', error);
+      res.status(500).json({ 
+        message: 'Failed to fetch admin roles',
+        code: 'ADMIN_ROLES_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
   // API endpoint to get user permissions
   app.get('/api/user/permissions', requireAuth, async (req: any, res: any) => {
     try {
