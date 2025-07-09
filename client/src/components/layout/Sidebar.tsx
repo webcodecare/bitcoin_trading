@@ -212,6 +212,11 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
       icon: Edit,
     },
     {
+      title: "Permission Management",
+      href: "/admin/permissions",
+      icon: Shield,
+    },
+    {
       title: "Test Users",
       href: "/admin/test-users",
       icon: Users,

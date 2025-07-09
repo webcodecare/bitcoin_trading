@@ -1,6 +1,7 @@
 import React from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { hasAccess, getUpgradeMessage, getPlanBadgeColor } from "@/lib/subscriptionUtils";
+import { PermissionManager } from "@/lib/permissions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +27,8 @@ export default function SubscriptionGuard({
   // Debug logging
   console.log(`SubscriptionGuard DEBUG: feature=${feature}, userTier=${userTier}, user=`, user);
   
-  const hasFeatureAccess = hasAccess(userTier, feature as any);
+  // Try both subscription-based and permission-based access
+  const hasFeatureAccess = hasAccess(userTier, feature as any) || PermissionManager.canAccessFeature(user, feature);
   
   console.log(`SubscriptionGuard DEBUG: hasFeatureAccess=${hasFeatureAccess} for ${feature}`);
   
