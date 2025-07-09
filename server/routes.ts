@@ -2177,6 +2177,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Reports Endpoints
+  app.get("/api/admin/reports", requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      // Mock report data - in production this would come from a reports table
+      const mockReports = [
+        {
+          id: "report_1",
+          name: "User Activity Report - December 2024",
+          type: "user_activity",
+          generatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          downloadUrl: "/api/admin/reports/report_1/download",
+          status: "ready",
+          fileSize: "2.3 MB",
+        },
+        {
+          id: "report_2", 
+          name: "Signal Effectiveness - November 2024",
+          type: "signal_effectiveness",
+          generatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          downloadUrl: "/api/admin/reports/report_2/download",
+          status: "ready",
+          fileSize: "1.8 MB",
+        },
+        {
+          id: "report_3",
+          name: "Revenue Analytics - Q4 2024", 
+          type: "revenue_analytics",
+          generatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          downloadUrl: "/api/admin/reports/report_3/download",
+          status: "expired",
+          fileSize: "3.1 MB",
+        },
+      ];
+
+      res.json(mockReports);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      res.status(500).json({ message: "Failed to fetch reports" });
+    }
+  });
+
+  app.post("/api/admin/reports/generate", requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const reportConfig = z.object({
+        type: z.enum(["user_activity", "signal_effectiveness", "subscription_trends", "revenue_analytics"]),
+        dateRange: z.object({
+          start: z.string(),
+          end: z.string(),
+        }),
+        format: z.enum(["xlsx", "csv", "pdf"]).default("xlsx"),
+      }).parse(req.body);
+
+      // Mock report generation - in production this would trigger background job
+      const reportId = `report_${Date.now()}`;
+      const reportName = `${reportConfig.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} - ${new Date().toLocaleDateString()}`;
+      
+      // Create admin log
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: 'GENERATE_REPORT',
+        targetTable: 'reports',
+        targetId: reportId,
+        notes: `Generated ${reportConfig.type} report for period ${reportConfig.dateRange.start} to ${reportConfig.dateRange.end}`,
+      });
+
+      const newReport = {
+        id: reportId,
+        name: reportName,
+        type: reportConfig.type,
+        generatedAt: new Date().toISOString(),
+        downloadUrl: `/api/admin/reports/${reportId}/download`,
+        status: "ready",
+        fileSize: "1.5 MB",
+      };
+
+      res.json(newReport);
+    } catch (error) {
+      console.error("Error generating report:", error);
+      res.status(500).json({ message: "Failed to generate report" });
+    }
+  });
+
+  app.get("/api/admin/reports/:reportId/download", requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { reportId } = req.params;
+      
+      // Mock Excel file generation - in production this would create actual Excel/CSV files
+      const mockExcelContent = Buffer.from("Report ID: " + reportId + "\nGenerated: " + new Date().toISOString() + "\n\nSample Report Data\n");
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=report-${reportId}.xlsx`);
+      res.send(mockExcelContent);
+    } catch (error) {
+      console.error("Error downloading report:", error);
+      res.status(500).json({ message: "Failed to download report" });
+    }
+  });
+
   // Advanced Forecasting API Endpoints
   app.get("/api/forecast/models/:ticker", async (req, res) => {
     try {
