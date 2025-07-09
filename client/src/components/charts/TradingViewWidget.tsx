@@ -531,110 +531,34 @@ export default function TradingViewWidget({
         )}
       </div>
 
-      {/* Trading Panel */}
+      {/* Signal Information Panel */}
       {enableTrading && (
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Quick Trade</CardTitle>
+            <CardTitle className="text-foreground">Signal Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={tradeMode} onValueChange={(value) => setTradeMode(value as 'market' | 'limit')}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="market">Market Order</TabsTrigger>
-                <TabsTrigger value="limit">Limit Order</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="market" className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="amount" className="text-foreground">Amount (USD)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="Enter amount"
-                    value={tradeAmount}
-                    onChange={(e) => setTradeAmount(e.target.value)}
-                  />
-                </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    onClick={() => handleTrade('buy')} 
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    disabled={buyMutation.isPending}
-                  >
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    {buyMutation.isPending ? 'Processing...' : 'Buy'}
-                  </Button>
-                  <Button 
-                    onClick={() => handleTrade('sell')} 
-                    variant="destructive" 
-                    className="flex-1"
-                    disabled={sellMutation.isPending}
-                  >
-                    <TrendingDown className="w-4 h-4 mr-2" />
-                    {sellMutation.isPending ? 'Processing...' : 'Sell'}
-                  </Button>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="limit" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="limit-amount" className="text-foreground">Amount (USD)</Label>
-                    <Input
-                      id="limit-amount"
-                      type="number"
-                      placeholder="Enter amount"
-                      value={tradeAmount}
-                      onChange={(e) => setTradeAmount(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="limit-price" className="text-foreground">Limit Price</Label>
-                    <Input
-                      id="limit-price"
-                      type="number"
-                      placeholder="Enter price"
-                      value={limitPrice}
-                      onChange={(e) => setLimitPrice(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    onClick={() => handleTrade('buy')} 
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    disabled={buyMutation.isPending}
-                  >
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    {buyMutation.isPending ? 'Processing...' : 'Buy Limit'}
-                  </Button>
-                  <Button 
-                    onClick={() => handleTrade('sell')} 
-                    variant="destructive" 
-                    className="flex-1"
-                    disabled={sellMutation.isPending}
-                  >
-                    <TrendingDown className="w-4 h-4 mr-2" />
-                    {sellMutation.isPending ? 'Processing...' : 'Sell Limit'}
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            {/* Quick Amount Buttons */}
-            <div className="mt-4">
-              <Label className="text-foreground">Quick amounts:</Label>
-              <div className="flex space-x-2 mt-2">
-                {['100', '500', '1000', '5000'].map((amount) => (
-                  <Button
-                    key={amount}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setTradeAmount(amount)}
-                  >
-                    ${amount}
-                  </Button>
-                ))}
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                This platform provides trading signals and market analysis. 
+                Trading signals are for informational purposes only.
+              </div>
+              
+              <div className="bg-muted p-4 rounded-lg">
+                <h4 className="font-semibold mb-2">Signal Features</h4>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  <li>• TradingView webhook integration</li>
+                  <li>• Real-time buy/sell signal alerts</li>
+                  <li>• Multiple timeframe support for BTCUSD</li>
+                  <li>• Historical signal tracking</li>
+                  <li>• Email and SMS notifications</li>
+                </ul>
+              </div>
+              
+              <div className="text-xs text-muted-foreground p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <strong>Disclaimer:</strong> This platform does not facilitate actual trading. 
+                All signals are for educational and informational purposes only. 
+                Users must execute trades on their own trading platforms.
               </div>
             </div>
           </CardContent>

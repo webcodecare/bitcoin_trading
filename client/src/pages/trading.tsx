@@ -66,32 +66,14 @@ export default function TradingPage() {
     setOrderAmount(amount);
   };
 
-  // Mock order book data matching reference design
-  const orderBook = {
-    bids: [
-      { price: 65750.0, amount: 0.303, total: 19925.25 },
-      { price: 65740.0, amount: 0.153, total: 10056.42 },
-      { price: 65730.0, amount: 0.731, total: 48038.63 },
-      { price: 65720.0, amount: 0.702, total: 45935.44 },
-      { price: 65710.0, amount: 0.801, total: 52623.71 },
-    ],
-    asks: [
-      { price: 65760.0, amount: 0.142, total: 9337.92 },
-      { price: 65770.0, amount: 0.303, total: 19928.31 },
-      { price: 65780.0, amount: 0.157, total: 10327.46 },
-      { price: 65790.0, amount: 0.702, total: 46184.58 },
-      { price: 65800.0, amount: 0.801, total: 52665.80 },
-    ]
+  // Market statistics for information display
+  const marketStats = {
+    volume24h: "$28.5B",
+    marketCap: "$1.37T",
+    circulatingSupply: "19.8M BTC",
+    allTimeHigh: "$73,750",
+    dominance: "54.3%"
   };
-
-  // Mock market trades
-  const marketTrades = [
-    { id: 1, side: "buy", price: 65755.0, amount: 0.125, time: "14:32:01" },
-    { id: 2, side: "sell", price: 65750.0, amount: 0.203, time: "14:31:58" },
-    { id: 3, side: "buy", price: 65760.0, amount: 0.085, time: "14:31:55" },
-    { id: 4, side: "sell", price: 65745.0, amount: 0.156, time: "14:31:52" },
-    { id: 5, side: "buy", price: 65755.0, amount: 0.298, time: "14:31:49" },
-  ];
 
   const handleOrder = async (side: 'buy' | 'sell') => {
     if (!orderAmount || (!limitPrice && orderType === 'limit')) {
