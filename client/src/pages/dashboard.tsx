@@ -6,6 +6,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
 import TickerSelector from "@/components/ui/ticker-selector";
+import TradingViewRealWidget from "@/components/charts/TradingViewRealWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -178,19 +179,7 @@ export default function Dashboard() {
               <div className="w-full">
                 <Card className="bg-card/50 backdrop-blur-sm border-border/50">
                   <CardContent className="p-4">
-                    <div className="h-[600px] flex items-center justify-center bg-muted rounded-lg">
-                      <div className="text-center">
-                        <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">Professional TradingView Chart</h3>
-                        <p className="text-muted-foreground">
-                          Advanced charting with technical indicators and real-time data
-                        </p>
-                        <Button className="mt-4" onClick={() => window.location.href = '/trading'}>
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Open Trading Terminal
-                        </Button>
-                      </div>
-                    </div>
+                    <TradingViewRealWidget ticker="BTCUSDT" />
                   </CardContent>
                 </Card>
               </div>

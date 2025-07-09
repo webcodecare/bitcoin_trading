@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   TrendingUp,
   TrendingDown,
@@ -203,35 +203,23 @@ export default function ProfessionalTradingInterface({
         </Card>
       </div>
 
-      {/* Trading Action Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-        <Button
-          size="lg"
-          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-4"
-          onClick={() => {
-            toast({
-              title: "Buy Order",
-              description: `Preparing to buy ${symbol}`,
-            });
-          }}
-        >
-          <TrendingUp className="h-5 w-5 mr-2" />
-          BUY BTC
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white font-semibold py-4"
-          onClick={() => {
-            toast({
-              title: "Sell Order",
-              description: `Preparing to sell ${symbol}`,
-            });
-          }}
-        >
-          <TrendingDown className="h-5 w-5 mr-2" />
-          SELL BTC
-        </Button>
+      {/* Signal Information */}
+      <div className="mt-6">
+        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+              <h3 className="font-semibold text-sm">Signal-Only Platform</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-2">
+              This platform provides trading signals and market analysis. We do not facilitate actual trades.
+              Use these signals with your preferred trading platform.
+            </p>
+            <div className="text-xs text-muted-foreground">
+              <strong>Current Status:</strong> TradingView webhook integration active for BTCUSD across 7 timeframes
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recent Trades - Kept as single section */}

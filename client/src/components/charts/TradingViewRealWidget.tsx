@@ -191,22 +191,14 @@ export default function TradingViewRealWidget({ ticker, onTrade }: TradingViewRe
           </div>
         </div>
         
-        {/* Quick Trade Actions */}
+        {/* Chart Status */}
         <div className="flex items-center space-x-2">
-          <Button
-            onClick={() => handleQuickTrade('buy')}
-            className="bg-green-600 hover:bg-green-700 text-white font-medium px-6"
-            size="sm"
-          >
-            BUY
-          </Button>
-          <Button
-            onClick={() => handleQuickTrade('sell')}
-            className="bg-red-600 hover:bg-red-700 text-white font-medium px-6"
-            size="sm"
-          >
-            SELL
-          </Button>
+          <Badge variant="outline" className="bg-green-900 text-green-300 border-green-600">
+            Live Data
+          </Badge>
+          <Badge variant="outline" className="text-blue-300 border-blue-600">
+            Signals Active
+          </Badge>
         </div>
       </div>
 
@@ -240,39 +232,13 @@ export default function TradingViewRealWidget({ ticker, onTrade }: TradingViewRe
                 <span className="text-gray-300">Circulating Supply:</span>
                 <span className="text-white font-medium">19.8M BTC</span>
               </div>
-
-              {/* Amount */}
-              <div>
-                <label className="text-sm text-gray-300 mb-2 block">Amount (USDT)</label>
-                <div className="flex space-x-2">
-                  <input 
-                    type="number" 
-                    placeholder="0.00"
-                    className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white"
-                  />
-                </div>
-                <div className="flex space-x-1 mt-2">
-                  <Button variant="ghost" size="sm" className="text-xs">25%</Button>
-                  <Button variant="ghost" size="sm" className="text-xs">50%</Button>
-                  <Button variant="ghost" size="sm" className="text-xs">75%</Button>
-                  <Button variant="ghost" size="sm" className="text-xs">Max</Button>
-                </div>
+              <div className="flex justify-between">
+                <span className="text-gray-300">All Time High:</span>
+                <span className="text-white font-medium">$73,750</span>
               </div>
-
-              {/* Buy/Sell Buttons */}
-              <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  onClick={() => handleQuickTrade('buy')}
-                  className="bg-green-600 hover:bg-green-700 text-white font-medium py-3"
-                >
-                  BUY {ticker.replace('USDT', '')}
-                </Button>
-                <Button 
-                  onClick={() => handleQuickTrade('sell')}
-                  className="bg-red-600 hover:bg-red-700 text-white font-medium py-3"
-                >
-                  SELL {ticker.replace('USDT', '')}
-                </Button>
+              <div className="flex justify-between">
+                <span className="text-gray-300">Market Dominance:</span>
+                <span className="text-white font-medium">54.3%</span>
               </div>
             </div>
           </CardContent>
