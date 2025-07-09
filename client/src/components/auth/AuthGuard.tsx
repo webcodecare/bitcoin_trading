@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, startTransition } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -17,15 +17,18 @@ export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      // Store the attempted URL for post-login redirect
-      const currentPath = window.location.pathname;
-      if (currentPath !== '/login' && currentPath !== '/auth' && currentPath !== '/') {
-        sessionStorage.setItem('redirectAfterLogin', currentPath);
-      }
-      setLocation("/login");
+      startTransition(() => {
+        // Store the attempted URL for post-login redirect
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/login' && currentPath !== '/auth' && currentPath !== '/') {
+          sessionStorage.setItem('redirectAfterLogin', currentPath);
+        }
+        setLocation("/login");
+      });
     }
   }, [isAuthenticated, isLoading, setLocation]);
 
+  // Show loading state while authentication is being checked
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -39,8 +42,17 @@ export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {
     );
   }
 
+  // If not authenticated, don't render anything (redirect will happen in useEffect)
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="space-y-4 w-full max-w-md">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      </div>
+    );
   }
 
   // Check role-based access with superuser support
