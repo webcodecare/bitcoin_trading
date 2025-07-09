@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { useSupabaseRealtime, type RealtimeAlert } from "@/hooks/useSupabaseRealtime";
 import Sidebar from "@/components/layout/Sidebar";
 import TradingViewRealWidget from "@/components/charts/TradingViewRealWidget";
 import HeatmapChart from "@/components/charts/HeatmapChart";
@@ -66,18 +67,45 @@ export default function MultiTickerDashboard() {
     },
   });
 
-  // WebSocket for real-time updates
+  // Supabase Realtime for real-time updates
+  const { realtimeAlerts, isConnected, connectionError } = useSupabaseRealtime();
+  
+  // Legacy WebSocket for fallback (when Supabase is not configured)
   useWebSocket((message) => {
     if (message.type === "new_signal" && message.signal) {
       setRecentSignals(prev => [message.signal, ...prev.slice(0, 19)]);
     }
   });
 
+  // Update signals from both API and Supabase Realtime
   useEffect(() => {
     if (userSignals) {
       setRecentSignals(userSignals);
     }
   }, [userSignals]);
+
+  // Merge Supabase Realtime alerts with existing signals
+  useEffect(() => {
+    if (realtimeAlerts.length > 0) {
+      // Transform RealtimeAlert to AlertSignal format
+      const transformedAlerts = realtimeAlerts.map((alert: RealtimeAlert) => ({
+        id: alert.id,
+        ticker: alert.ticker,
+        signalType: alert.signalType,
+        price: alert.price.toString(),
+        timestamp: alert.timestamp,
+        source: alert.source,
+        note: alert.strategy || alert.note
+      }));
+      
+      // Add new alerts to the front of the list, avoiding duplicates
+      setRecentSignals(prev => {
+        const existingIds = new Set(prev.map(s => s.id));
+        const newAlerts = transformedAlerts.filter(alert => !existingIds.has(alert.id));
+        return [...newAlerts, ...prev].slice(0, 20); // Keep last 20 signals
+      });
+    }
+  }, [realtimeAlerts]);
 
   const quickStats = [
     {

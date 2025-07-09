@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TrendingUp, TrendingDown, Activity, BarChart3 } from 'lucide-react';
+import { useRealtimeChartMarkers, type RealtimeAlert } from '@/hooks/useSupabaseRealtime';
 
 interface TradingViewChartProps {
   symbol: string;
@@ -16,6 +17,40 @@ interface PriceData {
 export default function TradingViewChart({ symbol, height = 400, className = '' }: TradingViewChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [priceHistory, setPriceHistory] = useState<PriceData[]>([]);
+  const [signalMarkers, setSignalMarkers] = useState<RealtimeAlert[]>([]);
+
+  // Handle realtime chart marker updates
+  const handleNewSignal = (alert: RealtimeAlert) => {
+    console.log(`Supabase Realtime: New ${alert.signalType} signal for ${alert.ticker} at $${alert.price}`);
+    
+    // Add signal marker to chart
+    setSignalMarkers(prev => [alert, ...prev.slice(0, 9)]); // Keep last 10 signals
+    
+    // Create visual indicator for new signal
+    const signalIndicator = document.createElement('div');
+    signalIndicator.className = `fixed top-4 right-4 z-50 p-3 rounded-lg shadow-lg animate-pulse ${
+      alert.signalType === 'buy' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+    }`;
+    signalIndicator.innerHTML = `
+      <div class="flex items-center space-x-2">
+        <span class="font-bold">${alert.signalType.toUpperCase()}</span>
+        <span>${alert.ticker}</span>
+        <span>$${alert.price}</span>
+      </div>
+    `;
+    
+    document.body.appendChild(signalIndicator);
+    
+    // Remove indicator after 5 seconds
+    setTimeout(() => {
+      if (document.body.contains(signalIndicator)) {
+        document.body.removeChild(signalIndicator);
+      }
+    }, 5000);
+  };
+
+  // Subscribe to realtime chart markers for this ticker
+  const { tickerAlerts, latestAlert } = useRealtimeChartMarkers(symbol, handleNewSignal);
 
   // Fetch current price
   const { data: priceData } = useQuery({
@@ -155,7 +190,53 @@ export default function TradingViewChart({ symbol, height = 400, className = '' 
       ctx.fill();
     }
 
-  }, [priceHistory]);
+    // Draw signal markers
+    signalMarkers.forEach((signal) => {
+      // Find the closest price point to the signal timestamp
+      const signalTime = new Date(signal.timestamp).getTime();
+      const chartTimes = priceHistory.map(p => new Date(p.time).getTime());
+      
+      let closestIndex = 0;
+      let closestTimeDiff = Math.abs(chartTimes[0] - signalTime);
+      
+      for (let i = 1; i < chartTimes.length; i++) {
+        const timeDiff = Math.abs(chartTimes[i] - signalTime);
+        if (timeDiff < closestTimeDiff) {
+          closestTimeDiff = timeDiff;
+          closestIndex = i;
+        }
+      }
+      
+      if (closestIndex >= 0 && closestIndex < priceHistory.length) {
+        const x = padding + (chartWidth * closestIndex) / (priceHistory.length - 1);
+        const y = padding + chartHeight - ((signal.price - minPrice) / priceRange) * chartHeight;
+        
+        // Draw signal marker
+        ctx.fillStyle = signal.signalType === 'buy' ? '#10b981' : '#ef4444';
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Draw signal border
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, 2 * Math.PI);
+        ctx.stroke();
+        
+        // Draw signal label
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(
+          signal.signalType.toUpperCase().charAt(0), 
+          x, 
+          y + 3
+        );
+      }
+    });
+
+  }, [priceHistory, signalMarkers]);
 
   const currentPrice = priceData?.price || 0;
   const previousPrice = priceHistory.length > 1 ? priceHistory[priceHistory.length - 2].price : currentPrice;
@@ -192,6 +273,27 @@ export default function TradingViewChart({ symbol, height = 400, className = '' 
           style={{ width: '100%', height: '100%' }}
         />
         
+        {/* Signal overlay indicators */}
+        {latestAlert && (
+          <div className="absolute top-2 left-2 z-10">
+            <div className={`px-3 py-1 rounded-lg text-sm font-medium border ${
+              latestAlert.signalType === 'buy' 
+                ? 'bg-green-600/20 text-green-400 border-green-600/30' 
+                : 'bg-red-600/20 text-red-400 border-red-600/30'
+            }`}>
+              Latest: {latestAlert.signalType.toUpperCase()} ${latestAlert.price}
+            </div>
+          </div>
+        )}
+        
+        {/* Supabase Realtime connection status */}
+        <div className="absolute top-2 right-2 z-10">
+          <div className="flex items-center space-x-2 px-2 py-1 rounded bg-card/80 border text-xs">
+            <div className={`w-2 h-2 rounded-full ${tickerAlerts.length > 0 ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}></div>
+            <span>Supabase Realtime</span>
+          </div>
+        </div>
+        
         {priceHistory.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex items-center space-x-2 text-muted-foreground">
@@ -208,10 +310,16 @@ export default function TradingViewChart({ symbol, height = 400, className = '' 
           <span>Real-time</span>
           <span>•</span>
           <span>{priceHistory.length} data points</span>
+          {signalMarkers.length > 0 && (
+            <>
+              <span>•</span>
+              <span>{signalMarkers.length} signals</span>
+            </>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-          <span>Live</span>
+          <span>Live + Supabase Realtime</span>
         </div>
       </div>
     </div>
