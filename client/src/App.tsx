@@ -4,52 +4,58 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import SessionWarning from "@/components/auth/SessionWarning";
+import LazyLoader from "@/components/common/LazyLoader";
+import PerformanceOptimizer from "@/components/common/PerformanceOptimizer";
+
+// Critical pages loaded immediately
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Auth from "@/pages/auth";
 import Login from "@/pages/login";
-import Dashboard from "@/pages/dashboard";
-import MultiTickerDashboard from "@/pages/multi-ticker-dashboard";
-import Admin from "@/pages/admin";
-import AdminUsers from "@/pages/admin/users";
-import AdminSignals from "@/pages/admin/signals";
-import AdminTickers from "@/pages/admin/tickers";
-import AdminAlerts from "@/pages/admin/alerts";
-import AdminNotifications from "@/pages/admin/notifications";
-import AdminLogs from "@/pages/admin/logs";
-import AdminAnalytics from "@/pages/admin/analytics";
-import AdminReports from "@/pages/admin/reports";
-import AdminSubscriptions from "@/pages/admin/subscriptions";
-import AdminPayments from "@/pages/admin/payments";
-import AdminIntegrations from "@/pages/admin/integrations";
-import AdminContent from "@/pages/admin/content";
-import Alerts from "@/pages/alerts";
-import AdvancedAlertsPage from "@/pages/advanced-alerts";
-import AdvancedPortfolioPage from "@/pages/advanced-portfolio";
-import MoodBoard from "@/pages/mood-board";
-import AlertsTest from "@/components/test/AlertsTest";
-import DashboardWidgetsPage from "@/pages/dashboard-widgets";
-import Settings from "@/pages/settings";
-import Preferences from "@/pages/preferences";
-import NotificationSetup from "@/pages/notification-setup";
-import TradingPlayground from "@/pages/trading-playground";
-import NotificationDashboard from "@/pages/notification-dashboard";
-import Pricing from "@/pages/pricing";
-import Members from "@/pages/members";
-import MarketData from "@/pages/market-data";
-import About from "@/pages/about";
-import Contact from "@/pages/contact";
-import Privacy from "@/pages/privacy";
-import Terms from "@/pages/terms";
-import Subscription from "@/pages/subscription";
-import Trading from "@/pages/trading";
-import BitcoinAnalytics from "@/pages/bitcoin-analytics";
-import LiveStreaming from "@/pages/live-streaming";
-import HistoricalOHLC from "@/pages/historical-ohlc";
-import Achievements from "@/pages/achievements";
-import UserProgress from "@/pages/user-progress";
+
+// Heavy pages lazy loaded for better performance
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const MultiTickerDashboard = lazy(() => import("@/pages/multi-ticker-dashboard"));
+const Admin = lazy(() => import("@/pages/admin"));
+const AdminUsers = lazy(() => import("@/pages/admin/users"));
+const AdminSignals = lazy(() => import("@/pages/admin/signals"));
+const AdminTickers = lazy(() => import("@/pages/admin/tickers"));
+const AdminAlerts = lazy(() => import("@/pages/admin/alerts"));
+const AdminNotifications = lazy(() => import("@/pages/admin/notifications"));
+const AdminLogs = lazy(() => import("@/pages/admin/logs"));
+const AdminAnalytics = lazy(() => import("@/pages/admin/analytics"));
+const AdminReports = lazy(() => import("@/pages/admin/reports"));
+const AdminSubscriptions = lazy(() => import("@/pages/admin/subscriptions"));
+const AdminPayments = lazy(() => import("@/pages/admin/payments"));
+const AdminIntegrations = lazy(() => import("@/pages/admin/integrations"));
+const AdminContent = lazy(() => import("@/pages/admin/content"));
+const Alerts = lazy(() => import("@/pages/alerts"));
+const AdvancedAlertsPage = lazy(() => import("@/pages/advanced-alerts"));
+const AdvancedPortfolioPage = lazy(() => import("@/pages/advanced-portfolio"));
+const MoodBoard = lazy(() => import("@/pages/mood-board"));
+const AlertsTest = lazy(() => import("@/components/test/AlertsTest"));
+const DashboardWidgetsPage = lazy(() => import("@/pages/dashboard-widgets"));
+const Settings = lazy(() => import("@/pages/settings"));
+const Preferences = lazy(() => import("@/pages/preferences"));
+const NotificationSetup = lazy(() => import("@/pages/notification-setup"));
+const TradingPlayground = lazy(() => import("@/pages/trading-playground"));
+const NotificationDashboard = lazy(() => import("@/pages/notification-dashboard"));
+const Pricing = lazy(() => import("@/pages/pricing"));
+const Members = lazy(() => import("@/pages/members"));
+const MarketData = lazy(() => import("@/pages/market-data"));
+const About = lazy(() => import("@/pages/about"));
+const Contact = lazy(() => import("@/pages/contact"));
+const Privacy = lazy(() => import("@/pages/privacy"));
+const Terms = lazy(() => import("@/pages/terms"));
+const Subscription = lazy(() => import("@/pages/subscription"));
+const Trading = lazy(() => import("@/pages/trading"));
+const BitcoinAnalytics = lazy(() => import("@/pages/bitcoin-analytics"));
+const LiveStreaming = lazy(() => import("@/pages/live-streaming"));
+const HistoricalOHLC = lazy(() => import("@/pages/historical-ohlc"));
+const Achievements = lazy(() => import("@/pages/achievements"));
+const UserProgress = lazy(() => import("@/pages/user-progress"));
 import AuthGuard from "@/components/auth/AuthGuard";
 
 function Router() {
@@ -62,22 +68,30 @@ function Router() {
       <Route path="/pricing" component={Pricing} />
       <Route path="/dashboard">
         <AuthGuard>
-          <Dashboard />
+          <LazyLoader>
+            <Dashboard />
+          </LazyLoader>
         </AuthGuard>
       </Route>
       <Route path="/multi-ticker">
         <AuthGuard>
-          <MultiTickerDashboard />
+          <LazyLoader>
+            <MultiTickerDashboard />
+          </LazyLoader>
         </AuthGuard>
       </Route>
       <Route path="/admin">
         <AuthGuard requiredRole="admin">
-          <Admin />
+          <LazyLoader>
+            <Admin />
+          </LazyLoader>
         </AuthGuard>
       </Route>
       <Route path="/admin/users">
         <AuthGuard requiredRole="admin">
-          <AdminUsers />
+          <LazyLoader>
+            <AdminUsers />
+          </LazyLoader>
         </AuthGuard>
       </Route>
       <Route path="/admin/signals">
@@ -299,9 +313,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
+        <PerformanceOptimizer>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </PerformanceOptimizer>
       </TooltipProvider>
     </QueryClientProvider>
   );
