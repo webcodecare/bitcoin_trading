@@ -128,13 +128,13 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 crypto-gradient opacity-20"></div>
-        <div className="relative container mx-auto px-4 py-16 lg:py-24">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+        <div className="relative container mx-auto px-4 py-12 sm:py-16 lg:py-24">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="space-y-6 lg:space-y-8">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
                 Professional <span className="text-primary">Crypto</span> Trading Signals
               </h1>
-              <p className="text-xl text-muted-foreground leading-relaxed">
+              <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
                 Advanced Bitcoin analytics with real-time TradingView signals, 200-week heatmaps, and cycle forecasting. Join thousands of traders making data-driven decisions.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -150,24 +150,24 @@ export default function Home() {
               </div>
               
               {/* Track Record Metrics */}
-              <div className="grid grid-cols-3 gap-6 pt-8">
+              <div className="grid grid-cols-3 gap-4 lg:gap-6 pt-6 lg:pt-8">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-emerald-400">87%</div>
-                  <div className="text-sm text-muted-foreground">Win Rate</div>
+                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-400">87%</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Win Rate</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold">12,847</div>
-                  <div className="text-sm text-muted-foreground">Active Traders</div>
+                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold">12,847</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Active Traders</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-emerald-400">+234%</div>
-                  <div className="text-sm text-muted-foreground">Avg ROI</div>
+                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-emerald-400">+234%</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Avg ROI</div>
                 </div>
               </div>
             </div>
             
             {/* Live BTC Chart Preview */}
-            <div className="lg:ml-8">
+            <div className="order-first lg:order-last lg:ml-8">
               <SimpleDemoChart 
                 title="Bitcoin Live Chart"
                 symbol="BTCUSDT"
@@ -179,11 +179,11 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-muted/50">
+      <section className="py-12 sm:py-16 bg-muted/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Why Choose CryptoStrategy Pro?</h2>
-            <p className="text-xl text-muted-foreground">Professional tools designed for serious traders</p>
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 lg:mb-4">Why Choose CryptoStrategy Pro?</h2>
+            <p className="text-lg lg:text-xl text-muted-foreground">Professional tools designed for serious traders</p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -201,11 +201,11 @@ export default function Home() {
       </section>
 
       {/* Advanced Charts Section */}
-      <section className="py-16">
+      <section className="py-12 sm:py-16">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Advanced Bitcoin Analytics</h2>
-            <p className="text-xl text-muted-foreground">Professional-grade charts, heatmaps, cycle forecasting, and live demo trading signals</p>
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 lg:mb-4">Advanced Bitcoin Analytics</h2>
+            <p className="text-lg lg:text-xl text-muted-foreground px-4">Professional-grade charts, heatmaps, cycle forecasting, and live demo trading signals</p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
@@ -270,11 +270,11 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-16 bg-muted/50">
+      <section className="py-12 sm:py-16 bg-muted/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Choose Your Trading Plan</h2>
-            <p className="text-xl text-muted-foreground">Professional tools for every level of trader</p>
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 lg:mb-4">Choose Your Trading Plan</h2>
+            <p className="text-lg lg:text-xl text-muted-foreground">Professional tools for every level of trader</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -318,11 +318,11 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-16">
+      <section className="py-12 sm:py-16">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Trusted by Traders Worldwide</h2>
-            <p className="text-xl text-muted-foreground">See what our community is saying</p>
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 lg:mb-4">Trusted by Traders Worldwide</h2>
+            <p className="text-lg lg:text-xl text-muted-foreground">See what our community is saying</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -354,11 +354,11 @@ export default function Home() {
       </section>
 
       {/* Market Data Widgets */}
-      <section className="py-16 bg-muted/50">
+      <section className="py-12 sm:py-16 bg-muted/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Live Market Data</h2>
-            <p className="text-xl text-muted-foreground">Real-time cryptocurrency prices and market statistics</p>
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 lg:mb-4">Live Market Data</h2>
+            <p className="text-lg lg:text-xl text-muted-foreground">Real-time cryptocurrency prices and market statistics</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -376,10 +376,10 @@ export default function Home() {
       </section>
 
       {/* Enhanced CTA Section */}
-      <section className="py-16 crypto-gradient">
+      <section className="py-12 sm:py-16 crypto-gradient">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-4 text-white">Ready to Transform Your Trading?</h2>
-          <p className="text-xl mb-8 text-white/90">Join thousands of traders using our professional analytics platform</p>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 lg:mb-4 text-white">Ready to Transform Your Trading?</h2>
+          <p className="text-lg lg:text-xl mb-6 lg:mb-8 text-white/90 px-4">Join thousands of traders using our professional analytics platform</p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
             <Button size="lg" variant="secondary" asChild>
@@ -398,75 +398,30 @@ export default function Home() {
           </div>
           
           {/* Navigation Flow Steps */}
-          <div className="max-w-2xl mx-auto p-6 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
-            <div className="flex items-center justify-center space-x-8 text-sm text-white">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-white text-primary rounded-full flex items-center justify-center font-semibold">1</div>
-                <span>Sign Up</span>
+          <div className="max-w-2xl mx-auto p-4 sm:p-6 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
+            <div className="flex items-center justify-center space-x-4 sm:space-x-8 text-xs sm:text-sm text-white">
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white text-primary rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm">1</div>
+                <span className="hidden sm:inline">Sign Up</span>
+                <span className="sm:hidden">Sign</span>
               </div>
-              <ArrowRight className="h-4 w-4 text-white/70" />
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-white text-primary rounded-full flex items-center justify-center font-semibold">2</div>
-                <span>Choose Plan</span>
+              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 text-white/70" />
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white text-primary rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm">2</div>
+                <span className="hidden sm:inline">Choose Plan</span>
+                <span className="sm:hidden">Plan</span>
               </div>
-              <ArrowRight className="h-4 w-4 text-white/70" />
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-white text-primary rounded-full flex items-center justify-center font-semibold">3</div>
-                <span>Start Trading</span>
+              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 text-white/70" />
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white text-primary rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm">3</div>
+                <span className="hidden sm:inline">Start Trading</span>
+                <span className="sm:hidden">Trade</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-card border-t border-border py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 text-2xl font-bold text-primary mb-4">
-                <Bitcoin className="h-8 w-8" />
-                <span>CryptoStrategy Pro</span>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                Professional cryptocurrency trading signals and analytics for serious traders.
-              </p>
-              <div className="flex space-x-4">
-                <Button variant="ghost" size="icon">
-                  <Users className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <Award className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link></li>
-                <li><Link href="/auth" className="hover:text-foreground transition-colors">Sign Up</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Contact Us</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Terms of Service</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2025 CryptoStrategy Pro. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
       <Footer />
     </div>
   );
