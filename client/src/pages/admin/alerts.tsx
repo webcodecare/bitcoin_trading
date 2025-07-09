@@ -211,26 +211,30 @@ export default function AdminAlerts() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar className="w-64 hidden lg:block" />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm border-b lg:hidden">
-          <div className="px-4 py-4">
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        <Sidebar className="hidden lg:block lg:w-64" />
+        
+        {/* Main Content */}
+        <div className="flex-1 lg:ml-64">
+          {/* Mobile Header */}
+          <header className="bg-card border-b border-border p-4 lg:hidden">
             <h1 className="text-xl font-semibold">Alert Management</h1>
-          </div>
-        </header>
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-6">
+          </header>
+          
+          {/* Page Content */}
+          <main className="p-4 lg:p-6">
+            <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col space-y-2 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
               <div>
-                <h1 className="text-3xl font-bold">Alert System Management</h1>
-                <p className="text-muted-foreground">Manage webhook configurations and alert delivery queue</p>
+                <h1 className="text-2xl lg:text-3xl font-bold">Alert System Management</h1>
+                <p className="text-muted-foreground text-sm lg:text-base">Manage webhook configurations and alert delivery queue</p>
               </div>
             </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Webhooks</CardTitle>
@@ -484,8 +488,9 @@ export default function AdminAlerts() {
           )}
         </CardContent>
       </Card>
-          </div>
-        </main>
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );
