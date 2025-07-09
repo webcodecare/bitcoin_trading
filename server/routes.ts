@@ -189,6 +189,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  // Enhanced permission-based middleware
+  const requirePermission = (permission: string) => {
+    return (req: any, res: any, next: any) => {
+      if (!req.user) {
+        return res.status(401).json({
+          message: 'Authentication required',
+          code: 'AUTH_REQUIRED',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Check if user has required permission
+      if (!hasUserPermission(req.user, permission)) {
+        return res.status(403).json({
+          message: `Permission '${permission}' required`,
+          code: 'INSUFFICIENT_PERMISSIONS',
+          requiredPermission: permission,
+          userRole: req.user.role,
+          userTier: req.user.subscriptionTier,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      next();
+    };
+  };
+
   // Admin role middleware (local implementation)
   const requireAdmin = (req: any, res: any, next: any) => {
     const userRole = req.user?.role;
@@ -205,6 +232,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     next();
   };
+
+  // Permission checking function
+  function hasUserPermission(user: any, permission: string): boolean {
+    if (!user) return false;
+    
+    // Define role permissions (matches client-side permissions)
+    const rolePermissions: Record<string, string[]> = {
+      'user': [
+        'signals.view', 'analytics.basic', 'alerts.email', 
+        'subscriptions.view', 'api.basic'
+      ],
+      'admin': [
+        'signals.view', 'analytics.basic', 'analytics.advanced', 'analytics.heatmap',
+        'analytics.cycle', 'analytics.portfolio', 'trading.playground',
+        'alerts.email', 'alerts.sms', 'alerts.telegram', 'alerts.advanced',
+        'subscriptions.view', 'subscriptions.billing', 'api.basic', 'api.advanced',
+        'users.view', 'users.create', 'users.edit', 'users.delete', 'users.manage_roles',
+        'signals.create', 'signals.manage', 'alerts.manage', 'admin.dashboard',
+        'admin.logs', 'admin.system', 'admin.tickers', 'admin.webhooks',
+        'subscriptions.manage', 'api.admin'
+      ],
+      'superuser': [
+        // All permissions - superuser has access to everything
+        'signals.view', 'signals.create', 'signals.manage',
+        'analytics.basic', 'analytics.advanced', 'analytics.heatmap', 'analytics.cycle', 'analytics.portfolio',
+        'trading.playground', 'alerts.email', 'alerts.sms', 'alerts.telegram', 'alerts.advanced', 'alerts.manage',
+        'subscriptions.view', 'subscriptions.manage', 'subscriptions.billing',
+        'users.view', 'users.create', 'users.edit', 'users.delete', 'users.manage_roles',
+        'admin.dashboard', 'admin.logs', 'admin.system', 'admin.tickers', 'admin.webhooks',
+        'api.basic', 'api.advanced', 'api.admin'
+      ]
+    };
+
+    // Get subscription-based permissions
+    const subscriptionPermissions: Record<string, string[]> = {
+      'free': ['signals.view', 'analytics.basic', 'alerts.email'],
+      'basic': ['signals.view', 'analytics.basic', 'analytics.heatmap', 'trading.playground', 'alerts.email', 'alerts.sms'],
+      'premium': ['signals.view', 'analytics.basic', 'analytics.advanced', 'analytics.heatmap', 'analytics.cycle', 'analytics.portfolio', 'trading.playground', 'alerts.email', 'alerts.sms', 'alerts.telegram', 'alerts.advanced'],
+      'pro': ['signals.view', 'analytics.basic', 'analytics.advanced', 'analytics.heatmap', 'analytics.cycle', 'analytics.portfolio', 'trading.playground', 'alerts.email', 'alerts.sms', 'alerts.telegram', 'alerts.advanced']
+    };
+
+    // Combine role and subscription permissions
+    const userRolePermissions = rolePermissions[user.role] || [];
+    const userSubscriptionPermissions = subscriptionPermissions[user.subscriptionTier] || [];
+    const allPermissions = [...userRolePermissions, ...userSubscriptionPermissions];
+
+    return allPermissions.includes(permission);
+  }
 
   // TradingView webhook authentication
   const validateWebhookSecret = (req: any, res: any, next: any) => {
@@ -1841,6 +1916,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`Normalized and cached ${normalizedData.length} OHLC candles for ${symbol}`);
     return normalizedData;
   }
+
+  // API endpoint to get user permissions
+  app.get('/api/user/permissions', requireAuth, async (req: any, res: any) => {
+    try {
+      const user = req.user;
+      const userPermissions = [];
+      
+      // Get role-based permissions
+      const rolePermissions: Record<string, string[]> = {
+        'user': ['signals.view', 'analytics.basic', 'alerts.email', 'subscriptions.view', 'api.basic'],
+        'admin': ['signals.view', 'analytics.basic', 'analytics.advanced', 'analytics.heatmap', 'analytics.cycle', 'analytics.portfolio', 'trading.playground', 'alerts.email', 'alerts.sms', 'alerts.telegram', 'alerts.advanced', 'subscriptions.view', 'subscriptions.billing', 'api.basic', 'api.advanced', 'users.view', 'users.create', 'users.edit', 'users.delete', 'users.manage_roles', 'signals.create', 'signals.manage', 'alerts.manage', 'admin.dashboard', 'admin.logs', 'admin.system', 'admin.tickers', 'admin.webhooks', 'subscriptions.manage', 'api.admin'],
+        'superuser': ['signals.view', 'signals.create', 'signals.manage', 'analytics.basic', 'analytics.advanced', 'analytics.heatmap', 'analytics.cycle', 'analytics.portfolio', 'trading.playground', 'alerts.email', 'alerts.sms', 'alerts.telegram', 'alerts.advanced', 'alerts.manage', 'subscriptions.view', 'subscriptions.manage', 'subscriptions.billing', 'users.view', 'users.create', 'users.edit', 'users.delete', 'users.manage_roles', 'admin.dashboard', 'admin.logs', 'admin.system', 'admin.tickers', 'admin.webhooks', 'api.basic', 'api.advanced', 'api.admin']
+      };
+      
+      // Get subscription-based permissions
+      const subscriptionPermissions: Record<string, string[]> = {
+        'free': ['signals.view', 'analytics.basic', 'alerts.email'],
+        'basic': ['signals.view', 'analytics.basic', 'analytics.heatmap', 'trading.playground', 'alerts.email', 'alerts.sms'],
+        'premium': ['signals.view', 'analytics.basic', 'analytics.advanced', 'analytics.heatmap', 'analytics.cycle', 'analytics.portfolio', 'trading.playground', 'alerts.email', 'alerts.sms', 'alerts.telegram', 'alerts.advanced'],
+        'pro': ['signals.view', 'analytics.basic', 'analytics.advanced', 'analytics.heatmap', 'analytics.cycle', 'analytics.portfolio', 'trading.playground', 'alerts.email', 'alerts.sms', 'alerts.telegram', 'alerts.advanced']
+      };
+      
+      const userRolePermissions = rolePermissions[user.role] || [];
+      const userSubscriptionPermissions = subscriptionPermissions[user.subscriptionTier] || [];
+      const allPermissions = [...new Set([...userRolePermissions, ...userSubscriptionPermissions])];
+      
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          subscriptionTier: user.subscriptionTier
+        },
+        permissions: allPermissions,
+        rolePermissions: userRolePermissions,
+        subscriptionPermissions: userSubscriptionPermissions
+      });
+    } catch (error) {
+      console.error('Error getting user permissions:', error);
+      res.status(500).json({ 
+        message: 'Failed to get user permissions',
+        code: 'PERMISSIONS_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
 
   // User Subscription Management Routes
   app.get('/api/user/subscriptions', requireAuth, async (req: any, res) => {
