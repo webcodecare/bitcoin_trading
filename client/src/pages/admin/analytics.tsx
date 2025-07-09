@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
+import Header from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -106,41 +107,35 @@ export default function AdminAnalytics() {
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
-        <Sidebar />
+        <Sidebar className="hidden lg:block lg:w-64" />
         
         {/* Main Content */}
-        <div className="ml-0 lg:ml-64 flex-1">
+        <div className="flex-1 lg:ml-64">
           {/* Header */}
-          <header className="bg-card border-b border-border p-4 lg:p-6">
-            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
-              <div>
-                <h1 className="text-2xl lg:text-3xl font-bold">Analytics & Reporting</h1>
-                <p className="text-muted-foreground">
-                  Comprehensive platform analytics and performance metrics
-                </p>
-              </div>
+          <Header 
+            title="Analytics & Reporting" 
+            subtitle="Comprehensive platform analytics and performance metrics"
+          >
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={exportReport}>
+                <Download className="h-4 w-4 mr-2" />
+                Export Report
+              </Button>
               
-              <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={exportReport}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Report
-                </Button>
-                
-                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {periods.map((period) => (
-                      <SelectItem key={period.value} value={period.value}>
-                        {period.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {periods.map((period) => (
+                    <SelectItem key={period.value} value={period.value}>
+                      {period.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </header>
+          </Header>
 
           {/* Content */}
           <div className="p-4 lg:p-6 space-y-6">
@@ -233,19 +228,15 @@ export default function AdminAnalytics() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <AnalyticsChart
-                  type="line"
-                  height={320}
-                  data={{
-                    labels: mockChartData.map(d => d.name),
-                    datasets: [{
-                      label: 'Users',
-                      data: mockChartData.map(d => d.users),
-                      borderColor: '#3B82F6',
-                      backgroundColor: '#3B82F6',
-                    }]
-                  }}
-                />
+                <ResponsiveContainer width="100%" height={320}>
+                  <RechartsLineChart data={mockChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="users" stroke="#3B82F6" strokeWidth={2} />
+                  </RechartsLineChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
 
@@ -258,18 +249,20 @@ export default function AdminAnalytics() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <AnalyticsChart
-                  type="pie"
-                  height={320}
-                  data={{
-                    labels: ['Subscriptions', 'Trading Fees', 'Premium'],
-                    datasets: [{
-                      label: 'Revenue',
-                      data: [75.3, 19.4, 5.3],
-                      backgroundColor: '#3B82F6',
-                    }]
-                  }}
-                />
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="flex justify-between items-center p-3 bg-muted/20 rounded-lg">
+                    <span className="text-sm font-medium">Subscriptions</span>
+                    <Badge variant="outline">75.3%</Badge>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-muted/20 rounded-lg">
+                    <span className="text-sm font-medium">Trading Fees</span>
+                    <Badge variant="outline">19.4%</Badge>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-muted/20 rounded-lg">
+                    <span className="text-sm font-medium">Premium Features</span>
+                    <Badge variant="outline">5.3%</Badge>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -308,18 +301,23 @@ export default function AdminAnalytics() {
                 <CardTitle>User Registration Trends</CardTitle>
               </CardHeader>
               <CardContent>
-                <AnalyticsChart
-                  type="bar"
-                  height={320}
-                  data={{
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                    datasets: [{
-                      label: 'New Users',
-                      data: [45, 52, 38, 61, 47, 33, 29],
-                      backgroundColor: '#10B981',
-                    }]
-                  }}
-                />
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={[
+                    { name: 'Mon', users: 45 },
+                    { name: 'Tue', users: 52 },
+                    { name: 'Wed', users: 38 },
+                    { name: 'Thu', users: 61 },
+                    { name: 'Fri', users: 47 },
+                    { name: 'Sat', users: 33 },
+                    { name: 'Sun', users: 29 },
+                  ]}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="users" fill="#10B981" />
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
 
