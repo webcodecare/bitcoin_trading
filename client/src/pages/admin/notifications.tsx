@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Sidebar from "@/components/layout/Sidebar";
+import Header from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -199,21 +200,15 @@ export default function AdminNotifications() {
         
         {/* Main Content */}
         <div className="flex-1 lg:ml-64">
-          {/* Mobile Header */}
-          <header className="bg-card border-b border-border p-4 lg:hidden">
-            <h1 className="text-xl font-semibold">Notification Management</h1>
-          </header>
+          {/* Header */}
+          <Header 
+            title="Notification System" 
+            subtitle="Manage email, SMS, and push notification delivery"
+          />
           
           {/* Page Content */}
           <main className="p-4 lg:p-6">
             <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col space-y-2 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-              <div>
-                <h1 className="text-2xl lg:text-3xl font-bold">Notification System</h1>
-                <p className="text-muted-foreground text-sm lg:text-base">Manage email, SMS, and push notification delivery</p>
-              </div>
-            </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
