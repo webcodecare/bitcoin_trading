@@ -34,6 +34,7 @@ import DashboardWidgetsPage from "@/pages/dashboard-widgets";
 import Settings from "@/pages/settings";
 import Preferences from "@/pages/preferences";
 import NotificationSetup from "@/pages/notification-setup";
+import TradingPlayground from "@/pages/trading-playground";
 import NotificationDashboard from "@/pages/notification-dashboard";
 import Pricing from "@/pages/pricing";
 import Members from "@/pages/members";
@@ -195,6 +196,11 @@ function Router() {
       <Route path="/trading">
         <AuthGuard>
           <Trading />
+        </AuthGuard>
+      </Route>
+      <Route path="/trading-playground">
+        <AuthGuard>
+          <TradingPlayground />
         </AuthGuard>
       </Route>
       <Route path="/bitcoin-analytics">
