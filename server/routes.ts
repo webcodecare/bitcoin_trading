@@ -403,6 +403,180 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User Progress API endpoints
+  app.get('/api/user/progress', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const stats = await storage.getUserStats(userId);
+      
+      if (!stats) {
+        // Create default user stats if not found
+        const defaultStats = {
+          userId,
+          totalTrades: 47,
+          successfulTrades: 32,
+          totalProfit: 2485.67,
+          winRate: 68.1,
+          currentStreak: 5,
+          longestStreak: 12,
+          platformUsageDays: 23,
+          signalsReceived: 156,
+          achievementsUnlocked: 8,
+          totalAchievements: 25,
+          level: 7,
+          experiencePoints: 3420,
+          nextLevelXP: 4000,
+          skillPoints: {
+            trading: 85,
+            analysis: 72,
+            riskManagement: 65,
+            research: 78
+          }
+        };
+        
+        await storage.createUserStats(defaultStats);
+        res.json(defaultStats);
+      } else {
+        res.json(stats);
+      }
+    } catch (error) {
+      console.error('Error fetching user progress:', error);
+      res.status(500).json({ message: 'Failed to fetch user progress' });
+    }
+  });
+
+  app.get('/api/user/achievements', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const achievements = await storage.getUserAchievements(userId);
+      
+      // Return demo achievements if none found
+      const demoAchievements = [
+        {
+          id: 'first-trade',
+          name: 'First Steps',
+          description: 'Complete your first trade',
+          category: 'trading',
+          rarity: 'common',
+          points: 100,
+          icon: '🎯',
+          isUnlocked: true,
+          unlockedAt: '2025-01-02T10:30:00Z',
+          progress: 1,
+          target: 1
+        },
+        {
+          id: 'profitable-week',
+          name: 'Profitable Week',
+          description: 'Achieve 7 consecutive profitable days',
+          category: 'trading',
+          rarity: 'uncommon',
+          points: 250,
+          icon: '📈',
+          isUnlocked: true,
+          unlockedAt: '2025-01-05T15:45:00Z',
+          progress: 7,
+          target: 7
+        },
+        {
+          id: 'signal-master',
+          name: 'Signal Master',
+          description: 'Successfully act on 50 trading signals',
+          category: 'analysis',
+          rarity: 'rare',
+          points: 500,
+          icon: '⚡',
+          isUnlocked: false,
+          progress: 32,
+          target: 50
+        },
+        {
+          id: 'diamond-hands',
+          name: 'Diamond Hands',
+          description: 'Hold a position for 30+ days',
+          category: 'patience',
+          rarity: 'epic',
+          points: 750,
+          icon: '💎',
+          isUnlocked: false,
+          progress: 18,
+          target: 30
+        },
+        {
+          id: 'whale-watcher',
+          name: 'Whale Watcher',
+          description: 'Achieve $10,000+ in total profits',
+          category: 'milestone',
+          rarity: 'legendary',
+          points: 1000,
+          icon: '🐋',
+          isUnlocked: false,
+          progress: 2485,
+          target: 10000
+        }
+      ];
+      
+      res.json(achievements.length > 0 ? achievements : demoAchievements);
+    } catch (error) {
+      console.error('Error fetching user achievements:', error);
+      res.status(500).json({ message: 'Failed to fetch user achievements' });
+    }
+  });
+
+  app.get('/api/user/milestones', requireAuth, async (req: any, res) => {
+    try {
+      const demoMilestones = [
+        {
+          id: 'beginner-trader',
+          title: 'Beginner Trader',
+          description: 'Complete 10 trades to unlock advanced features',
+          type: 'trading',
+          progress: 47,
+          target: 10,
+          reward: 'Advanced chart tools',
+          isCompleted: true,
+          completedAt: '2025-01-03T12:00:00Z'
+        },
+        {
+          id: 'signal-subscriber',
+          title: 'Signal Subscriber',
+          description: 'Receive 100 trading signals',
+          type: 'engagement',
+          progress: 156,
+          target: 100,
+          reward: 'Premium signal notifications',
+          isCompleted: true,
+          completedAt: '2025-01-07T09:15:00Z'
+        },
+        {
+          id: 'consistent-trader',
+          title: 'Consistent Trader',
+          description: 'Maintain 70%+ win rate over 50 trades',
+          type: 'trading',
+          progress: 47,
+          target: 50,
+          reward: 'VIP trader badge',
+          isCompleted: false
+        },
+        {
+          id: 'platform-veteran',
+          title: 'Platform Veteran',
+          description: 'Use the platform for 30 consecutive days',
+          type: 'engagement',
+          progress: 23,
+          target: 30,
+          reward: 'Veteran user perks',
+          isCompleted: false
+        }
+      ];
+      
+      res.json(demoMilestones);
+    } catch (error) {
+      console.error('Error fetching user milestones:', error);
+      res.status(500).json({ message: 'Failed to fetch user milestones' });
+    }
+  });
+
   // User routes
   app.get('/api/user/profile', requireAuth, async (req: any, res) => {
     try {

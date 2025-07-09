@@ -93,6 +93,11 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
       icon: Trophy,
     },
     {
+      title: "User Progress",
+      href: "/user-progress",
+      icon: TrendingUp,
+    },
+    {
       title: "Signal Mood Board",
       href: "/mood-board",
       icon: Smile,

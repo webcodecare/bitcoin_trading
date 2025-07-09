@@ -49,6 +49,7 @@ import BitcoinAnalytics from "@/pages/bitcoin-analytics";
 import LiveStreaming from "@/pages/live-streaming";
 import HistoricalOHLC from "@/pages/historical-ohlc";
 import Achievements from "@/pages/achievements";
+import UserProgress from "@/pages/user-progress";
 import AuthGuard from "@/components/auth/AuthGuard";
 
 function Router() {
@@ -222,6 +223,11 @@ function Router() {
       <Route path="/achievements">
         <AuthGuard>
           <Achievements />
+        </AuthGuard>
+      </Route>
+      <Route path="/user-progress">
+        <AuthGuard>
+          <UserProgress />
         </AuthGuard>
       </Route>
       <Route path="/mood-board">
