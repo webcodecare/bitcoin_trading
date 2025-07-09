@@ -496,7 +496,169 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // TradingView Webhook Endpoints
+  // TradingView Webhook Ingestion - Supabase Edge Function Implementation
+  app.post('/api/webhook/alerts', async (req, res) => {
+    try {
+      // Secure Webhook Endpoint Using webhook_secrets Validation
+      const authHeader = req.headers.authorization || req.headers['x-webhook-secret'];
+      if (!authHeader) {
+        return res.status(401).json({ 
+          message: 'Missing webhook authentication',
+          code: 401,
+          required: 'Authorization header or x-webhook-secret header'
+        });
+      }
+
+      const providedSecret = authHeader.replace('Bearer ', '');
+      
+      // Validate against webhook_secrets table
+      const isValidSecret = await validateWebhookSecretAsync(providedSecret);
+      if (!isValidSecret) {
+        return res.status(401).json({ 
+          message: 'Invalid webhook secret',
+          code: 401,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Parse and validate incoming alert data
+      const alertData = validateAlertPayload(req.body);
+      if (!alertData.valid) {
+        return res.status(400).json({
+          message: 'Invalid alert payload',
+          errors: alertData.errors,
+          code: 400
+        });
+      }
+
+      // Persist Incoming Alert to alert_signals Table
+      const signal = await storage.createSignal({
+        ticker: alertData.data.ticker,
+        signalType: alertData.data.action.toUpperCase() as 'BUY' | 'SELL',
+        price: alertData.data.price.toString(),
+        timestamp: new Date(alertData.data.timestamp),
+        timeframe: alertData.data.timeframe,
+        source: 'tradingview_webhook',
+        note: alertData.data.strategy || 'TradingView Alert',
+        userId: null, // System-generated signal
+      });
+
+      // Broadcast to all connected WebSocket clients
+      broadcast({
+        type: 'webhook_alert',
+        signal: signal,
+        source: 'tradingview',
+        timestamp: new Date().toISOString()
+      });
+
+      // Update webhook usage tracking
+      await updateWebhookUsage(providedSecret);
+
+      // Return Proper HTTP Codes (201 for created)
+      return res.status(201).json({
+        message: 'Alert successfully ingested',
+        alertId: signal.id,
+        ticker: signal.ticker,
+        signalType: signal.signalType,
+        timestamp: signal.timestamp,
+        code: 201
+      });
+
+    } catch (error: any) {
+      console.error('Webhook Alert Ingestion Error:', error);
+      return res.status(500).json({
+        message: 'Internal webhook processing error',
+        error: error.message,
+        code: 500,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Webhook secret validation function for new endpoint
+  async function validateWebhookSecretAsync(providedSecret: string): Promise<boolean> {
+    try {
+      // Check against database webhook_secrets
+      const secrets = await storage.getWebhookSecrets();
+      const validSecret = secrets.find(s => 
+        s.secret === providedSecret && s.isActive
+      );
+
+      if (validSecret) {
+        return true;
+      }
+
+      // Fallback to environment variable for backward compatibility
+      const envSecret = process.env.WEBHOOK_SECRET || 'default_tradingview_secret_2025';
+      return providedSecret === envSecret;
+    } catch (error) {
+      console.error('Webhook secret validation error:', error);
+      return false;
+    }
+  }
+
+  // Alert payload validation function
+  function validateAlertPayload(payload: any): { valid: boolean; data?: any; errors?: string[] } {
+    const errors: string[] = [];
+    
+    // Required fields validation
+    if (!payload.ticker) errors.push('ticker is required');
+    if (!payload.action || !['buy', 'sell'].includes(payload.action.toLowerCase())) {
+      errors.push('action must be "buy" or "sell"');
+    }
+    if (!payload.price || typeof payload.price !== 'number') {
+      errors.push('price must be a valid number');
+    }
+    if (!payload.timestamp) errors.push('timestamp is required');
+    if (!payload.timeframe) errors.push('timeframe is required');
+
+    // Ticker validation
+    const supportedTickers = ['BTCUSDT', 'BTCUSD', 'ETHUSDT', 'ETHUSD'];
+    if (payload.ticker && !supportedTickers.includes(payload.ticker.toUpperCase())) {
+      errors.push(`ticker must be one of: ${supportedTickers.join(', ')}`);
+    }
+
+    // Timeframe validation
+    const supportedTimeframes = ['1M', '1W', '1D', '12h', '4h', '1h', '30m'];
+    if (payload.timeframe && !supportedTimeframes.includes(payload.timeframe)) {
+      errors.push(`timeframe must be one of: ${supportedTimeframes.join(', ')}`);
+    }
+
+    if (errors.length > 0) {
+      return { valid: false, errors };
+    }
+
+    return {
+      valid: true,
+      data: {
+        ticker: payload.ticker.toUpperCase(),
+        action: payload.action.toLowerCase(),
+        price: payload.price,
+        timestamp: payload.timestamp,
+        timeframe: payload.timeframe,
+        strategy: payload.strategy || payload.note
+      }
+    };
+  }
+
+  // Update webhook usage tracking
+  async function updateWebhookUsage(secret: string): Promise<void> {
+    try {
+      const secrets = await storage.getWebhookSecrets();
+      const webhookSecret = secrets.find(s => s.secret === secret);
+      
+      if (webhookSecret) {
+        await storage.updateWebhookSecret(webhookSecret.id, {
+          lastUsed: new Date(),
+          usageCount: (webhookSecret.usageCount || 0) + 1
+        });
+      }
+    } catch (error) {
+      console.error('Error updating webhook usage:', error);
+    }
+  }
+
+  // Legacy endpoint for backward compatibility
   app.post('/api/webhook/tradingview', validateWebhookSecret, async (req: any, res) => {
     try {
       const { ticker, action, price, time, timeframe, strategy, alert_id } = req.body;
