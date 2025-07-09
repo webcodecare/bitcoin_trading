@@ -4,9 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Trophy, TrendingUp, Target, Calendar, Star, Award, BarChart3, Activity } from 'lucide-react';
+import { Trophy, TrendingUp, Target, Calendar, Star, Award, BarChart3, Activity, Zap, Clock } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import ProgressChart from './ProgressChart';
+import AchievementUnlockModal from './AchievementUnlockModal';
+import CustomAchievementEditor from './CustomAchievementEditor';
 
 interface UserProgress {
   id: string;
@@ -61,6 +64,9 @@ interface ProgressMilestone {
 export default function UserProgressDashboard() {
   const [selectedTab, setSelectedTab] = useState('overview');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [unlockedAchievement, setUnlockedAchievement] = useState<Achievement | null>(null);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [customAchievements, setCustomAchievements] = useState<any[]>([]);
 
   const { data: progressData, isLoading: progressLoading } = useQuery({
     queryKey: ['/api/user/progress'],
@@ -234,6 +240,55 @@ export default function UserProgressDashboard() {
     ? demoAchievements 
     : demoAchievements.filter(achievement => achievement.category === selectedCategory);
 
+  // Demo progress data for chart
+  const progressChartData = [
+    { date: '2025-01-01', totalTrades: 5, winRate: 60, profit: 245, level: 1 },
+    { date: '2025-01-03', totalTrades: 12, winRate: 67, profit: 580, level: 2 },
+    { date: '2025-01-05', totalTrades: 23, winRate: 65, profit: 1250, level: 3 },
+    { date: '2025-01-07', totalTrades: 34, winRate: 68, profit: 1890, level: 5 },
+    { date: '2025-01-09', totalTrades: 47, winRate: 68.1, profit: 2485, level: 7 },
+  ];
+
+  // Simulate achievement unlock
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (progress.totalTrades >= 45 && !demoAchievements.find(a => a.id === 'consistent-trader')?.isUnlocked) {
+        const achievement = {
+          id: 'high-volume-trader',
+          name: 'High Volume Trader',
+          description: 'Complete 45+ trades',
+          category: 'trading',
+          rarity: 'rare' as const,
+          points: 400,
+          icon: '🚀'
+        };
+        setUnlockedAchievement(achievement);
+        setShowUnlockModal(true);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [progress.totalTrades]);
+
+  const handleAchievementUnlock = () => {
+    setShowUnlockModal(false);
+    setUnlockedAchievement(null);
+  };
+
+  const handleSaveCustomAchievement = (achievement: any) => {
+    setCustomAchievements(prev => {
+      const existing = prev.find(a => a.id === achievement.id);
+      if (existing) {
+        return prev.map(a => a.id === achievement.id ? achievement : a);
+      }
+      return [...prev, achievement];
+    });
+  };
+
+  const handleDeleteCustomAchievement = (id: string) => {
+    setCustomAchievements(prev => prev.filter(a => a.id !== id));
+  };
+
   return (
     <div className="space-y-6">
       {/* Progress Overview Header */}
@@ -273,11 +328,12 @@ export default function UserProgressDashboard() {
 
       {/* Progress Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="achievements">Achievements</TabsTrigger>
           <TabsTrigger value="milestones">Milestones</TabsTrigger>
           <TabsTrigger value="skills">Skills</TabsTrigger>
+          <TabsTrigger value="custom">Custom</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -377,40 +433,70 @@ export default function UserProgressDashboard() {
             </motion.div>
           </div>
 
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your latest achievements and milestones</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {demoAchievements
-                  .filter(achievement => achievement.isUnlocked)
-                  .slice(0, 3)
-                  .map((achievement) => (
-                    <motion.div
-                      key={achievement.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center space-x-4 p-3 rounded-lg border"
-                    >
-                      <div className="text-2xl">{achievement.icon}</div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold">{achievement.name}</h4>
-                        <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                      </div>
-                      <Badge className={getRarityColor(achievement.rarity)}>
-                        {achievement.rarity}
-                      </Badge>
-                      <div className="text-sm text-muted-foreground">
-                        {achievement.unlockedAt && new Date(achievement.unlockedAt).toLocaleDateString()}
-                      </div>
-                    </motion.div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Progress Chart */}
+          <ProgressChart data={progressChartData} className="mb-6" />
+
+          {/* Recent Activity & Quick Actions */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Your latest achievements and milestones</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {demoAchievements
+                    .filter(achievement => achievement.isUnlocked)
+                    .slice(0, 3)
+                    .map((achievement) => (
+                      <motion.div
+                        key={achievement.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center space-x-4 p-3 rounded-lg border"
+                      >
+                        <div className="text-2xl">{achievement.icon}</div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold">{achievement.name}</h4>
+                          <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                        </div>
+                        <Badge className={getRarityColor(achievement.rarity)}>
+                          {achievement.rarity}
+                        </Badge>
+                        <div className="text-sm text-muted-foreground">
+                          {achievement.unlockedAt && new Date(achievement.unlockedAt).toLocaleDateString()}
+                        </div>
+                      </motion.div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>Boost your progress with these activities</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button className="w-full justify-start" variant="outline">
+                  <Target className="h-4 w-4 mr-2" />
+                  Practice Trading (+50 XP)
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analyze Market Trends (+25 XP)
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <Zap className="h-4 w-4 mr-2" />
+                  Complete Daily Challenge (+100 XP)
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <Clock className="h-4 w-4 mr-2" />
+                  Set Weekly Goals (+75 XP)
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Achievements Tab */}
@@ -584,7 +670,33 @@ export default function UserProgressDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Custom Achievements Tab */}
+        <TabsContent value="custom" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Custom Achievement Creator</CardTitle>
+              <CardDescription>
+                Create personalized achievements to track your unique trading goals and milestones
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CustomAchievementEditor
+                onSave={handleSaveCustomAchievement}
+                onDelete={handleDeleteCustomAchievement}
+                customAchievements={customAchievements}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      {/* Achievement Unlock Modal */}
+      <AchievementUnlockModal
+        achievement={unlockedAchievement}
+        isOpen={showUnlockModal}
+        onClose={handleAchievementUnlock}
+      />
     </div>
   );
 }

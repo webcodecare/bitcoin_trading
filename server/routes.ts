@@ -434,7 +434,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         };
         
-        await storage.createUserStats(defaultStats);
+        try {
+          await storage.createUserStats(defaultStats);
+        } catch (error) {
+          console.log('UserStats creation skipped (table may not exist)');
+        }
         res.json(defaultStats);
       } else {
         res.json(stats);
