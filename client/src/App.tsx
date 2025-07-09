@@ -48,6 +48,7 @@ import Trading from "@/pages/trading";
 import BitcoinAnalytics from "@/pages/bitcoin-analytics";
 import LiveStreaming from "@/pages/live-streaming";
 import HistoricalOHLC from "@/pages/historical-ohlc";
+import Achievements from "@/pages/achievements";
 import AuthGuard from "@/components/auth/AuthGuard";
 
 function Router() {
@@ -216,6 +217,11 @@ function Router() {
       <Route path="/historical-ohlc">
         <AuthGuard>
           <HistoricalOHLC />
+        </AuthGuard>
+      </Route>
+      <Route path="/achievements">
+        <AuthGuard>
+          <Achievements />
         </AuthGuard>
       </Route>
       <Route path="/mood-board">

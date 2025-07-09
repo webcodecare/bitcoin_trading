@@ -27,6 +27,7 @@ import {
   LogOut,
   Star,
   Target,
+  Trophy,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -85,6 +86,11 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
       title: "Historical OHLC",
       href: "/historical-ohlc",
       icon: BarChart,
+    },
+    {
+      title: "Achievements",
+      href: "/achievements",
+      icon: Trophy,
     },
     {
       title: "Signal Mood Board",
