@@ -75,6 +75,36 @@ export default function AdminAnalytics() {
     { name: 'Jul', users: 3490, revenue: 43000, trades: 2100 },
   ];
 
+  const mockRevenueData = [
+    { month: 'Jan', revenue: 24000 },
+    { month: 'Feb', revenue: 13980 },
+    { month: 'Mar', revenue: 29800 },
+    { month: 'Apr', revenue: 39080 },
+    { month: 'May', revenue: 48000 },
+    { month: 'Jun', revenue: 38000 },
+    { month: 'Jul', revenue: 43000 },
+  ];
+
+  const mockTradingData = [
+    { date: '2025-01-01', volume: 1250000 },
+    { date: '2025-01-07', volume: 1340000 },
+    { date: '2025-01-14', volume: 1180000 },
+    { date: '2025-01-21', volume: 1420000 },
+    { date: '2025-01-28', volume: 1360000 },
+    { date: '2025-02-04', volume: 1480000 },
+    { date: '2025-02-11', volume: 1520000 },
+  ];
+
+  const mockSignalData = [
+    { date: '2025-01-01', accuracy: 78.5 },
+    { date: '2025-01-07', accuracy: 82.1 },
+    { date: '2025-01-14', accuracy: 75.3 },
+    { date: '2025-01-21', accuracy: 84.7 },
+    { date: '2025-01-28', accuracy: 79.2 },
+    { date: '2025-02-04', accuracy: 86.1 },
+    { date: '2025-02-11', accuracy: 83.4 },
+  ];
+
   const periods = [
     { value: '1d', label: '24 Hours' },
     { value: '7d', label: '7 Days' },
@@ -149,11 +179,11 @@ export default function AdminAnalytics() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {isLoading ? "..." : (analyticsData?.overview?.totalUsers || 0).toLocaleString()}
+                    {isLoading ? "..." : (analyticsData?.overview?.totalUsers || mockOverviewData.totalUsers).toLocaleString()}
                   </div>
                   <div className="flex items-center text-xs text-muted-foreground">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                    +{analyticsData?.overview?.userGrowth || 0}% from last period
+                    +{analyticsData?.overview?.userGrowth || mockOverviewData.userGrowth}% from last period
                   </div>
                 </CardContent>
               </Card>
@@ -165,11 +195,11 @@ export default function AdminAnalytics() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {isLoading ? "..." : `$${(analyticsData?.overview?.monthlyRevenue || 0).toLocaleString()}`}
+                    {isLoading ? "..." : `$${(analyticsData?.overview?.monthlyRevenue || mockOverviewData.monthlyRevenue).toLocaleString()}`}
                   </div>
                   <div className="flex items-center text-xs text-muted-foreground">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                    +{analyticsData?.overview?.revenueGrowth || 0}% from last month
+                    +{analyticsData?.overview?.revenueGrowth || mockOverviewData.revenueGrowth}% from last month
                   </div>
                 </CardContent>
               </Card>
@@ -181,11 +211,11 @@ export default function AdminAnalytics() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {isLoading ? "..." : (analyticsData?.overview?.totalTrades || 0).toLocaleString()}
+                    {isLoading ? "..." : (analyticsData?.overview?.totalTrades || mockOverviewData.totalTrades).toLocaleString()}
                   </div>
                   <div className="flex items-center text-xs text-muted-foreground">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                    +{analyticsData?.overview?.tradesGrowth || 0}% from last period
+                    +{analyticsData?.overview?.tradesGrowth || mockOverviewData.tradesGrowth}% from last period
                   </div>
                 </CardContent>
               </Card>
@@ -197,11 +227,11 @@ export default function AdminAnalytics() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {isLoading ? "..." : `${analyticsData?.overview?.signalAccuracy || 0}%`}
+                    {isLoading ? "..." : `${analyticsData?.overview?.signalAccuracy || mockOverviewData.signalAccuracy}%`}
                   </div>
                   <div className="flex items-center text-xs text-muted-foreground">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                    +{analyticsData?.overview?.accuracyChange || 0}% improvement
+                    +{analyticsData?.overview?.accuracyChange || mockOverviewData.accuracyChange}% improvement
                   </div>
                 </CardContent>
               </Card>
@@ -358,11 +388,11 @@ export default function AdminAnalytics() {
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={revenueData?.monthlyRevenue || []}>
+                    <BarChart data={revenueData?.monthlyRevenue || mockRevenueData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip formatter={(value) => [`$${value}`, "Revenue"]} />
+                      <Tooltip formatter={(value) => [`$${value?.toLocaleString()}`, "Revenue"]} />
                       <Bar dataKey="revenue" fill="#3B82F6" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -409,7 +439,7 @@ export default function AdminAnalytics() {
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RechartsLineChart data={tradingMetrics?.volumeData || []}>
+                    <RechartsLineChart data={tradingMetrics?.volumeData || mockTradingData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
@@ -458,7 +488,7 @@ export default function AdminAnalytics() {
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RechartsLineChart data={signalPerformance?.accuracyData || []}>
+                    <RechartsLineChart data={signalPerformance?.accuracyData || mockSignalData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis domain={[0, 100]} />
