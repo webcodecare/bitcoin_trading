@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import Sidebar from "@/components/layout/Sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -158,13 +159,24 @@ export default function AdminIntegrations() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">3rd Party API Integrations</h1>
-          <p className="text-muted-foreground">Manage API keys, endpoints, and usage logs for external services</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        <Sidebar />
+        
+        {/* Main Content */}
+        <div className="ml-0 lg:ml-64 flex-1">
+          {/* Header */}
+          <header className="bg-card border-b border-border p-4 lg:p-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-2xl lg:text-3xl font-bold">3rd Party API Integrations</h1>
+                <p className="text-muted-foreground">Manage API keys, endpoints, and usage logs for external services</p>
+              </div>
+            </div>
+          </header>
+
+          {/* Content */}
+          <div className="p-4 lg:p-6 space-y-6">
 
       <Tabs defaultValue="integrations" className="space-y-4">
         <TabsList>
@@ -461,6 +473,9 @@ export default function AdminIntegrations() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
