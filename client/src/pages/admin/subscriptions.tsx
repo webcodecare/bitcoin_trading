@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CreditCard, Edit, Trash2, Plus, Users, TrendingUp, DollarSign, Calendar } from "lucide-react";
 import Sidebar from "@/components/layout/Sidebar";
+import Header from "@/components/layout/Header";
 
 interface UserSubscription {
   id: string;
@@ -229,19 +230,25 @@ export default function AdminSubscriptions() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <div className="flex-1 space-y-6 p-6 lg:p-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Subscription Management</h1>
-          <p className="text-muted-foreground">Manage subscription plans and user subscriptions</p>
-        </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Plan
-        </Button>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        <Sidebar className="hidden lg:block lg:w-64" />
+        
+        {/* Main Content */}
+        <div className="flex-1 lg:ml-64">
+          {/* Header */}
+          <Header 
+            title="Subscription Management" 
+            subtitle="Manage subscription plans and user subscriptions"
+          >
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Plan
+            </Button>
+          </Header>
+
+          {/* Content */}
+          <div className="p-4 lg:p-6 space-y-6">
 
       <Tabs defaultValue="plans" className="space-y-4">
         <TabsList>
@@ -696,6 +703,8 @@ export default function AdminSubscriptions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+          </div>
+        </div>
       </div>
     </div>
   );
