@@ -169,6 +169,53 @@
   }
 }
 
+/* Professional Chart Styling */
+.professional-chart {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 1px solid #e2e8f0;
+}
+
+.dark .professional-chart {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+}
+
+.chart-candlestick {
+  transition: all 0.3s ease;
+}
+
+.chart-candlestick:hover {
+  filter: brightness(1.2);
+  transform: scaleY(1.05);
+}
+
+.signal-marker {
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), 0 0 30px rgba(34, 197, 94, 0.4);
+  }
+}
+
+.streaming-indicator {
+  animation: stream-pulse 1.5s infinite;
+}
+
+@keyframes stream-pulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
 /* Mobile buy/sell controls */
 .quick-amount-buttons button {
   @apply text-xs py-2 px-3 font-medium;

@@ -6,7 +6,7 @@ import Footer from "@/components/layout/Footer";
 import TradingViewWidget from "@/components/charts/TradingViewWidget";
 import HeatmapChart from "@/components/charts/HeatmapChart";
 import CycleChart from "@/components/charts/CycleChart";
-import PublicDemoChart from "@/components/charts/PublicDemoChart";
+import ProfessionalDemoChart from "@/components/charts/ProfessionalDemoChart";
 import MarketWidget from "@/components/widgets/MarketWidget";
 import { 
   Bitcoin, 
@@ -168,10 +168,10 @@ export default function Home() {
             
             {/* Live BTC Chart Preview with Simulated Alerts */}
             <div className="lg:ml-8">
-              <PublicDemoChart 
-                title="Bitcoin Live Chart with Signals"
+              <ProfessionalDemoChart 
+                title="Bitcoin Professional Chart"
                 symbol="BTCUSDT"
-                className="shadow-xl"
+                className="shadow-2xl"
               />
             </div>
           </div>
@@ -262,8 +262,8 @@ export default function Home() {
                     <span className="text-xs text-muted-foreground">LIVE UPDATES</span>
                   </div>
                 </div>
-                <PublicDemoChart 
-                  title="Bitcoin Analytics Dashboard"
+                <ProfessionalDemoChart 
+                  title="Bitcoin Professional Analytics"
                   symbol="BTCUSDT"
                   className="shadow-2xl border-2 border-orange-500/20 hover:border-orange-500/40 transition-all duration-300"
                 />
@@ -280,8 +280,8 @@ export default function Home() {
                     <span className="text-xs text-muted-foreground">SIGNAL ACTIVE</span>
                   </div>
                 </div>
-                <PublicDemoChart 
-                  title="Ethereum Live Signals"
+                <ProfessionalDemoChart 
+                  title="Ethereum Trading Terminal"
                   symbol="ETHUSDT"
                   className="shadow-2xl border-2 border-blue-500/20 hover:border-blue-500/40 transition-all duration-300"
                 />
@@ -295,16 +295,16 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-8 mb-8">
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold text-center">Solana Market Analysis</h4>
-                <PublicDemoChart 
-                  title="Solana Market Analysis"
+                <ProfessionalDemoChart 
+                  title="Solana Professional Chart"
                   symbol="SOLUSDT"
                   className="shadow-xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300"
                 />
               </div>
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold text-center">Cardano Trading Signals</h4>
-                <PublicDemoChart 
-                  title="Cardano Trading Signals"
+                <ProfessionalDemoChart 
+                  title="Cardano Advanced Analytics"
                   symbol="ADAUSDT" 
                   className="shadow-xl border border-green-500/20 hover:border-green-500/40 transition-all duration-300"
                 />
