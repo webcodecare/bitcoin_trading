@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CreditCard, Edit, Trash2, Plus, Users, TrendingUp, DollarSign, Calendar } from "lucide-react";
+import Sidebar from "@/components/layout/Sidebar";
 
 interface UserSubscription {
   id: string;
@@ -109,6 +110,34 @@ export default function AdminSubscriptions() {
         description: "Subscription plan updated successfully.",
       });
     },
+    onError: (error: any) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update plan",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePlanMutation = useMutation({
+    mutationFn: async (planId: string) => {
+      const response = await apiRequest("DELETE", `/api/admin/subscription-plans/${planId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/subscription-plans"] });
+      toast({
+        title: "Plan Deleted",
+        description: "Subscription plan deleted successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete plan",
+        variant: "destructive",
+      });
+    },
   });
 
   const cancelSubscriptionMutation = useMutation({
@@ -152,6 +181,26 @@ export default function AdminSubscriptions() {
     setIsEditDialogOpen(true);
   };
 
+  const handleUpdatePlan = () => {
+    if (!selectedPlan) return;
+    
+    const planData = {
+      ...selectedPlan,
+      features: selectedPlan.features.filter(f => f.trim()),
+      monthlyPrice: selectedPlan.monthlyPrice,
+      yearlyPrice: selectedPlan.yearlyPrice,
+      maxSignals: selectedPlan.maxSignals === 0 ? -1 : selectedPlan.maxSignals,
+      maxTickers: selectedPlan.maxTickers === 0 ? -1 : selectedPlan.maxTickers,
+    };
+    updatePlanMutation.mutate({ id: selectedPlan.id, data: planData });
+  };
+
+  const handleDeletePlan = (planId: string) => {
+    if (confirm("Are you sure you want to delete this plan? This action cannot be undone.")) {
+      deletePlanMutation.mutate(planId);
+    }
+  };
+
   const handleCreatePlan = () => {
     const planData = {
       ...newPlan,
@@ -180,7 +229,9 @@ export default function AdminSubscriptions() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+      <div className="flex-1 space-y-6 p-6 lg:p-8">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Subscription Management</h1>
@@ -228,13 +279,23 @@ export default function AdminSubscriptions() {
                         </CardTitle>
                         <CardDescription className="capitalize">{plan.tier} tier</CardDescription>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditPlan(plan)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditPlan(plan)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeletePlan(plan.id)}
+                          disabled={deletePlanMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -400,6 +461,138 @@ export default function AdminSubscriptions() {
         </TabsContent>
       </Tabs>
 
+      {/* Edit Plan Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Subscription Plan</DialogTitle>
+            <DialogDescription>
+              Update the details of this subscription plan.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Plan Name</Label>
+              <Input
+                id="edit-name"
+                value={selectedPlan?.name || ""}
+                onChange={(e) => setSelectedPlan(prev => prev ? { ...prev, name: e.target.value } : null)}
+                placeholder="Basic Plan"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-tier">Tier</Label>
+              <Select 
+                value={selectedPlan?.tier || ""} 
+                onValueChange={(value) => setSelectedPlan(prev => prev ? { ...prev, tier: value } : null)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select tier" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="basic">Basic</SelectItem>
+                  <SelectItem value="premium">Premium</SelectItem>
+                  <SelectItem value="pro">Pro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-monthly-price">Monthly Price ($)</Label>
+              <Input
+                id="edit-monthly-price"
+                type="number"
+                value={selectedPlan?.monthlyPrice ? selectedPlan.monthlyPrice / 100 : 0}
+                onChange={(e) => setSelectedPlan(prev => prev ? { ...prev, monthlyPrice: Number(e.target.value) * 100 } : null)}
+                placeholder="29.99"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-yearly-price">Yearly Price ($, optional)</Label>
+              <Input
+                id="edit-yearly-price"
+                type="number"
+                value={selectedPlan?.yearlyPrice ? selectedPlan.yearlyPrice / 100 : 0}
+                onChange={(e) => setSelectedPlan(prev => prev ? { ...prev, yearlyPrice: Number(e.target.value) * 100 } : null)}
+                placeholder="299.99"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-max-signals">Max Signals (0 = unlimited)</Label>
+              <Input
+                id="edit-max-signals"
+                type="number"
+                value={selectedPlan?.maxSignals === -1 ? 0 : selectedPlan?.maxSignals || 0}
+                onChange={(e) => setSelectedPlan(prev => prev ? { ...prev, maxSignals: Number(e.target.value) } : null)}
+                placeholder="100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-max-tickers">Max Tickers (0 = unlimited)</Label>
+              <Input
+                id="edit-max-tickers"
+                type="number"
+                value={selectedPlan?.maxTickers === -1 ? 0 : selectedPlan?.maxTickers || 0}
+                onChange={(e) => setSelectedPlan(prev => prev ? { ...prev, maxTickers: Number(e.target.value) } : null)}
+                placeholder="10"
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Features</Label>
+            {selectedPlan?.features?.map((feature, index) => (
+              <div key={index} className="flex space-x-2">
+                <Input
+                  value={feature}
+                  onChange={(e) => {
+                    if (selectedPlan) {
+                      const newFeatures = [...selectedPlan.features];
+                      newFeatures[index] = e.target.value;
+                      setSelectedPlan({ ...selectedPlan, features: newFeatures });
+                    }
+                  }}
+                  placeholder="Feature description"
+                />
+                {selectedPlan.features.length > 1 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      if (selectedPlan) {
+                        const newFeatures = selectedPlan.features.filter((_, i) => i !== index);
+                        setSelectedPlan({ ...selectedPlan, features: newFeatures });
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                if (selectedPlan) {
+                  setSelectedPlan({ ...selectedPlan, features: [...selectedPlan.features, ""] });
+                }
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Feature
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdatePlan} disabled={updatePlanMutation.isPending}>
+              {updatePlanMutation.isPending ? "Updating..." : "Update Plan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Create Plan Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-2xl">
@@ -503,6 +696,7 @@ export default function AdminSubscriptions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

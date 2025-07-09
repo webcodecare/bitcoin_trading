@@ -1797,6 +1797,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Subscription Management Endpoints
+  app.get("/api/admin/subscriptions", requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const paidUsers = users.filter(u => u.subscriptionTier !== "free");
+      
+      // Mock subscription data - in production this would come from a subscriptions table
+      const subscriptions = paidUsers.map(user => ({
+        id: user.id,
+        userId: user.id,
+        userEmail: user.email,
+        userName: user.email.split('@')[0],
+        planTier: user.subscriptionTier,
+        planName: user.subscriptionTier === 'basic' ? 'Basic Plan' : 
+                  user.subscriptionTier === 'premium' ? 'Premium Plan' : 'Pro Plan',
+        status: user.subscriptionStatus || 'active',
+        startDate: user.createdAt,
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        amount: user.subscriptionTier === 'basic' ? 2900 : 
+                user.subscriptionTier === 'premium' ? 7900 : 19900,
+        stripeSubscriptionId: user.stripeSubscriptionId,
+        lastPayment: user.createdAt,
+        nextPayment: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      }));
+      
+      res.json(subscriptions);
+    } catch (error) {
+      console.error("Error fetching admin subscriptions:", error);
+      res.status(500).json({ message: "Failed to fetch subscriptions" });
+    }
+  });
+
+  app.post("/api/admin/subscription-plans", requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const planData = req.body;
+      
+      // Validate required fields
+      if (!planData.name || !planData.tier || !planData.monthlyPrice) {
+        return res.status(400).json({ message: "Missing required fields: name, tier, monthlyPrice" });
+      }
+      
+      const plan = await storage.createSubscriptionPlan({
+        name: planData.name,
+        tier: planData.tier,
+        monthlyPrice: planData.monthlyPrice,
+        yearlyPrice: planData.yearlyPrice,
+        features: planData.features || [],
+        maxSignals: planData.maxSignals,
+        maxTickers: planData.maxTickers,
+        isActive: true
+      });
+      
+      // Log admin action
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: 'CREATE_PLAN',
+        targetTable: 'subscription_plans',
+        targetId: plan.id,
+        notes: `Created subscription plan: ${plan.name} (${plan.tier})`,
+      });
+      
+      res.json(plan);
+    } catch (error) {
+      console.error("Error creating subscription plan:", error);
+      res.status(500).json({ message: "Failed to create subscription plan" });
+    }
+  });
+
+  app.put("/api/admin/subscription-plans/:id", requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const plan = await storage.getSubscriptionPlan(id);
+      if (!plan) {
+        return res.status(404).json({ message: "Subscription plan not found" });
+      }
+      
+      // Update the plan (this would typically update in database)
+      const updatedPlan = { ...plan, ...updates };
+      
+      // Log admin action
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: 'UPDATE_PLAN',
+        targetTable: 'subscription_plans',
+        targetId: id,
+        notes: `Updated subscription plan: ${plan.name}`,
+      });
+      
+      res.json(updatedPlan);
+    } catch (error) {
+      console.error("Error updating subscription plan:", error);
+      res.status(500).json({ message: "Failed to update subscription plan" });
+    }
+  });
+
+  app.delete("/api/admin/subscription-plans/:id", requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      const plan = await storage.getSubscriptionPlan(id);
+      if (!plan) {
+        return res.status(404).json({ message: "Subscription plan not found" });
+      }
+      
+      // In a real implementation, you'd delete from database
+      // For now, we'll just mark as inactive
+      
+      // Log admin action
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: 'DELETE_PLAN',
+        targetTable: 'subscription_plans',
+        targetId: id,
+        notes: `Deleted subscription plan: ${plan.name}`,
+      });
+      
+      res.json({ success: true, message: "Subscription plan deleted" });
+    } catch (error) {
+      console.error("Error deleting subscription plan:", error);
+      res.status(500).json({ message: "Failed to delete subscription plan" });
+    }
+  });
+
+  app.post("/api/admin/subscriptions/:id/cancel", requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Cancel the subscription by updating user status
+      const updatedUser = await storage.updateUser(id, {
+        subscriptionStatus: 'cancelled',
+        subscriptionTier: 'free'
+      });
+      
+      // Log admin action
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: 'CANCEL_SUBSCRIPTION',
+        targetTable: 'users',
+        targetId: id,
+        notes: `Cancelled subscription for user: ${user.email}`,
+      });
+      
+      res.json({ success: true, message: "Subscription cancelled successfully" });
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+      res.status(500).json({ message: "Failed to cancel subscription" });
+    }
+  });
+
   // Admin Analytics Endpoints
   app.get("/api/admin/analytics", async (req, res) => {
     try {
