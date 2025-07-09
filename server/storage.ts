@@ -688,7 +688,48 @@ export class MemoryStorage implements IStorage {
       createdAt: new Date(),
     }
   ];
-  private userAchievements: UserAchievement[] = [];
+  private userAchievements: UserAchievement[] = [
+    {
+      id: "user-achievement-1",
+      userId: "test-user-123",
+      achievementId: "achievement-1",
+      progress: 100,
+      isUnlocked: true,
+      unlockedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "user-achievement-2", 
+      userId: "test-user-123",
+      achievementId: "achievement-3",
+      progress: 100,
+      isUnlocked: true,
+      unlockedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "user-achievement-3",
+      userId: "test-user-123", 
+      achievementId: "achievement-4",
+      progress: 50,
+      isUnlocked: false,
+      unlockedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: "user-achievement-4",
+      userId: "test-user-123",
+      achievementId: "achievement-2",
+      progress: 30,
+      isUnlocked: false,
+      unlockedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
   private userStats: UserStats[] = [
     {
       id: "stats-test-123",
