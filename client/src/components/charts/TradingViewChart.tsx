@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TrendingUp, TrendingDown, Activity, BarChart3 } from 'lucide-react';
 import { useRealtimeChartMarkers, type RealtimeAlert } from '@/hooks/useSupabaseRealtime';
+import SignalOverlay from './SignalOverlay';
+import SignalTooltip from './SignalTooltip';
 
 interface TradingViewChartProps {
   symbol: string;
@@ -18,6 +20,8 @@ export default function TradingViewChart({ symbol, height = 400, className = '' 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [priceHistory, setPriceHistory] = useState<PriceData[]>([]);
   const [signalMarkers, setSignalMarkers] = useState<RealtimeAlert[]>([]);
+  const [hoveredAlert, setHoveredAlert] = useState<RealtimeAlert | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   // Handle realtime chart marker updates
   const handleNewSignal = (alert: RealtimeAlert) => {
@@ -85,6 +89,59 @@ export default function TradingViewChart({ symbol, height = 400, className = '' 
       setPriceHistory(sampleData);
     }
   }, [priceData]);
+
+  // Handle canvas click for signal tooltips
+  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas || signalMarkers.length === 0) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    // Check if click is near any signal marker
+    const padding = 60;
+    const chartWidth = rect.width - 2 * padding;
+    const chartHeight = rect.height - 2 * padding;
+
+    if (priceHistory.length === 0) return;
+
+    const prices = priceHistory.map(d => d.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceRange = maxPrice - minPrice || 1;
+
+    signalMarkers.forEach((signal) => {
+      const signalTime = new Date(signal.timestamp).getTime();
+      const chartTimes = priceHistory.map(p => new Date(p.time).getTime());
+      
+      let closestIndex = 0;
+      let closestTimeDiff = Math.abs(chartTimes[0] - signalTime);
+      
+      for (let i = 1; i < chartTimes.length; i++) {
+        const timeDiff = Math.abs(chartTimes[i] - signalTime);
+        if (timeDiff < closestTimeDiff) {
+          closestTimeDiff = timeDiff;
+          closestIndex = i;
+        }
+      }
+      
+      if (closestIndex >= 0 && closestIndex < priceHistory.length) {
+        const x = padding + (chartWidth * closestIndex) / (priceHistory.length - 1);
+        const y = padding + chartHeight - ((signal.price - minPrice) / priceRange) * chartHeight;
+        
+        // Check if click is within marker area (20px radius)
+        const distance = Math.sqrt((clickX - x) ** 2 + (clickY - y) ** 2);
+        if (distance <= 20) {
+          setHoveredAlert(signal);
+          setTooltipPosition({ 
+            x: event.clientX, 
+            y: event.clientY 
+          });
+        }
+      }
+    });
+  };
 
   // Draw chart
   useEffect(() => {
@@ -190,8 +247,8 @@ export default function TradingViewChart({ symbol, height = 400, className = '' 
       ctx.fill();
     }
 
-    // Draw signal markers
-    signalMarkers.forEach((signal) => {
+    // Draw professional signal markers
+    signalMarkers.forEach((signal, index) => {
       // Find the closest price point to the signal timestamp
       const signalTime = new Date(signal.timestamp).getTime();
       const chartTimes = priceHistory.map(p => new Date(p.time).getTime());
@@ -209,30 +266,86 @@ export default function TradingViewChart({ symbol, height = 400, className = '' 
       
       if (closestIndex >= 0 && closestIndex < priceHistory.length) {
         const x = padding + (chartWidth * closestIndex) / (priceHistory.length - 1);
-        const y = padding + chartHeight - ((signal.price - minPrice) / priceRange) * chartHeight;
+        const signalPrice = signal.price;
+        const y = padding + chartHeight - ((signalPrice - minPrice) / priceRange) * chartHeight;
         
-        // Draw signal marker
-        ctx.fillStyle = signal.signalType === 'buy' ? '#10b981' : '#ef4444';
-        ctx.beginPath();
-        ctx.arc(x, y, 8, 0, 2 * Math.PI);
-        ctx.fill();
+        const isBuy = signal.signalType === 'buy';
+        const isLatest = index === 0; // Latest signal gets special treatment
         
-        // Draw signal border
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
+        // Draw TradingView-style signal marker
+        if (isBuy) {
+          // Buy signal - Triangle pointing up
+          ctx.fillStyle = isLatest ? '#00d4aa' : '#10b981';
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          
+          // Triangle path
+          ctx.beginPath();
+          ctx.moveTo(x, y - 12); // Top point
+          ctx.lineTo(x - 10, y + 8); // Bottom left
+          ctx.lineTo(x + 10, y + 8); // Bottom right
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          
+          // Buy arrow symbol
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 12px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('▲', x, y + 3);
+          
+        } else {
+          // Sell signal - Triangle pointing down
+          ctx.fillStyle = isLatest ? '#ff6b6b' : '#ef4444';
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          
+          // Triangle path
+          ctx.beginPath();
+          ctx.moveTo(x, y + 12); // Bottom point
+          ctx.lineTo(x - 10, y - 8); // Top left
+          ctx.lineTo(x + 10, y - 8); // Top right
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          
+          // Sell arrow symbol
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 12px Inter, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('▼', x, y - 3);
+        }
+        
+        // Draw price label next to marker
+        if (isLatest) {
+          ctx.fillStyle = isBuy ? '#00d4aa' : '#ff6b6b';
+          ctx.fillRect(x + 15, y - 10, 60, 20);
+          
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 10px Inter, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(`$${signalPrice.toLocaleString()}`, x + 18, y + 2);
+        }
+        
+        // Draw vertical line from marker to price
+        ctx.strokeStyle = isBuy ? (isLatest ? '#00d4aa' : '#10b981') : (isLatest ? '#ff6b6b' : '#ef4444');
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
         ctx.beginPath();
-        ctx.arc(x, y, 8, 0, 2 * Math.PI);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, rect.height - padding);
         ctx.stroke();
+        ctx.setLineDash([]); // Reset dash
         
-        // Draw signal label
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 10px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(
-          signal.signalType.toUpperCase().charAt(0), 
-          x, 
-          y + 3
-        );
+        // Animate latest signal with pulsing effect
+        if (isLatest) {
+          const pulseRadius = 15 + Math.sin(Date.now() / 200) * 3;
+          ctx.strokeStyle = isBuy ? 'rgba(0, 212, 170, 0.3)' : 'rgba(255, 107, 107, 0.3)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x, y, pulseRadius, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
       }
     });
 
@@ -269,22 +382,20 @@ export default function TradingViewChart({ symbol, height = 400, className = '' 
       <div className="relative" style={{ height: `${height}px` }}>
         <canvas
           ref={canvasRef}
-          className="w-full h-full"
+          className="w-full h-full cursor-crosshair"
           style={{ width: '100%', height: '100%' }}
+          onClick={handleCanvasClick}
         />
         
-        {/* Signal overlay indicators */}
-        {latestAlert && (
-          <div className="absolute top-2 left-2 z-10">
-            <div className={`px-3 py-1 rounded-lg text-sm font-medium border ${
-              latestAlert.signalType === 'buy' 
-                ? 'bg-green-600/20 text-green-400 border-green-600/30' 
-                : 'bg-red-600/20 text-red-400 border-red-600/30'
-            }`}>
-              Latest: {latestAlert.signalType.toUpperCase()} ${latestAlert.price}
-            </div>
-          </div>
-        )}
+        {/* Professional Signal Overlay */}
+        <SignalOverlay 
+          alerts={tickerAlerts} 
+          ticker={symbol}
+          onAlertClick={(alert) => {
+            console.log('Signal clicked:', alert);
+            // Could trigger modal with signal details
+          }}
+        />
         
         {/* Supabase Realtime connection status */}
         <div className="absolute top-2 right-2 z-10">
@@ -322,6 +433,13 @@ export default function TradingViewChart({ symbol, height = 400, className = '' 
           <span>Live + Supabase Realtime</span>
         </div>
       </div>
+
+      {/* Signal Tooltip */}
+      <SignalTooltip
+        alert={hoveredAlert}
+        position={tooltipPosition}
+        onClose={() => setHoveredAlert(null)}
+      />
     </div>
   );
 }
