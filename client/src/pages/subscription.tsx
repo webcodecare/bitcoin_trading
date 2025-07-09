@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import SubscriptionManager from '@/components/subscription/SubscriptionManager';
-import InteractiveChart from '@/components/charts/InteractiveChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import Sidebar from '@/components/layout/Sidebar';
 import { 
   Star, 
   Activity,
   TrendingUp,
   Zap,
-  BarChart3
+  BarChart3,
+  Settings
 } from 'lucide-react';
 
 export default function SubscriptionPage() {
@@ -76,10 +76,24 @@ export default function SubscriptionPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Subscription Management - Takes up 2 columns on XL screens */}
         <div className="xl:col-span-2">
-          <SubscriptionManager 
-            onTickerSelect={handleTickerSelect}
-            selectedTicker={selectedTicker}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Subscription Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">
+                  Subscription management is temporarily under maintenance.
+                </p>
+                <Button variant="outline">
+                  Configure Subscriptions
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Interactive Chart - Takes up 1 column on XL screens */}
@@ -152,23 +166,6 @@ export default function SubscriptionPage() {
           </Card>
         </div>
       </div>
-
-      {/* Interactive Chart Section */}
-      {selectedTicker && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold">Live Chart</h2>
-            <Badge variant="outline">{selectedTicker}</Badge>
-          </div>
-          
-          <InteractiveChart 
-            symbol={selectedTicker}
-            height={600}
-            onSymbolChange={handleTickerSelect}
-            className="w-full"
-          />
-        </div>
-      )}
 
       {/* Help Section */}
       <Card>
