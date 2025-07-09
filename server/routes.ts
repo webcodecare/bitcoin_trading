@@ -9,6 +9,7 @@ import { cycleForecastingService } from "./services/cycleForecasting";
 import { notificationService } from "./services/notificationService";
 import { smsService } from "./services/smsService";
 import { telegramService } from "./services/telegramService";
+import { smartTimingOptimizer } from "./services/smartTimingOptimizer";
 import { z } from "zod";
 
 // Initialize Stripe
@@ -2617,6 +2618,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error sending Telegram test:', error);
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Smart Timing Optimizer Routes
+  
+  // Get user's timing preferences
+  app.get('/api/smart-timing/preferences', async (req, res) => {
+    try {
+      const { userId } = req.query;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+      
+      const preferences = await smartTimingOptimizer.getUserTimingPreferences(userId as string);
+      res.json(preferences);
+    } catch (error) {
+      console.error('Get timing preferences error:', error);
+      res.status(500).json({ error: 'Failed to get timing preferences' });
+    }
+  });
+
+  // Update user's timing preferences
+  app.put('/api/smart-timing/preferences', async (req, res) => {
+    try {
+      const { userId, ...updates } = req.body;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+      
+      const preferences = await smartTimingOptimizer.updateTimingPreferences(userId, updates);
+      res.json(preferences);
+    } catch (error) {
+      console.error('Update timing preferences error:', error);
+      res.status(500).json({ error: 'Failed to update timing preferences' });
+    }
+  });
+
+  // Get timing optimization suggestions
+  app.get('/api/smart-timing/suggestions', async (req, res) => {
+    try {
+      const { userId } = req.query;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+      
+      const suggestions = await smartTimingOptimizer.generateOptimizationSuggestions(userId as string);
+      res.json(suggestions);
+    } catch (error) {
+      console.error('Get timing suggestions error:', error);
+      res.status(500).json({ error: 'Failed to get timing suggestions' });
+    }
+  });
+
+  // Apply timing optimization
+  app.post('/api/smart-timing/apply-optimization', async (req, res) => {
+    try {
+      const { optimizationId } = req.body;
+      if (!optimizationId) {
+        return res.status(400).json({ error: 'Optimization ID is required' });
+      }
+      
+      const success = await smartTimingOptimizer.applyOptimization(optimizationId);
+      res.json({ success });
+    } catch (error) {
+      console.error('Apply optimization error:', error);
+      res.status(500).json({ error: 'Failed to apply optimization' });
+    }
+  });
+
+  // Check if notification should be sent
+  app.post('/api/smart-timing/should-send', async (req, res) => {
+    try {
+      const { userId, signalConfidence } = req.body;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+      
+      const result = await smartTimingOptimizer.shouldSendNotification(userId, signalConfidence);
+      res.json(result);
+    } catch (error) {
+      console.error('Should send notification error:', error);
+      res.status(500).json({ error: 'Failed to check notification timing' });
+    }
+  });
+
+  // Get timing analytics summary
+  app.get('/api/smart-timing/analytics', async (req, res) => {
+    try {
+      const { userId, days } = req.query;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+      
+      const analytics = await smartTimingOptimizer.getTimingAnalyticsSummary(
+        userId as string, 
+        days ? parseInt(days as string) : 30
+      );
+      res.json(analytics);
+    } catch (error) {
+      console.error('Get timing analytics error:', error);
+      res.status(500).json({ error: 'Failed to get timing analytics' });
+    }
+  });
+
+  // Record notification interaction
+  app.post('/api/smart-timing/record-interaction', async (req, res) => {
+    try {
+      const analyticsData = req.body;
+      await smartTimingOptimizer.recordNotificationAnalytics(analyticsData);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Record interaction error:', error);
+      res.status(500).json({ error: 'Failed to record interaction' });
+    }
+  });
+
+  // Get optimal timing analysis
+  app.get('/api/smart-timing/optimal-analysis', async (req, res) => {
+    try {
+      const { userId } = req.query;
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+      
+      const analysis = await smartTimingOptimizer.calculateOptimalTiming(userId as string);
+      res.json(analysis);
+    } catch (error) {
+      console.error('Get optimal analysis error:', error);
+      res.status(500).json({ error: 'Failed to get optimal timing analysis' });
     }
   });
 

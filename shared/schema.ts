@@ -1,6 +1,7 @@
 import { pgTable, text, varchar, serial, integer, boolean, timestamp, uuid, decimal, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -430,3 +431,69 @@ export const insertDashboardLayoutSchema = createInsertSchema(dashboardLayouts).
 
 export type DashboardLayout = typeof dashboardLayouts.$inferSelect;
 export type InsertDashboardLayout = z.infer<typeof insertDashboardLayoutSchema>;
+
+// Smart Notification Timing Tables
+export const notificationTimingPreferences = pgTable("notification_timing_preferences", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  timezone: varchar("timezone").notNull(), // User's timezone
+  preferredHours: jsonb("preferred_hours").notNull(), // Array of preferred hours [9, 10, 11, 16, 17]
+  quietHours: jsonb("quiet_hours").notNull(), // Array of quiet hours [22, 23, 0, 1, 2, 3, 4, 5, 6, 7]
+  weekendPreference: varchar("weekend_preference").notNull().default("reduced"), // "normal", "reduced", "none"
+  marketOpenOnly: boolean("market_open_only").default(false),
+  maxNotificationsPerHour: integer("max_notifications_per_hour").default(3),
+  adaptiveTiming: boolean("adaptive_timing").default(true), // Learn from user behavior
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const notificationTimingAnalytics = pgTable("notification_timing_analytics", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  notificationId: varchar("notification_id").notNull(), // Reference to sent notification
+  sentAt: timestamp("sent_at").notNull(),
+  openedAt: timestamp("opened_at"),
+  clickedAt: timestamp("clicked_at"),
+  dismissedAt: timestamp("dismissed_at"),
+  responseTime: integer("response_time"), // Seconds to open/click
+  marketCondition: varchar("market_condition"), // "bullish", "bearish", "volatile", "stable"
+  signalConfidence: decimal("signal_confidence", { precision: 5, scale: 4 }), // 0.0000 to 1.0000
+  userActiveScore: decimal("user_active_score", { precision: 3, scale: 2 }), // 0.00 to 1.00
+  timeScore: decimal("time_score", { precision: 3, scale: 2 }), // Calculated timing effectiveness
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const smartTimingOptimizations = pgTable("smart_timing_optimizations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  optimizationType: varchar("optimization_type").notNull(), // "peak_hours", "quiet_adjustment", "frequency_limit"
+  currentSetting: jsonb("current_setting").notNull(),
+  suggestedSetting: jsonb("suggested_setting").notNull(),
+  confidenceScore: decimal("confidence_score", { precision: 3, scale: 2 }).notNull(),
+  appliedAt: timestamp("applied_at"),
+  effectivenessScore: decimal("effectiveness_score", { precision: 3, scale: 2 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertNotificationTimingPreferenceSchema = createInsertSchema(notificationTimingPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationTimingAnalyticSchema = createInsertSchema(notificationTimingAnalytics).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSmartTimingOptimizationSchema = createInsertSchema(smartTimingOptimizations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type NotificationTimingPreference = typeof notificationTimingPreferences.$inferSelect;
+export type InsertNotificationTimingPreference = z.infer<typeof insertNotificationTimingPreferenceSchema>;
+export type NotificationTimingAnalytic = typeof notificationTimingAnalytics.$inferSelect;
+export type InsertNotificationTimingAnalytic = z.infer<typeof insertNotificationTimingAnalyticSchema>;
+export type SmartTimingOptimization = typeof smartTimingOptimizations.$inferSelect;
+export type InsertSmartTimingOptimization = z.infer<typeof insertSmartTimingOptimizationSchema>;
