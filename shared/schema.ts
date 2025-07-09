@@ -29,6 +29,7 @@ export const userSettings = pgTable("user_settings", {
   notificationEmail: boolean("notification_email").notNull().default(true),
   notificationSms: boolean("notification_sms").notNull().default(false),
   notificationPush: boolean("notification_push").notNull().default(true),
+  notificationTelegram: boolean("notification_telegram").notNull().default(false),
   emailSignalAlerts: boolean("email_signal_alerts").notNull().default(true),
   smsSignalAlerts: boolean("sms_signal_alerts").notNull().default(false),
   pushSignalAlerts: boolean("push_signal_alerts").notNull().default(true),
@@ -36,6 +37,26 @@ export const userSettings = pgTable("user_settings", {
   quietHoursStart: text("quiet_hours_start").default("22:00"), // 24h format
   quietHoursEnd: text("quiet_hours_end").default("08:00"),
   weekendNotifications: boolean("weekend_notifications").notNull().default(true),
+  
+  // Contact Information
+  emailAddress: text("email_address"),
+  phoneNumber: text("phone_number"),
+  telegramChatId: text("telegram_chat_id"),
+  
+  // Webhook Settings
+  webhookSecret: text("webhook_secret"),
+  webhookEnabled: boolean("webhook_enabled").notNull().default(false),
+  
+  // Push Notification Settings
+  pushSubscription: jsonb("push_subscription"),
+  pushEnabled: boolean("push_enabled").notNull().default(false),
+  
+  // Alert Type Preferences
+  priceAlerts: boolean("price_alerts").notNull().default(true),
+  volumeAlerts: boolean("volume_alerts").notNull().default(false),
+  newsAlerts: boolean("news_alerts").notNull().default(true),
+  technicalAlerts: boolean("technical_alerts").notNull().default(true),
+  whaleAlerts: boolean("whale_alerts").notNull().default(false),
   
   // Display Preferences
   theme: text("theme", { enum: ["light", "dark", "auto"] }).notNull().default("dark"),
