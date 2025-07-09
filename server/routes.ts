@@ -3990,5 +3990,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Achievement System API Endpoints
+  
+  // Get all achievements
+  app.get('/api/achievements', async (req, res) => {
+    try {
+      const achievements = await storage.getAllAchievements();
+      res.json(achievements);
+    } catch (error) {
+      console.error('Error fetching achievements:', error);
+      res.status(500).json({ message: 'Failed to fetch achievements' });
+    }
+  });
+
+  // Get user achievements with progress
+  app.get('/api/user/achievements', requireAuth, async (req: any, res) => {
+    try {
+      const userAchievements = await storage.getUserAchievements(req.user.id);
+      res.json(userAchievements);
+    } catch (error) {
+      console.error('Error fetching user achievements:', error);
+      res.status(500).json({ message: 'Failed to fetch user achievements' });
+    }
+  });
+
+  // Get user statistics
+  app.get('/api/user/stats', requireAuth, async (req: any, res) => {
+    try {
+      const stats = await storage.getUserStats(req.user.id);
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      res.status(500).json({ message: 'Failed to fetch user statistics' });
+    }
+  });
+
+  // Update user statistics (internal use for achievement tracking)
+  app.put('/api/user/stats', requireAuth, async (req: any, res) => {
+    try {
+      const { signalsReceived, daysActive, profitPercentage } = req.body;
+      
+      const updates: any = {};
+      if (signalsReceived !== undefined) updates.signalsReceived = signalsReceived;
+      if (daysActive !== undefined) updates.daysActive = daysActive;
+      if (profitPercentage !== undefined) updates.profitPercentage = profitPercentage;
+      
+      const stats = await storage.updateUserStats(req.user.id, updates);
+      
+      // Check for new achievement unlocks
+      await checkAndUnlockAchievements(req.user.id, stats);
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Error updating user stats:', error);
+      res.status(500).json({ message: 'Failed to update user statistics' });
+    }
+  });
+
+  // Helper function to check and unlock achievements
+  async function checkAndUnlockAchievements(userId: string, stats: any) {
+    try {
+      const achievements = await storage.getAllAchievements();
+      const userAchievements = await storage.getUserAchievements(userId);
+      const unlockedIds = userAchievements.map(ua => ua.achievementId);
+      
+      for (const achievement of achievements) {
+        if (unlockedIds.includes(achievement.id)) continue;
+        
+        let shouldUnlock = false;
+        
+        // Check achievement criteria
+        switch (achievement.id) {
+          case 'first-signal':
+            shouldUnlock = stats.signalsReceived >= 1;
+            break;
+          case 'signal-veteran':
+            shouldUnlock = stats.signalsReceived >= 100;
+            break;
+          case 'signal-master':
+            shouldUnlock = stats.signalsReceived >= 1000;
+            break;
+          case 'early-adopter':
+            shouldUnlock = stats.daysActive >= 7;
+            break;
+          case 'consistent-trader':
+            shouldUnlock = stats.daysActive >= 30;
+            break;
+          case 'profitable-trader':
+            shouldUnlock = stats.profitPercentage >= 10;
+            break;
+          case 'platform-explorer':
+            shouldUnlock = stats.daysActive >= 1; // Simple engagement check
+            break;
+          case 'loyal-user':
+            shouldUnlock = stats.daysActive >= 90;
+            break;
+        }
+        
+        if (shouldUnlock) {
+          await storage.unlockUserAchievement({
+            userId,
+            achievementId: achievement.id,
+            progress: 100,
+            unlockedAt: new Date()
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking achievements:', error);
+    }
+  }
+
+  // Admin endpoints for achievement management
+  app.post('/api/admin/achievements', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const achievementData = req.body;
+      const achievement = await storage.createAchievement(achievementData);
+      
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: 'CREATE_ACHIEVEMENT',
+        targetTable: 'achievements',
+        targetId: achievement.id,
+        notes: `Created achievement: ${achievement.title}`,
+      });
+      
+      res.json(achievement);
+    } catch (error) {
+      console.error('Error creating achievement:', error);
+      res.status(500).json({ message: 'Failed to create achievement' });
+    }
+  });
+
+  app.put('/api/admin/achievements/:id', requireAuth, requireAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const achievement = await storage.updateAchievement(id, updates);
+      if (!achievement) {
+        return res.status(404).json({ message: 'Achievement not found' });
+      }
+      
+      await storage.createAdminLog({
+        adminId: req.user.id,
+        action: 'UPDATE_ACHIEVEMENT',
+        targetTable: 'achievements',
+        targetId: achievement.id,
+        notes: `Updated achievement: ${achievement.title}`,
+      });
+      
+      res.json(achievement);
+    } catch (error) {
+      console.error('Error updating achievement:', error);
+      res.status(500).json({ message: 'Failed to update achievement' });
+    }
+  });
+
   return httpServer;
 }

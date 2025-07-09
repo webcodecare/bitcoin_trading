@@ -37,6 +37,12 @@ import type {
   InsertDashboardLayout,
   WebhookSecret,
   InsertWebhookSecret,
+  Achievement,
+  UserAchievement, 
+  UserStats,
+  InsertAchievement,
+  InsertUserAchievement,
+  InsertUserStats,
 } from "@shared/schema";
 
 // Initialize database connection if URL is provided
@@ -128,6 +134,26 @@ export interface IStorage {
   createWebhookSecret(secret: InsertWebhookSecret): Promise<WebhookSecret>;
   updateWebhookSecret(id: string, updates: Partial<WebhookSecret>): Promise<WebhookSecret | undefined>;
   deleteWebhookSecret(id: string): Promise<boolean>;
+
+  // Achievement system
+  getAllAchievements(): Promise<Achievement[]>;
+  getAchievement(id: string): Promise<Achievement | undefined>;
+  createAchievement(achievement: InsertAchievement): Promise<Achievement>;
+  updateAchievement(id: string, updates: Partial<Achievement>): Promise<Achievement | undefined>;
+  deleteAchievement(id: string): Promise<boolean>;
+
+  // User achievements
+  getUserAchievements(userId: string): Promise<UserAchievement[]>;
+  getUserAchievement(userId: string, achievementId: string): Promise<UserAchievement | undefined>;
+  unlockUserAchievement(userAchievement: InsertUserAchievement): Promise<UserAchievement>;
+  updateUserAchievement(id: string, updates: Partial<UserAchievement>): Promise<UserAchievement | undefined>;
+  updateUserAchievementProgress(userId: string, achievementId: string, progress: number): Promise<UserAchievement | undefined>;
+
+  // User stats
+  getUserStats(userId: string): Promise<UserStats | undefined>;
+  createUserStats(userStats: InsertUserStats): Promise<UserStats>;
+  updateUserStats(userId: string, updates: Partial<UserStats>): Promise<UserStats | undefined>;
+  incrementUserStat(userId: string, statName: keyof UserStats, increment?: number): Promise<UserStats | undefined>;
 }
 
 export class MemoryStorage implements IStorage {
@@ -595,6 +621,90 @@ export class MemoryStorage implements IStorage {
       usageCount: 0
     }
   ];
+  private achievements: Achievement[] = [
+    {
+      id: "achievement-1",
+      name: "First Login",
+      description: "Complete your first login to the platform",
+      category: "milestone",
+      iconType: "star",
+      iconColor: "gold",
+      points: 10,
+      requirement: { type: "login_count", target: 1 },
+      isActive: true,
+      rarity: "common",
+      createdAt: new Date(),
+    },
+    {
+      id: "achievement-2", 
+      name: "Week Warrior",
+      description: "Login for 7 consecutive days",
+      category: "streak",
+      iconType: "trophy",
+      iconColor: "gold",
+      points: 50,
+      requirement: { type: "login_streak", target: 7 },
+      isActive: true,
+      rarity: "rare",
+      createdAt: new Date(),
+    },
+    {
+      id: "achievement-3",
+      name: "Signal Hunter",
+      description: "Receive your first trading signal",
+      category: "trading",
+      iconType: "badge",
+      iconColor: "blue",
+      points: 15,
+      requirement: { type: "signals_received", target: 1 },
+      isActive: true,
+      rarity: "common",
+      createdAt: new Date(),
+    },
+    {
+      id: "achievement-4",
+      name: "Dashboard Explorer",
+      description: "Visit the dashboard 10 times",
+      category: "learning",
+      iconType: "medal",
+      iconColor: "bronze",
+      points: 25,
+      requirement: { type: "dashboard_views", target: 10 },
+      isActive: true,
+      rarity: "common",
+      createdAt: new Date(),
+    },
+    {
+      id: "achievement-5",
+      name: "Alert Master",
+      description: "Create 5 custom alerts",
+      category: "trading",
+      iconType: "crown",
+      iconColor: "purple",
+      points: 75,
+      requirement: { type: "alerts_created", target: 5 },
+      isActive: true,
+      rarity: "epic",
+      createdAt: new Date(),
+    }
+  ];
+  private userAchievements: UserAchievement[] = [];
+  private userStats: UserStats[] = [
+    {
+      id: "stats-test-123",
+      userId: "test-user-123",
+      totalLogins: 1,
+      loginStreak: 1,
+      lastLoginDate: new Date(),
+      signalsReceived: 3,
+      alertsCreated: 0,
+      dashboardViews: 5,
+      totalPoints: 10,
+      level: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
 
   async getUserTrades(userId: string, limit = 100): Promise<UserTrade[]> {
     return this.trades
@@ -820,6 +930,131 @@ export class MemoryStorage implements IStorage {
     
     this.webhookSecrets.splice(index, 1);
     return true;
+  }
+
+  // Achievement system implementation
+  async getAllAchievements(): Promise<Achievement[]> {
+    return this.achievements.filter(a => a.isActive);
+  }
+
+  async getAchievement(id: string): Promise<Achievement | undefined> {
+    return this.achievements.find(a => a.id === id && a.isActive);
+  }
+
+  async createAchievement(achievement: InsertAchievement): Promise<Achievement> {
+    const newAchievement: Achievement = {
+      ...achievement,
+      id: `achievement-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date(),
+    };
+    this.achievements.push(newAchievement);
+    return newAchievement;
+  }
+
+  async updateAchievement(id: string, updates: Partial<Achievement>): Promise<Achievement | undefined> {
+    const index = this.achievements.findIndex(a => a.id === id);
+    if (index === -1) return undefined;
+    
+    this.achievements[index] = { 
+      ...this.achievements[index], 
+      ...updates 
+    };
+    return this.achievements[index];
+  }
+
+  async deleteAchievement(id: string): Promise<boolean> {
+    const index = this.achievements.findIndex(a => a.id === id);
+    if (index === -1) return false;
+    
+    this.achievements.splice(index, 1);
+    return true;
+  }
+
+  // User achievements implementation
+  async getUserAchievements(userId: string): Promise<UserAchievement[]> {
+    return this.userAchievements.filter(ua => ua.userId === userId);
+  }
+
+  async getUserAchievement(userId: string, achievementId: string): Promise<UserAchievement | undefined> {
+    return this.userAchievements.find(ua => ua.userId === userId && ua.achievementId === achievementId);
+  }
+
+  async unlockUserAchievement(userAchievement: InsertUserAchievement): Promise<UserAchievement> {
+    const newUserAchievement: UserAchievement = {
+      ...userAchievement,
+      id: `user-achievement-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      progress: userAchievement.progress ?? 100,
+      isUnlocked: true,
+      unlockedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.userAchievements.push(newUserAchievement);
+    return newUserAchievement;
+  }
+
+  async updateUserAchievement(id: string, updates: Partial<UserAchievement>): Promise<UserAchievement | undefined> {
+    const index = this.userAchievements.findIndex(ua => ua.id === id);
+    if (index === -1) return undefined;
+    
+    this.userAchievements[index] = { 
+      ...this.userAchievements[index], 
+      ...updates,
+      updatedAt: new Date()
+    };
+    return this.userAchievements[index];
+  }
+
+  async updateUserAchievementProgress(userId: string, achievementId: string, progress: number): Promise<UserAchievement | undefined> {
+    const userAchievement = await this.getUserAchievement(userId, achievementId);
+    if (!userAchievement) return undefined;
+    
+    const isCompleted = progress >= userAchievement.target;
+    return this.updateUserAchievement(userAchievement.id, {
+      progress,
+      isCompleted,
+      completedAt: isCompleted ? new Date() : undefined
+    });
+  }
+
+  // User stats implementation
+  async getUserStats(userId: string): Promise<UserStats | undefined> {
+    return this.userStats.find(s => s.userId === userId);
+  }
+
+  async createUserStats(userStats: InsertUserStats): Promise<UserStats> {
+    const newUserStats: UserStats = {
+      ...userStats,
+      id: `stats-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.userStats.push(newUserStats);
+    return newUserStats;
+  }
+
+  async updateUserStats(userId: string, updates: Partial<UserStats>): Promise<UserStats | undefined> {
+    const index = this.userStats.findIndex(s => s.userId === userId);
+    if (index === -1) return undefined;
+    
+    this.userStats[index] = { 
+      ...this.userStats[index], 
+      ...updates,
+      updatedAt: new Date()
+    };
+    return this.userStats[index];
+  }
+
+  async incrementUserStat(userId: string, statName: keyof UserStats, increment = 1): Promise<UserStats | undefined> {
+    const stats = await this.getUserStats(userId);
+    if (!stats) return undefined;
+    
+    const currentValue = stats[statName] as number || 0;
+    const updates: Partial<UserStats> = {
+      [statName]: currentValue + increment
+    } as Partial<UserStats>;
+    
+    return this.updateUserStats(userId, updates);
   }
 }
 
@@ -1233,6 +1468,147 @@ export class DatabaseStorage implements IStorage {
       .delete(schema.userSubscriptions)
       .where(eq(schema.userSubscriptions.id, id));
     return result.rowCount > 0;
+  }
+
+  // Achievement system implementation
+  async getAllAchievements(): Promise<Achievement[]> {
+    try {
+      return await db.select().from(schema.achievements)
+        .where(eq(schema.achievements.isActive, true))
+        .orderBy(schema.achievements.createdAt);
+    } catch (error) {
+      console.log('Achievements table not found, returning empty array');
+      return [];
+    }
+  }
+
+  async getAchievement(id: string): Promise<Achievement | undefined> {
+    try {
+      const result = await db.select().from(schema.achievements)
+        .where(and(
+          eq(schema.achievements.id, id),
+          eq(schema.achievements.isActive, true)
+        ))
+        .limit(1);
+      return result[0];
+    } catch (error) {
+      console.log('Achievements table not found');
+      return undefined;
+    }
+  }
+
+  async createAchievement(achievement: InsertAchievement): Promise<Achievement> {
+    const result = await db.insert(schema.achievements).values(achievement).returning();
+    return result[0];
+  }
+
+  async updateAchievement(id: string, updates: Partial<Achievement>): Promise<Achievement | undefined> {
+    const result = await db.update(schema.achievements)
+      .set(updates)
+      .where(eq(schema.achievements.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteAchievement(id: string): Promise<boolean> {
+    const result = await db.delete(schema.achievements)
+      .where(eq(schema.achievements.id, id));
+    return result.rowCount > 0;
+  }
+
+  // User achievements implementation
+  async getUserAchievements(userId: string): Promise<UserAchievement[]> {
+    try {
+      return await db.select().from(schema.userAchievements)
+        .where(eq(schema.userAchievements.userId, userId))
+        .orderBy(desc(schema.userAchievements.createdAt));
+    } catch (error) {
+      console.log('User achievements table not found, returning empty array');
+      return [];
+    }
+  }
+
+  async getUserAchievement(userId: string, achievementId: string): Promise<UserAchievement | undefined> {
+    try {
+      const result = await db.select().from(schema.userAchievements)
+        .where(and(
+          eq(schema.userAchievements.userId, userId),
+          eq(schema.userAchievements.achievementId, achievementId)
+        ))
+        .limit(1);
+      return result[0];
+    } catch (error) {
+      console.log('User achievements table not found');
+      return undefined;
+    }
+  }
+
+  async unlockUserAchievement(userAchievement: InsertUserAchievement): Promise<UserAchievement> {
+    const result = await db.insert(schema.userAchievements).values({
+      ...userAchievement,
+      progress: userAchievement.progress ?? 100,
+      isUnlocked: true,
+      unlockedAt: new Date(),
+    }).returning();
+    return result[0];
+  }
+
+  async updateUserAchievement(id: string, updates: Partial<UserAchievement>): Promise<UserAchievement | undefined> {
+    const result = await db.update(schema.userAchievements)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.userAchievements.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async updateUserAchievementProgress(userId: string, achievementId: string, progress: number): Promise<UserAchievement | undefined> {
+    const userAchievement = await this.getUserAchievement(userId, achievementId);
+    if (!userAchievement) return undefined;
+    
+    const isUnlocked = progress >= 100; // Assuming 100 is the target
+    return this.updateUserAchievement(userAchievement.id, {
+      progress,
+      isUnlocked,
+      unlockedAt: isUnlocked ? new Date() : undefined
+    });
+  }
+
+  // User stats implementation
+  async getUserStats(userId: string): Promise<UserStats | undefined> {
+    try {
+      const result = await db.select().from(schema.userStats)
+        .where(eq(schema.userStats.userId, userId))
+        .limit(1);
+      return result[0];
+    } catch (error) {
+      console.log('User stats table not found');
+      return undefined;
+    }
+  }
+
+  async createUserStats(userStats: InsertUserStats): Promise<UserStats> {
+    const result = await db.insert(schema.userStats).values(userStats).returning();
+    return result[0];
+  }
+
+  async updateUserStats(userId: string, updates: Partial<UserStats>): Promise<UserStats | undefined> {
+    const result = await db.update(schema.userStats)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.userStats.userId, userId))
+      .returning();
+    return result[0];
+  }
+
+  async incrementUserStat(userId: string, statName: keyof UserStats, increment = 1): Promise<UserStats | undefined> {
+    const stats = await this.getUserStats(userId);
+    if (!stats) return undefined;
+    
+    const currentValue = (stats[statName] as number) || 0;
+    const updates: Partial<UserStats> = {
+      [statName]: currentValue + increment
+    } as Partial<UserStats>;
+    
+    return this.updateUserStats(userId, updates);
   }
 }
 

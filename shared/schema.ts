@@ -695,3 +695,70 @@ export type NotificationLog = typeof notificationLogs.$inferSelect;
 export type InsertNotificationLog = typeof notificationLogs.$inferInsert;
 export type NotificationChannel = typeof notificationChannels.$inferSelect;
 export type InsertNotificationChannel = typeof notificationChannels.$inferInsert;
+
+// Achievement system tables
+export const achievements = pgTable("achievements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  category: text("category", { enum: ["trading", "social", "learning", "milestone", "streak"] }).notNull(),
+  iconType: text("icon_type", { enum: ["trophy", "medal", "star", "badge", "crown"] }).notNull(),
+  iconColor: text("icon_color", { enum: ["gold", "silver", "bronze", "blue", "green", "purple"] }).notNull().default("gold"),
+  points: integer("points").notNull().default(0),
+  requirement: jsonb("requirement").notNull(), // { type: 'login_streak', target: 7 }
+  isActive: boolean("is_active").notNull().default(true),
+  rarity: text("rarity", { enum: ["common", "rare", "epic", "legendary"] }).notNull().default("common"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const userAchievements = pgTable("user_achievements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  achievementId: uuid("achievement_id").notNull().references(() => achievements.id, { onDelete: "cascade" }),
+  progress: integer("progress").notNull().default(0),
+  target: integer("target").notNull(),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const userStats = pgTable("user_stats", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  totalLogins: integer("total_logins").notNull().default(0),
+  loginStreak: integer("login_streak").notNull().default(0),
+  lastLoginDate: timestamp("last_login_date"),
+  signalsReceived: integer("signals_received").notNull().default(0),
+  alertsCreated: integer("alerts_created").notNull().default(0),
+  dashboardViews: integer("dashboard_views").notNull().default(0),
+  totalPoints: integer("total_points").notNull().default(0),
+  level: integer("level").notNull().default(1),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Achievement types and schemas
+export const insertAchievementSchema = createInsertSchema(achievements).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserAchievementSchema = createInsertSchema(userAchievements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserStatsSchema = createInsertSchema(userStats).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = z.infer<typeof insertUserAchievementSchema>;
+export type UserStats = typeof userStats.$inferSelect;
+export type InsertUserStats = z.infer<typeof insertUserStatsSchema>;
