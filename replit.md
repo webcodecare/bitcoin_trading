@@ -200,6 +200,7 @@ Changelog:
 - July 09, 2025. TRADING COMPLIANCE: Removed all buy/sell buttons and DOM widgets from platform to comply with trading regulations. Platform now clearly indicates it's signal-only and does not facilitate actual trades. Fixed dashboard TradingView chart display. Confirmed TradingView webhook system supports BTCUSD across 7 timeframes (1M, 1W, 1D, 12h, 4h, 1h, 30m) with proper endpoint configuration.
 - July 09, 2025. LOGOUT FUNCTIONALITY FIX: Fixed logout functionality in both user and admin dashboards. Added logout button to sidebar with user profile display, proper authentication cleanup, and automatic redirect to login page. Users can now successfully logout from any page.
 - July 09, 2025. HEADER ICONS FUNCTIONALITY: Fixed non-functional notification bell and user profile icons in dashboard header. Added proper dropdown menu for user profile with quick access to Settings, Preferences, Advanced Alerts, and Logout. Notification bell now links to alerts page. Both icons are fully responsive and working across all devices.
+- July 09, 2025. ADMIN INTEGRATIONS SIDEBAR FIX: Fixed missing sidebar in admin integrations page (/admin/integrations). Added proper layout structure with Sidebar component, responsive header, and consistent styling matching other admin pages. Sidebar navigation now works correctly on all admin pages.
 ```
 
 ## User Preferences
