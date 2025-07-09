@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import Sidebar from "@/components/layout/Sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -111,16 +112,27 @@ export default function AdminReports() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Reports & Analytics</h1>
-          <p className="text-muted-foreground">Generate and download comprehensive platform reports</p>
-        </div>
-        <Button onClick={handleGenerateReport} disabled={generateReportMutation.isPending}>
-          {generateReportMutation.isPending ? "Generating..." : "Generate Report"}
-        </Button>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        <Sidebar />
+        
+        {/* Main Content */}
+        <div className="ml-0 lg:ml-64 flex-1">
+          {/* Header */}
+          <header className="bg-card border-b border-border p-4 lg:p-6">
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+              <div>
+                <h1 className="text-2xl lg:text-3xl font-bold">Reports & Analytics</h1>
+                <p className="text-muted-foreground">Generate and download comprehensive platform reports</p>
+              </div>
+              <Button onClick={handleGenerateReport} disabled={generateReportMutation.isPending}>
+                {generateReportMutation.isPending ? "Generating..." : "Generate Report"}
+              </Button>
+            </div>
+          </header>
+
+          {/* Content */}
+          <div className="p-4 lg:p-6 space-y-6">
 
       <Tabs defaultValue="generate" className="space-y-4">
         <TabsList>
@@ -314,6 +326,9 @@ export default function AdminReports() {
           </Card>
         </TabsContent>
       </Tabs>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
