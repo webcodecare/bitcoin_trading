@@ -58,6 +58,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+  updateUserLoginTime(id: string): Promise<void>;
   getAllUsers(): Promise<User[]>;
   
   // User settings
@@ -322,6 +323,17 @@ export class MemoryStorage implements IStorage {
     if (index === -1) return undefined;
     this.users[index] = { ...this.users[index], ...updates, updatedAt: new Date() };
     return this.users[index];
+  }
+
+  async updateUserLoginTime(id: string): Promise<void> {
+    const index = this.users.findIndex(u => u.id === id);
+    if (index !== -1) {
+      this.users[index] = { 
+        ...this.users[index], 
+        lastLoginAt: new Date(), 
+        updatedAt: new Date() 
+      };
+    }
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -1219,6 +1231,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(schema.users.id, id))
       .returning();
     return result[0];
+  }
+
+  async updateUserLoginTime(id: string): Promise<void> {
+    await db.update(schema.users)
+      .set({ lastLoginAt: new Date(), updatedAt: new Date() })
+      .where(eq(schema.users.id, id));
   }
 
   async getAllUsers(): Promise<User[]> {

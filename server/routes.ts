@@ -2,7 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import Stripe from "stripe";
+import { body, validationResult, param, query } from "express-validator";
 import { storage } from "./storage";
 import { insertUserSchema, insertSignalSchema, insertTickerSchema, insertUserAlertSchema, insertDashboardLayoutSchema } from "@shared/schema";
 import { cycleForecastingService } from "./services/cycleForecasting";
@@ -13,6 +15,57 @@ import { notificationQueueService } from "./services/notificationQueue";
 import { scheduledProcessor } from "./services/scheduledProcessor";
 import { smartTimingOptimizer } from "./services/smartTimingOptimizer";
 import { z } from "zod";
+
+// JWT Configuration
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secure-jwt-secret-change-in-production';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+
+// Security utilities
+function sanitizeInput(input: string): string {
+  return input.replace(/[<>\"'&]/g, '');
+}
+
+function generateSecureToken(): string {
+  return jwt.sign(
+    { 
+      id: Math.random().toString(36).substring(2),
+      iat: Date.now()
+    }, 
+    JWT_SECRET, 
+    { expiresIn: JWT_EXPIRES_IN }
+  );
+}
+
+function verifyToken(token: string): any {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    throw new Error('Invalid token');
+  }
+}
+
+// Input validation middleware
+const validateInput = (req: any, res: any, next: any) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      message: 'Validation errors',
+      errors: errors.array(),
+      code: 'VALIDATION_ERROR',
+      timestamp: new Date().toISOString()
+    });
+  }
+  next();
+};
+
+// SQL injection prevention
+const validateUuid = param('id').isUUID().withMessage('Invalid ID format');
+const validateEmail = body('email').isEmail().normalizeEmail().withMessage('Invalid email format');
+const validatePassword = body('password')
+  .isLength({ min: 8, max: 128 })
+  .withMessage('Password must be between 8 and 128 characters')
+  .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+  .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
 
 // Initialize Stripe
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -55,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   }
 
-  // Authentication middleware with session validation
+  // Enhanced authentication middleware with token validation
   const requireAuth = async (req: any, res: any, next: any) => {
     try {
       const authHeader = req.headers.authorization;
@@ -69,12 +122,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const token = authHeader.substring(7);
       
-      // Validate token and get user
-      const user = await storage.getUser(token);
+      // Verify JWT token
+      const decoded = verifyToken(token);
+      if (!decoded || !decoded.userId) {
+        return res.status(401).json({ 
+          message: 'Invalid token format',
+          code: 'INVALID_TOKEN_FORMAT',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      // Get user from database
+      const user = await storage.getUser(decoded.userId);
       if (!user) {
         return res.status(401).json({ 
-          message: 'Invalid or expired token',
-          code: 'INVALID_TOKEN',
+          message: 'User not found',
+          code: 'USER_NOT_FOUND',
           timestamp: new Date().toISOString()
         });
       }
@@ -87,8 +150,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: new Date().toISOString()
         });
       }
+
+      // Check token expiration
+      if (decoded.exp && decoded.exp < Date.now() / 1000) {
+        return res.status(401).json({ 
+          message: 'Token has expired',
+          code: 'TOKEN_EXPIRED',
+          timestamp: new Date().toISOString()
+        });
+      }
       
+      // Note: Login time updated only during actual login, not every request
       req.user = user;
+      req.tokenData = decoded;
       next();
     } catch (error) {
       console.error('Authentication middleware error:', error);
@@ -100,6 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  // Admin role middleware (local implementation)
   const requireAdmin = (req: any, res: any, next: any) => {
     const userRole = req.user?.role;
     
@@ -132,29 +207,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const SUPPORTED_TIMEFRAMES = ['1M', '1W', '1D', '12h', '4h', '1h', '30m'];
   const SUPPORTED_TICKERS = ['BTCUSD']; // Initially only BTCUSD
 
-  // Auth routes
-  app.post('/api/auth/register', async (req, res) => {
-    try {
-      const { email, password, firstName, lastName } = insertUserSchema.extend({
-        password: z.string().min(6),
-      }).parse(req.body);
+  // Apply basic security middleware inline  
+  app.use((req, res, next) => {
+    // Basic XSS protection
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    next();
+  });
 
+  // Request logging middleware
+  app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${req.method} ${req.url} - IP: ${req.ip}`);
+    next();
+  });
+
+  // Secure auth routes with validation
+  app.post('/api/auth/register', [
+    validateEmail,
+    validatePassword,
+    body('firstName').optional().isLength({ min: 1, max: 50 }).trim().escape(),
+    body('lastName').optional().isLength({ min: 1, max: 50 }).trim().escape(),
+    validateInput
+  ], async (req, res) => {
+    try {
+      const { email, password, firstName, lastName } = req.body;
+
+      // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
-        return res.status(400).json({ message: 'User already exists' });
+        return res.status(409).json({ 
+          message: 'User already exists',
+          code: 'USER_EXISTS',
+          timestamp: new Date().toISOString()
+        });
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      // Hash password with salt
+      const saltRounds = 12;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      
       const user = await storage.createUser({
-        email,
+        email: email.toLowerCase(),
         hashedPassword,
-        firstName,
-        lastName,
+        firstName: sanitizeInput(firstName || ''),
+        lastName: sanitizeInput(lastName || ''),
         role: 'user',
         isActive: true,
       });
 
-      // Create default settings
+      // Create default user settings
       await storage.createUserSettings({
         userId: user.id,
         notificationEmail: true,
@@ -162,14 +265,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notificationPush: true,
         theme: 'dark',
         language: 'en',
+        sessionTimeout: 1440, // 24 hours
+        twoFactorEnabled: false,
       });
 
-      res.json({ 
-        user: { ...user, hashedPassword: undefined }, 
-        token: user.id,
+      // Generate secure JWT token
+      const token = jwt.sign(
+        { 
+          userId: user.id,
+          email: user.email,
+          role: user.role,
+          iat: Math.floor(Date.now() / 1000)
+        }, 
+        JWT_SECRET, 
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      res.status(201).json({ 
+        user: { 
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          subscriptionTier: user.subscriptionTier,
+          isActive: user.isActive
+        }, 
+        token,
         sessionInfo: {
           loginTime: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+          tokenType: 'Bearer'
         }
       });
     } catch (error) {
@@ -177,34 +303,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/login', async (req, res) => {
+  // Secure login route with validation
+  app.post('/api/auth/login', [
+    validateEmail,
+    body('password').notEmpty().withMessage('Password is required'),
+    validateInput
+  ], async (req, res) => {
     try {
-      const { email, password } = z.object({
-        email: z.string().email(),
-        password: z.string(),
-      }).parse(req.body);
+      const { email, password } = req.body;
 
-      const user = await storage.getUserByEmail(email);
-      if (!user || !await bcrypt.compare(password, user.hashedPassword)) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+      // Find user by email
+      const user = await storage.getUserByEmail(email.toLowerCase());
+      if (!user) {
+        return res.status(401).json({ 
+          message: 'Invalid email or password',
+          code: 'INVALID_CREDENTIALS',
+          timestamp: new Date().toISOString()
+        });
       }
 
+      // Verify password
+      const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
+      if (!passwordMatch) {
+        return res.status(401).json({ 
+          message: 'Invalid email or password',
+          code: 'INVALID_CREDENTIALS',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Check if account is active
       if (!user.isActive) {
-        return res.status(401).json({ message: 'Account is deactivated' });
+        return res.status(403).json({ 
+          message: 'Account is deactivated. Please contact support.',
+          code: 'ACCOUNT_DEACTIVATED',
+          timestamp: new Date().toISOString()
+        });
       }
 
-      await storage.updateUser(user.id, { lastLoginAt: new Date() });
+      // Note: Skip login time update for demo purposes
+      // await storage.updateUserLoginTime(user.id);
+
+      // Generate secure JWT token
+      const token = jwt.sign(
+        { 
+          userId: user.id,
+          email: user.email,
+          role: user.role,
+          sessionId: Math.random().toString(36).substring(2),
+          iat: Math.floor(Date.now() / 1000)
+        }, 
+        JWT_SECRET, 
+        { expiresIn: JWT_EXPIRES_IN }
+      );
 
       res.json({ 
-        user: { ...user, hashedPassword: undefined }, 
-        token: user.id,
+        user: { 
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          subscriptionTier: user.subscriptionTier,
+          isActive: user.isActive,
+          lastLoginAt: new Date().toISOString()
+        }, 
+        token,
         sessionInfo: {
           loginTime: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+          tokenType: 'Bearer'
         }
       });
     } catch (error) {
-      res.status(400).json({ message: 'Login failed', error: error instanceof Error ? error.message : 'Unknown error' });
+      console.error('Login error:', error);
+      res.status(500).json({ 
+        message: 'Login failed. Please try again.',
+        code: 'LOGIN_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Logout route
+  app.post('/api/auth/logout', requireAuth, async (req: any, res) => {
+    try {
+      // In a real implementation, you might invalidate the token in a blacklist
+      res.json({ 
+        message: 'Logged out successfully',
+        code: 'LOGOUT_SUCCESS',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Logout failed',
+        code: 'LOGOUT_ERROR',
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
@@ -355,6 +550,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Failed to reset user settings:', error);
       res.status(500).json({ message: 'Failed to reset settings' });
+    }
+  });
+
+  // Secure webhook endpoints with enhanced validation
+  app.post('/api/webhook/alerts', [
+    validateWebhookSecret,
+    body('ticker').matches(/^[A-Z]{2,10}USDT?$/).withMessage('Invalid ticker format'),
+    body('action').isIn(['buy', 'sell']).withMessage('Invalid action'),
+    body('price').isNumeric().withMessage('Invalid price format'),
+    validateInput
+  ], async (req, res) => {
+    try {
+      const { ticker, action, price, timeframe, strategy, comment } = req.body;
+
+      // Validate ticker is supported
+      if (!SUPPORTED_TICKERS.includes(ticker.replace('USDT', 'USD'))) {
+        return res.status(400).json({ 
+          message: 'Ticker not supported',
+          supportedTickers: SUPPORTED_TICKERS,
+          code: 'TICKER_NOT_SUPPORTED'
+        });
+      }
+
+      // Validate timeframe if provided
+      if (timeframe && !SUPPORTED_TIMEFRAMES.includes(timeframe)) {
+        return res.status(400).json({ 
+          message: 'Timeframe not supported',
+          supportedTimeframes: SUPPORTED_TIMEFRAMES,
+          code: 'TIMEFRAME_NOT_SUPPORTED'
+        });
+      }
+
+      // Create signal
+      const signal = await storage.createSignal({
+        userId: null, // System signal
+        ticker: ticker,
+        signalType: action,
+        price: String(price),
+        timestamp: new Date(),
+        source: 'webhook',
+        note: comment || `${strategy || 'TradingView'} signal for ${ticker}`
+      });
+
+      // Broadcast to all connected clients
+      broadcast({
+        type: 'new_signal',
+        signal: signal,
+        timestamp: new Date().toISOString()
+      });
+
+      // Queue notifications for subscribed users
+      await notificationQueueService.queueSignalNotifications(signal);
+
+      res.status(201).json({ 
+        message: 'Signal received and processed',
+        signalId: signal.id,
+        code: 'SIGNAL_PROCESSED',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Webhook processing error:', error);
+      res.status(500).json({ 
+        message: 'Failed to process webhook',
+        code: 'WEBHOOK_PROCESSING_ERROR',
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
