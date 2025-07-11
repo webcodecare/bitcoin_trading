@@ -1,7 +1,7 @@
-# Git Setup Guide for CryptoStrategy Pro
+# Git Setup Guide for Bitcoin Trading Platform
 
 ## Current Status
-✅ Git repository is already initialized and connected to: `https://github.com/webcodecare/Replit_project.git`
+✅ Git repository is already initialized and connected to: `https://github.com/webcodecare/bitcoin_trading.git`
 
 ## How to Push Your Changes to GitHub
 
@@ -22,7 +22,7 @@
 
 4. **Push to GitHub**:
    - Click "Push" to send changes to your GitHub repository
-   - Your changes will appear at: https://github.com/webcodecare/Replit_project
+   - Your changes will appear at: https://github.com/webcodecare/bitcoin_trading
 
 ### Method 2: Using Command Line
 
@@ -143,8 +143,8 @@ git push -u origin feature-branch
 ## Repository Access
 
 After pushing, your code will be available at:
-- **GitHub Repository**: https://github.com/webcodecare/Replit_project
-- **Clone URL**: `git clone https://github.com/webcodecare/Replit_project.git`
+- **GitHub Repository**: https://github.com/webcodecare/bitcoin_trading
+- **Clone URL**: `git clone https://github.com/webcodecare/bitcoin_trading.git`
 
 ## Next Steps
 

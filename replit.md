@@ -1,8 +1,8 @@
-# CryptoStrategy Pro
+# Bitcoin Trading Platform
 
 ## Overview
 
-CryptoStrategy Pro is a full-stack cryptocurrency trading signals platform built with React and Express. The application provides real-time trading signals, advanced analytics including 200-week heatmaps and cycle forecasting, user management with role-based access control, and comprehensive alert systems for cryptocurrency traders.
+Bitcoin Trading Platform is a full-stack cryptocurrency trading signals platform built with React and Express. The application provides real-time trading signals, advanced analytics including 200-week heatmaps and cycle forecasting, user management with role-based access control, and comprehensive alert systems for cryptocurrency traders.
 
 ## System Architecture
 
@@ -260,12 +260,12 @@ Changelog:
 
 ## Repository Information
 
-**Primary Repository**: https://github.com/webcodecare/Replit_project
-**Clone URL**: `git clone https://github.com/webcodecare/Replit_project.git`
+**Primary Repository**: https://github.com/webcodecare/bitcoin_trading
+**Clone URL**: `git clone https://github.com/webcodecare/bitcoin_trading.git`
 
 ## User Preferences
 
 ```
 Preferred communication style: Simple, everyday language.
-Primary repository: Always reference and use https://github.com/webcodecare/Replit_project
+Primary repository: Always reference and use https://github.com/webcodecare/bitcoin_trading
 ```
