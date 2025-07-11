@@ -208,15 +208,15 @@ export default function Preferences() {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="ml-64 flex-1">
+        <div className="ml-0 md:ml-64 flex-1">
           {/* Top Bar */}
-          <header className="bg-card border-b border-border p-6">
-            <div className="flex items-center justify-between">
+          <header className="bg-card border-b border-border p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center space-x-3">
-                <Settings className="h-6 w-6" />
-                <h1 className="text-2xl font-bold">User Preferences</h1>
+                <Settings className="h-5 w-5 md:h-6 md:w-6" />
+                <h1 className="text-xl md:text-2xl font-bold">User Preferences</h1>
               </div>
-              <Badge variant="outline" className="text-blue-400">
+              <Badge variant="outline" className="text-blue-400 text-xs md:text-sm">
                 Customize Settings
               </Badge>
             </div>

@@ -401,15 +401,15 @@ export default function TradingPlayground() {
     <div className="min-h-screen bg-gray-900">
       <div className="flex">
         <Sidebar />
-        <div className="flex-1">
+        <div className="flex-1 ml-0 md:ml-0">
           <Header />
-          <div className="p-6 space-y-6">
+          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             <SubscriptionGuard feature="tradingPlayground">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-white">Trading Playground</h1>
-                <p className="text-gray-400 mt-1">Practice trading with real-time signals and simulated portfolio</p>
+                <h1 className="text-2xl md:text-3xl font-bold text-white">Trading Playground</h1>
+                <p className="text-sm md:text-base text-gray-400 mt-1">Practice trading with real-time signals and simulated portfolio</p>
               </div>
               <div className="flex items-center space-x-4">
                 <Button

@@ -42,13 +42,13 @@ export default function MultiTickerSimple() {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="ml-64 flex-1">
+        <div className="ml-0 md:ml-64 flex-1">
           {/* Top Bar */}
-          <header className="bg-card border-b border-border p-6">
-            <div className="flex items-center justify-between">
+          <header className="bg-card border-b border-border p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center space-x-3">
-                <BarChart3 className="h-6 w-6" />
-                <h1 className="text-2xl font-bold">Multi-Ticker Dashboard</h1>
+                <BarChart3 className="h-5 w-5 md:h-6 md:w-6" />
+                <h1 className="text-xl md:text-2xl font-bold">Multi-Ticker Dashboard</h1>
               </div>
               <Badge variant="outline" className="text-emerald-400">
                 Real-Time Data
@@ -57,18 +57,18 @@ export default function MultiTickerSimple() {
           </header>
 
           {/* Dashboard Content */}
-          <div className="p-6">
-            <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="charts">Charts</TabsTrigger>
-                <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                <TabsTrigger value="signals">Signals</TabsTrigger>
+          <div className="p-4 md:p-6">
+            <Tabs defaultValue="overview" className="space-y-4 md:space-y-6">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
+                <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+                <TabsTrigger value="charts" className="text-xs sm:text-sm">Charts</TabsTrigger>
+                <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
+                <TabsTrigger value="signals" className="text-xs sm:text-sm">Signals</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="overview" className="space-y-6">
+              <TabsContent value="overview" className="space-y-4 md:space-y-6">
                 {/* Market Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {tickers.map((ticker, index) => (
                     <Card key={index} className="cursor-pointer hover:shadow-lg transition-shadow">
                       <CardHeader className="pb-3">
