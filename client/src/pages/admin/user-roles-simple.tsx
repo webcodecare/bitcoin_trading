@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { Users, UserPlus, Edit, Trash2, Shield, Key, Settings, Search, Crown, UserCheck } from "lucide-react";
@@ -83,51 +81,13 @@ export default function AdminUserRoles() {
     role: "admin" as "admin" | "superuser",
   });
 
-  // Mock queries - in real app these would fetch from API
-  const { data: adminUsers = MOCK_ADMIN_USERS, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['/api/admin/users', { role: 'admin,superuser' }],
-    queryFn: async () => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return MOCK_ADMIN_USERS;
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  // Use mock data directly without API calls
+  const adminUsers = MOCK_ADMIN_USERS;
+  const userRoles = MOCK_ROLES;
+  const isLoadingUsers = false;
 
-  const { data: userRoles = MOCK_ROLES } = useQuery({
-    queryKey: ['/api/admin/roles'],
-    queryFn: async () => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return MOCK_ROLES;
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  });
-
-  // Create admin user mutation
-  const createUserMutation = useMutation({
-    mutationFn: async (userData: typeof newUser) => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return { id: Date.now().toString(), ...userData, isActive: true, createdAt: new Date().toISOString() };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      setIsCreateUserOpen(false);
-      setNewUser({ email: "", firstName: "", lastName: "", role: "admin" });
-      toast({
-        title: "Success",
-        description: "Admin user created successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create admin user",
-        variant: "destructive",
-      });
-    }
-  });
+  // Simple state-based user creation (no API calls)
+  const [isCreating, setIsCreating] = useState(false);
 
   // Filter users
   const filteredUsers = adminUsers.filter(user => {
@@ -147,7 +107,18 @@ export default function AdminUserRoles() {
       });
       return;
     }
-    createUserMutation.mutate(newUser);
+    
+    setIsCreating(true);
+    // Simulate creating user
+    setTimeout(() => {
+      setIsCreating(false);
+      setIsCreateUserOpen(false);
+      setNewUser({ email: "", firstName: "", lastName: "", role: "admin" });
+      toast({
+        title: "Success",
+        description: "Admin user created successfully (demo mode)",
+      });
+    }, 1000);
   };
 
   return (
@@ -320,9 +291,9 @@ export default function AdminUserRoles() {
                           </Button>
                           <Button 
                             onClick={handleCreateUser}
-                            disabled={createUserMutation.isPending}
+                            disabled={isCreating}
                           >
-                            {createUserMutation.isPending ? "Creating..." : "Create Admin User"}
+                            {isCreating ? "Creating..." : "Create Admin User"}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
