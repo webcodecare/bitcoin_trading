@@ -169,6 +169,38 @@ The platform now features a sophisticated machine learning-based forecasting sys
 - Integration with multi-ticker dashboard analytics tab
 - RESTful API endpoints for real-time forecast generation
 
+## Separated Architecture (New)
+
+The platform now supports a separated frontend and backend architecture for better scalability:
+
+### Frontend Application (`/frontend/`)
+- **React + TypeScript** SPA with Vite build system
+- **Port**: 3000 (development), static files (production)
+- **API Communication**: Proxy configuration for development, direct API calls for production
+- **Independent deployment** to static hosting services (Vercel, Netlify, S3)
+
+### Backend Application (`/backend/`)
+- **Node.js + Express** API server with WebSocket support
+- **Port**: 3001 (configurable via PORT environment variable)
+- **Database**: Same PostgreSQL database with Drizzle ORM
+- **Independent deployment** to container platforms (Railway, Heroku, AWS)
+
+### Benefits
+- **Scalability**: Independent scaling of frontend and backend components
+- **Development**: Teams can work independently on different parts
+- **Deployment**: Flexible deployment options with CDN support for frontend
+- **Security**: Clear separation of concerns with API-only backend
+
+### Migration Status
+- ✅ Frontend application created with all components and pages
+- ✅ Backend application created with all API routes and services
+- ✅ Environment configuration separated for both applications
+- ✅ Development setup with proxy configuration
+- ✅ Build configurations optimized for production deployment
+- ✅ Documentation created for both applications
+
+The original monolith setup remains functional for backward compatibility.
+
 ## Changelog
 
 ```
