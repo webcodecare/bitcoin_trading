@@ -180,15 +180,18 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
   
   if (!user) {
     // If user is not authenticated, show only basic free features
-    console.log("Sidebar DEBUG: User not authenticated, showing free tier only");
-    userNavItems = allUserNavItems.filter(item => 
-      hasAccess("free", item.requiredFeature)
-    );
+    console.log("Sidebar DEBUG: User not authenticated, showing free tier navigation only");
+    userNavItems = allUserNavItems.filter(item => {
+      const hasPermission = hasAccess("free", item.requiredFeature);
+      console.log(`Sidebar DEBUG: FREE TIER - ${item.title} (${item.requiredFeature}) -> ${hasPermission}`);
+      return hasPermission;
+    });
   } else {
     // User is authenticated, apply tier-based filtering
+    console.log(`Sidebar DEBUG: User authenticated with tier: ${userTier}`);
     userNavItems = allUserNavItems.filter(item => {
       const hasPermission = hasAccess(userTier, item.requiredFeature);
-      console.log(`Sidebar DEBUG: ${item.title} (${item.requiredFeature}) -> ${hasPermission} [${userTier} tier]`);
+      console.log(`Sidebar DEBUG: ${userTier.toUpperCase()} TIER - ${item.title} (${item.requiredFeature}) -> ${hasPermission}`);
       return hasPermission;
     });
   }
