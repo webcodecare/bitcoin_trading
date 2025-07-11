@@ -48,6 +48,20 @@ const Privacy = lazy(() => import("@/pages/privacy"));
 const Terms = lazy(() => import("@/pages/terms"));
 const Pricing = lazy(() => import("@/pages/pricing"));
 
+// Advanced feature pages
+const AdvancedAlerts = lazy(() => import("@/pages/advanced-alerts"));
+const MultiTicker = lazy(() => import("@/pages/multi-ticker-dashboard"));
+const TradingPlayground = lazy(() => import("@/pages/trading-playground"));
+const LiveStreaming = lazy(() => import("@/pages/live-streaming"));
+const HistoricalOHLC = lazy(() => import("@/pages/historical-ohlc"));
+const Achievements = lazy(() => import("@/pages/achievements"));
+const UserProgress = lazy(() => import("@/pages/user-progress"));
+const MoodBoard = lazy(() => import("@/pages/mood-board"));
+const NotificationCenter = lazy(() => import("@/pages/notification-center"));
+const NotificationSetup = lazy(() => import("@/pages/notification-setup"));
+const Preferences = lazy(() => import("@/pages/preferences"));
+const AdvancedPortfolio = lazy(() => import("@/pages/advanced-portfolio"));
+
 // Loading component for better UX
 const LoadingScreen = () => (
   <div className="flex items-center justify-center h-screen bg-background">
@@ -256,6 +270,93 @@ function Router() {
           <Terms />
         </Suspense>
       </Route>
+      
+      {/* Advanced Feature Routes */}
+      <Route path="/advanced-alerts">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdvancedAlerts />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/multi-ticker">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <MultiTicker />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/trading-playground">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <TradingPlayground />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/live-streaming">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <LiveStreaming />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/historical-ohlc">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <HistoricalOHLC />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/achievements">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <Achievements />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/user-progress">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <UserProgress />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/mood-board">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <MoodBoard />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/notification-center">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <NotificationCenter />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/notification-setup">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <NotificationSetup />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/preferences">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <Preferences />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/advanced-portfolio">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdvancedPortfolio />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      
       <Route component={NotFound} />
     </Switch>
   );
