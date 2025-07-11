@@ -117,11 +117,11 @@ export default function TradingPage() {
       
       <div className="flex-1 flex flex-col overflow-hidden ml-0 lg:ml-0">
         {/* Header */}
-        <div className="border-b bg-card/50 backdrop-blur-sm p-2 lg:p-4">
+        <div className="border-b bg-card/50 backdrop-blur-sm p-3 md:p-4 lg:p-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex items-center gap-2 lg:gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm lg:text-base">
+                <div className="w-6 h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base">
                   B
                 </div>
                 <div>
