@@ -58,7 +58,7 @@ export default function SubscriptionPage() {
     return (
       <div className="flex h-screen bg-background">
         <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden ml-0 md:ml-64">
           <div className="flex-1 overflow-y-auto">
             <div className="container mx-auto px-4 py-8">
               <Card>
@@ -79,7 +79,7 @@ export default function SubscriptionPage() {
     <Suspense fallback={<LoadingSkeleton />}>
       <div className="flex h-screen bg-background">
         <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden ml-0 md:ml-64">
           <div className="flex-1 overflow-y-auto">
             <div className="container mx-auto px-4 py-4 md:py-6 space-y-4 md:space-y-6">
               {/* Header */}

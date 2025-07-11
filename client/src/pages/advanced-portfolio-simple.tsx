@@ -35,72 +35,72 @@ export default function AdvancedPortfolioSimple() {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="ml-64 flex-1">
+        <div className="ml-0 md:ml-64 flex-1">
           {/* Top Bar */}
-          <header className="bg-card border-b border-border p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <BarChart3 className="h-6 w-6" />
-                <h1 className="text-2xl font-bold">Advanced Portfolio</h1>
+          <header className="bg-card border-b border-border p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-2 md:space-x-3">
+                <BarChart3 className="h-5 w-5 md:h-6 md:w-6" />
+                <h1 className="text-xl md:text-2xl font-bold">Advanced Portfolio</h1>
               </div>
-              <Badge variant="outline" className="text-emerald-400">
+              <Badge variant="outline" className="text-emerald-400 text-xs md:text-sm self-start sm:self-auto">
                 Professional Analytics
               </Badge>
             </div>
           </header>
 
           {/* Portfolio Content */}
-          <div className="p-6 space-y-6">
+          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             
             {/* Portfolio Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+                <CardHeader className="pb-2 md:pb-3">
+                  <CardTitle className="text-xs md:text-sm font-medium">Total Value</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">${totalValue.toLocaleString()}</div>
-                  <div className="flex items-center text-sm text-green-500">
-                    <TrendingUp className="h-4 w-4 mr-1" />
+                <CardContent className="pb-4">
+                  <div className="text-lg md:text-2xl font-bold">${totalValue.toLocaleString()}</div>
+                  <div className="flex items-center text-xs md:text-sm text-green-500">
+                    <TrendingUp className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                     +2.8% (24h)
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">Daily P&L</CardTitle>
+                <CardHeader className="pb-2 md:pb-3">
+                  <CardTitle className="text-xs md:text-sm font-medium">Daily P&L</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-500">+$245.60</div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Activity className="h-4 w-4 mr-1" />
+                <CardContent className="pb-4">
+                  <div className="text-lg md:text-2xl font-bold text-green-500">+$245.60</div>
+                  <div className="flex items-center text-xs md:text-sm text-muted-foreground">
+                    <Activity className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                     Today's change
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">Asset Count</CardTitle>
+                <CardHeader className="pb-2 md:pb-3">
+                  <CardTitle className="text-xs md:text-sm font-medium">Asset Count</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{portfolioData.length}</div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <PieChart className="h-4 w-4 mr-1" />
+                <CardContent className="pb-4">
+                  <div className="text-lg md:text-2xl font-bold">{portfolioData.length}</div>
+                  <div className="flex items-center text-xs md:text-sm text-muted-foreground">
+                    <PieChart className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                     Different coins
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">Risk Score</CardTitle>
+                <CardHeader className="pb-2 md:pb-3">
+                  <CardTitle className="text-xs md:text-sm font-medium">Risk Score</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">Medium</div>
-                  <div className="flex items-center text-sm text-yellow-500">
-                    <AlertTriangle className="h-4 w-4 mr-1" />
+                <CardContent className="pb-4">
+                  <div className="text-lg md:text-2xl font-bold">Medium</div>
+                  <div className="flex items-center text-xs md:text-sm text-yellow-500">
+                    <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                     Balanced risk
                   </div>
                 </CardContent>
