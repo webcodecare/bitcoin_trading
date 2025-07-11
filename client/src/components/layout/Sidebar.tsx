@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { hasAccess } from "@/lib/subscriptionUtils";
 import { useState } from "react";
 import {
   Bitcoin,
@@ -48,103 +49,128 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
     return location === path;
   };
 
-  const userNavItems = [
+  const allUserNavItems = [
     {
       title: "Dashboard",
       href: "/dashboard",
       icon: TrendingUp,
+      requiredFeature: "basicSignals" as const, // Available to all users
     },
     {
       title: "Multi-Ticker",
       href: "/multi-ticker",
       icon: BarChart3,
+      requiredFeature: "basicCharts" as const, // Available to all users
     },
     {
       title: "Subscriptions",
       href: "/subscription",
       icon: Star,
+      requiredFeature: "basicSignals" as const, // Available to all users
     },
     {
       title: "Trading",
       href: "/trading",
       icon: Activity,
+      requiredFeature: "basicSignals" as const, // Available to all users
     },
     {
       title: "Trading Playground",
       href: "/trading-playground",
       icon: Target,
+      requiredFeature: "tradingPlayground" as const, // Basic and above
     },
     {
       title: "Bitcoin Analytics",
       href: "/bitcoin-analytics",
       icon: Bitcoin,
+      requiredFeature: "advancedCharts" as const, // Basic and above
     },
     {
       title: "Live Streaming",
       href: "/live-streaming",
       icon: Activity,
+      requiredFeature: "liveStreaming" as const, // Basic and above
     },
     {
       title: "Historical OHLC",
       href: "/historical-ohlc",
       icon: BarChart,
+      requiredFeature: "historicalData" as const, // Basic and above
     },
     {
       title: "Achievements",
       href: "/achievements",
       icon: Trophy,
+      requiredFeature: "basicSignals" as const, // Available to all users
     },
     {
       title: "User Progress",
       href: "/user-progress",
       icon: TrendingUp,
+      requiredFeature: "basicSignals" as const, // Available to all users
     },
     {
       title: "Notifications",
       href: "/notification-center",
       icon: Bell,
+      requiredFeature: "emailAlerts" as const, // Available to all users
     },
     {
       title: "Signal Mood Board",
       href: "/mood-board",
       icon: Smile,
+      requiredFeature: "premiumSignals" as const, // Basic and above
     },
     {
       title: "Alerts",
       href: "/alerts",
       icon: Bell,
+      requiredFeature: "emailAlerts" as const, // Available to all users
     },
     {
       title: "Advanced Alerts",
       href: "/advanced-alerts",
       icon: AlertTriangle,
+      requiredFeature: "advancedAlerts" as const, // Premium and above
     },
     {
       title: "Portfolio Pro",
       href: "/advanced-portfolio",
       icon: PieChart,
+      requiredFeature: "portfolioManagement" as const, // Basic and above
     },
     {
       title: "Settings",
       href: "/settings",
       icon: Settings,
+      requiredFeature: "basicSignals" as const, // Available to all users
     },
     {
       title: "Preferences",
       href: "/preferences",
       icon: SlidersHorizontal,
+      requiredFeature: "basicSignals" as const, // Available to all users
     },
     {
       title: "Notifications",
       href: "/notification-setup",
       icon: Bell,
+      requiredFeature: "emailAlerts" as const, // Available to all users
     },
     {
       title: "Notification Dashboard",
       href: "/notification-dashboard",
       icon: Activity,
+      requiredFeature: "pushNotifications" as const, // Basic and above
     },
   ];
+
+  // Filter navigation items based on user's subscription tier
+  const userTier = user?.subscriptionTier || "free";
+  const userNavItems = allUserNavItems.filter(item => 
+    hasAccess(userTier, item.requiredFeature)
+  );
 
   const adminNavItems = [
     {
