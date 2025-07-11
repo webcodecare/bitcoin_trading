@@ -31,6 +31,10 @@ const AdminAnalytics = lazy(() => import("@/pages/admin/analytics"));
 const AdminIntegrations = lazy(() => import("@/pages/admin/integrations"));
 const AdminReports = lazy(() => import("@/pages/admin/reports"));
 const AdminPermissions = lazy(() => import("@/pages/admin/permissions"));
+const AdminPayments = lazy(() => import("@/pages/admin/payments"));
+const AdminSubscriptions = lazy(() => import("@/pages/admin/subscriptions"));
+const AdminContent = lazy(() => import("@/pages/admin/content"));
+const AdminTestUsers = lazy(() => import("@/pages/admin/test-users"));
 const Alerts = lazy(() => import("@/pages/alerts"));
 const Settings = lazy(() => import("@/pages/settings"));
 const Subscription = lazy(() => import("@/pages/subscription"));
@@ -164,6 +168,34 @@ function Router() {
         <AuthGuard>
           <Suspense fallback={<LoadingScreen />}>
             <AdminPermissions />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/payments">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminPayments />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/subscriptions">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminSubscriptions />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/content">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminContent />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/test-users">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminTestUsers />
           </Suspense>
         </AuthGuard>
       </Route>
