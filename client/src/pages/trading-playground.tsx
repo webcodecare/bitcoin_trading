@@ -407,44 +407,44 @@ export default function TradingPlayground() {
         <Sidebar />
         <div className="flex-1 ml-0 md:ml-64">
           <Header />
-          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+          <div className="p-2 sm:p-4 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">
             <SubscriptionGuard feature="tradingPlayground">
             {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-white">Trading Playground</h1>
-                <p className="text-sm md:text-base text-gray-400 mt-1">Practice trading with real-time signals and simulated portfolio</p>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">Trading Playground</h1>
+                <p className="text-xs sm:text-sm md:text-base text-gray-400 mt-1">Practice trading with real-time signals and simulated portfolio</p>
               </div>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+              <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2">
                 <Button
                   onClick={() => setIsSimulationRunning(!isSimulationRunning)}
-                  className={`text-xs sm:text-sm ${isSimulationRunning ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+                  className={`text-xs px-3 py-2 ${isSimulationRunning ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
                 >
                   {isSimulationRunning ? (
                     <>
-                      <Pause className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                      Pause Simulation
+                      <Pause className="w-3 h-3 mr-1" />
+                      Pause
                     </>
                   ) : (
                     <>
-                      <Play className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                      Start Simulation
+                      <Play className="w-3 h-3 mr-1" />
+                      Start
                     </>
                   )}
                 </Button>
                 <Button
                   onClick={resetSimulation}
                   variant="outline"
-                  className="text-xs sm:text-sm border-gray-600 text-gray-300 hover:text-white"
+                  className="text-xs px-3 py-2 border-gray-600 text-gray-300 hover:text-white"
                 >
-                  <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  <RotateCcw className="w-3 h-3 mr-1" />
                   Reset
                 </Button>
               </div>
             </div>
 
             {/* Portfolio Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-6">
               <Card className="bg-gray-800 border-gray-700">
                 <CardContent className="p-3 md:p-4">
                   <div className="flex items-center justify-between">
@@ -518,11 +518,11 @@ export default function TradingPlayground() {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {/* Performance Chart */}
-              <Card className="bg-gray-800 border-gray-700 xl:col-span-2">
+              <Card className="bg-gray-800 border-gray-700 lg:col-span-2">
                 <CardHeader className="pb-2 md:pb-3">
-                  <CardTitle className="text-white flex items-center text-sm md:text-base">
+                  <CardTitle className="text-white flex items-center text-xs sm:text-sm md:text-base">
                     <BarChart3 className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Portfolio Performance
                   </CardTitle>
@@ -557,14 +557,14 @@ export default function TradingPlayground() {
               </Card>
 
               {/* Simulation Settings */}
-              <Card className="bg-gray-800 border-gray-700 xl:col-span-1">
+              <Card className="bg-gray-800 border-gray-700 lg:col-span-1">
                 <CardHeader className="pb-2 md:pb-3">
-                  <CardTitle className="text-white flex items-center text-sm md:text-base">
+                  <CardTitle className="text-white flex items-center text-xs sm:text-sm md:text-base">
                     <Settings className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-                    Simulation Settings
+                    Settings
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 md:space-y-3 p-3 md:p-4">
+                <CardContent className="space-y-2 md:space-y-3 p-2 sm:p-3 md:p-4">
                   <div>
                     <Label className="text-gray-300">Initial Balance</Label>
                     <Input
@@ -715,9 +715,9 @@ export default function TradingPlayground() {
               </Card>
 
               {/* Live Signals */}
-              <Card className="bg-gray-800 border-gray-700 xl:col-span-1">
+              <Card className="bg-gray-800 border-gray-700 lg:col-span-1">
                 <CardHeader className="pb-2 md:pb-3">
-                  <CardTitle className="text-white flex items-center text-sm md:text-base">
+                  <CardTitle className="text-white flex items-center text-xs sm:text-sm md:text-base">
                     <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Live Signals
                     {isSimulationRunning && (
@@ -729,7 +729,7 @@ export default function TradingPlayground() {
                     )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 md:p-3">
+                <CardContent className="p-2 sm:p-3 md:p-4">
                   <div className="space-y-2 md:space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
                     <AnimatePresence>
                       {liveSignals.map((signal) => (
@@ -799,13 +799,13 @@ export default function TradingPlayground() {
 
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               {/* Open Positions */}
               <Card className="bg-gray-800 border-gray-700">
                 <CardHeader className="pb-2 md:pb-3">
-                  <CardTitle className="text-white text-sm md:text-base">Open Positions</CardTitle>
+                  <CardTitle className="text-white text-xs sm:text-sm md:text-base">Open Positions</CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 md:p-4">
+                <CardContent className="p-2 sm:p-3 md:p-4">
                   <div className="space-y-2 md:space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
                     {openPositions.map((position) => {
                       const currentPrice = marketPrices?.[position.symbol] || position.entryPrice;
@@ -885,38 +885,38 @@ export default function TradingPlayground() {
               {/* Trade History */}
               <Card className="bg-gray-800 border-gray-700">
                 <CardHeader className="pb-2 md:pb-3">
-                  <CardTitle className="text-white text-sm md:text-base">Recent Trades</CardTitle>
+                  <CardTitle className="text-white text-xs sm:text-sm md:text-base">Recent Trades</CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 md:p-4">
+                <CardContent className="p-2 sm:p-3 md:p-4">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="border-gray-700">
-                          <TableHead className="text-gray-300 text-xs md:text-sm">Time</TableHead>
-                          <TableHead className="text-gray-300 text-xs md:text-sm">Symbol</TableHead>
-                          <TableHead className="text-gray-300 text-xs md:text-sm">Action</TableHead>
-                          <TableHead className="text-gray-300 text-xs md:text-sm hidden sm:table-cell">Entry</TableHead>
-                          <TableHead className="text-gray-300 text-xs md:text-sm hidden sm:table-cell">Exit</TableHead>
-                          <TableHead className="text-gray-300 text-xs md:text-sm hidden md:table-cell">Qty</TableHead>
-                          <TableHead className="text-gray-300 text-xs md:text-sm">P&L</TableHead>
+                          <TableHead className="text-gray-300 text-xs p-1 sm:p-2">Time</TableHead>
+                          <TableHead className="text-gray-300 text-xs p-1 sm:p-2">Symbol</TableHead>
+                          <TableHead className="text-gray-300 text-xs p-1 sm:p-2">Action</TableHead>
+                          <TableHead className="text-gray-300 text-xs p-1 sm:p-2 hidden sm:table-cell">Entry</TableHead>
+                          <TableHead className="text-gray-300 text-xs p-1 sm:p-2 hidden sm:table-cell">Exit</TableHead>
+                          <TableHead className="text-gray-300 text-xs p-1 sm:p-2 hidden md:table-cell">Qty</TableHead>
+                          <TableHead className="text-gray-300 text-xs p-1 sm:p-2">P&L</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {closedPositions.map((position) => (
                           <TableRow key={position.id} className="border-gray-700">
-                            <TableCell className="text-gray-300 text-xs md:text-sm">
+                            <TableCell className="text-gray-300 text-xs p-1 sm:p-2">
                               {position.timestamp.toLocaleTimeString()}
                             </TableCell>
-                            <TableCell className="text-white text-xs md:text-sm">{position.symbol}</TableCell>
-                            <TableCell>
-                              <Badge variant={position.action === 'buy' ? 'default' : 'destructive'} className="text-xs">
+                            <TableCell className="text-white text-xs p-1 sm:p-2">{position.symbol}</TableCell>
+                            <TableCell className="p-1 sm:p-2">
+                              <Badge variant={position.action === 'buy' ? 'default' : 'destructive'} className="text-xs px-1 py-0">
                                 {position.action.toUpperCase()}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-white text-xs md:text-sm hidden sm:table-cell">${position.entryPrice}</TableCell>
-                            <TableCell className="text-white text-xs md:text-sm hidden sm:table-cell">${position.exitPrice}</TableCell>
-                            <TableCell className="text-white text-xs md:text-sm hidden md:table-cell">{position.quantity.toFixed(6)}</TableCell>
-                            <TableCell className={`text-xs md:text-sm ${position.pnl! >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            <TableCell className="text-white text-xs p-1 sm:p-2 hidden sm:table-cell">${position.entryPrice}</TableCell>
+                            <TableCell className="text-white text-xs p-1 sm:p-2 hidden sm:table-cell">${position.exitPrice}</TableCell>
+                            <TableCell className="text-white text-xs p-1 sm:p-2 hidden md:table-cell">{position.quantity.toFixed(6)}</TableCell>
+                            <TableCell className={`text-xs p-1 sm:p-2 ${position.pnl! >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                               {position.pnl! >= 0 ? '+' : ''}${position.pnl}
                             </TableCell>
                           </TableRow>
