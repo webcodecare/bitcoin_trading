@@ -159,35 +159,35 @@ export default function Settings() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex h-14 items-center px-6">
-            <h1 className="text-xl font-semibold">Settings & Preferences</h1>
+          <div className="flex h-12 md:h-14 items-center px-4 md:px-6">
+            <h1 className="text-lg md:text-xl font-semibold">Settings & Preferences</h1>
           </div>
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-4 md:p-6">
           <div className="max-w-6xl mx-auto">
-            <Tabs defaultValue="profile" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="profile" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
+            <Tabs defaultValue="profile" className="space-y-4 md:space-y-6">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+                <TabsTrigger value="profile" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                  <User className="h-3 w-3 md:h-4 md:w-4" />
                   Profile
                 </TabsTrigger>
-                <TabsTrigger value="notifications" className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
+                <TabsTrigger value="notifications" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                  <Bell className="h-3 w-3 md:h-4 md:w-4" />
                   Notifications
                 </TabsTrigger>
-                <TabsTrigger value="appearance" className="flex items-center gap-2">
-                  <Palette className="h-4 w-4" />
+                <TabsTrigger value="appearance" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                  <Palette className="h-3 w-3 md:h-4 md:w-4" />
                   Appearance
                 </TabsTrigger>
-                <TabsTrigger value="security" className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
+                <TabsTrigger value="security" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                  <Shield className="h-3 w-3 md:h-4 md:w-4" />
                   Security
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="profile" className="space-y-6">
+              <TabsContent value="profile" className="space-y-4 md:space-y-6">
                 <ProfileSettings
                   user={user}
                   onUpdate={handleUpdateProfile}
@@ -195,7 +195,7 @@ export default function Settings() {
                 />
               </TabsContent>
 
-              <TabsContent value="notifications" className="space-y-6">
+              <TabsContent value="notifications" className="space-y-4 md:space-y-6">
                 <NotificationSettings
                   settings={settings}
                   onUpdate={handleUpdateNotifications}
@@ -213,13 +213,13 @@ export default function Settings() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Theme</Label>
+                      <div className="space-y-2">
+                        <Label className="text-sm md:text-base">Theme</Label>
                         <Select 
                           value={settings?.theme || "dark"} 
                           onValueChange={(value) => updateSettingsMutation.mutate({ theme: value })}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="text-sm md:text-base">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -229,13 +229,13 @@ export default function Settings() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div>
-                        <Label>Language</Label>
+                      <div className="space-y-2">
+                        <Label className="text-sm md:text-base">Language</Label>
                         <Select 
                           value={settings?.language || "en"} 
                           onValueChange={(value) => updateSettingsMutation.mutate({ language: value })}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="text-sm md:text-base">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>

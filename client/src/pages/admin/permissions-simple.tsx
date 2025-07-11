@@ -48,17 +48,17 @@ export default function AdminPermissions() {
       <Sidebar />
       <div className="lg:pl-72">
         <Header />
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Permission Management</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Permission Management</h1>
+              <p className="text-sm md:text-base text-muted-foreground">
                 Manage role-based access control and user permissions
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200">
+              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 text-xs md:text-sm">
                 <Shield className="h-3 w-3 mr-1" />
                 RBAC Enabled
               </Badge>
@@ -66,14 +66,14 @@ export default function AdminPermissions() {
           </div>
 
           {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Permissions</CardTitle>
-                <Key className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-xs md:text-sm font-medium">Total Permissions</CardTitle>
+                <Key className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{Object.keys(MOCK_PERMISSIONS).length}</div>
+                <div className="text-xl md:text-2xl font-bold">{Object.keys(MOCK_PERMISSIONS).length}</div>
                 <p className="text-xs text-muted-foreground">
                   System-wide permissions
                 </p>
