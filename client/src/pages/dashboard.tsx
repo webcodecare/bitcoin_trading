@@ -4,11 +4,6 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { Link } from "wouter";
 import Sidebar from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
-
-import HeatmapChart from "@/components/charts/HeatmapChart";
-import CycleChart from "@/components/charts/CycleChart";
-import TickerSelector from "@/components/ui/ticker-selector";
-import TradingViewRealWidget from "@/components/charts/TradingViewRealWidget";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +21,13 @@ import {
   LineChart,
   PieChart
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
+
+// Lazy load heavy components
+const HeatmapChart = lazy(() => import("@/components/charts/HeatmapChart"));
+const CycleChart = lazy(() => import("@/components/charts/CycleChart"));
+const TickerSelector = lazy(() => import("@/components/ui/ticker-selector"));
+const TradingViewRealWidget = lazy(() => import("@/components/charts/TradingViewRealWidget"));
 
 interface AlertSignal {
   id: string;
@@ -203,11 +204,13 @@ export default function Dashboard() {
                     </div>
                     
                     <div className="mt-4">
-                      <TickerSelector 
-                        selectedTickers={selectedTickers}
-                        onTickerToggle={handleTickerToggle}
-                        className=""
-                      />
+                      <Suspense fallback={<Skeleton className="h-20 w-full" />}>
+                        <TickerSelector 
+                          selectedTickers={selectedTickers}
+                          onTickerToggle={handleTickerToggle}
+                          className=""
+                        />
+                      </Suspense>
                     </div>
                   </CardContent>
                 </Card>
@@ -219,7 +222,9 @@ export default function Dashboard() {
                       <CardTitle>Price Chart</CardTitle>
                     </CardHeader>
                     <CardContent className="p-2">
-                      <TradingViewRealWidget ticker={selectedTickers[0] || "BTCUSDT"} />
+                      <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                        <TradingViewRealWidget ticker={selectedTickers[0] || "BTCUSDT"} />
+                      </Suspense>
                     </CardContent>
                   </Card>
 
@@ -228,7 +233,9 @@ export default function Dashboard() {
                       <CardTitle>200-Week Heatmap</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <HeatmapChart symbol="BTC" height={300} />
+                      <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+                        <HeatmapChart symbol="BTC" height={300} />
+                      </Suspense>
                     </CardContent>
                   </Card>
                 </div>
@@ -292,8 +299,12 @@ export default function Dashboard() {
 
               <TabsContent value="charts" className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <HeatmapChart symbol="BTC" height={400} />
-                  <CycleChart symbol="BTC" height={400} />
+                  <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+                    <HeatmapChart symbol="BTC" height={400} />
+                  </Suspense>
+                  <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+                    <CycleChart symbol="BTC" height={400} />
+                  </Suspense>
                 </div>
               </TabsContent>
 
@@ -304,7 +315,9 @@ export default function Dashboard() {
                       <CardTitle>Cycle Analysis</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <CycleChart symbol="BTC" height={300} />
+                      <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+                        <CycleChart symbol="BTC" height={300} />
+                      </Suspense>
                     </CardContent>
                   </Card>
                   

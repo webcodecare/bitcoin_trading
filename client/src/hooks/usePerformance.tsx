@@ -1,147 +1,69 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 interface PerformanceMetrics {
-  fcp: number | null; // First Contentful Paint
-  lcp: number | null; // Largest Contentful Paint  
-  cls: number | null; // Cumulative Layout Shift
-  fid: number | null; // First Input Delay
+  loadTime: number;
+  renderTime: number;
+  memoryUsage?: number;
+  isLoading: boolean;
 }
 
 export function usePerformance() {
-  const metricsRef = useRef<PerformanceMetrics>({
-    fcp: null,
-    lcp: null,
-    cls: null,
-    fid: null
+  const [metrics, setMetrics] = useState<PerformanceMetrics>({
+    loadTime: 0,
+    renderTime: 0,
+    isLoading: true
   });
 
-  // Measure performance metrics
-  const measurePerformance = useCallback(() => {
-    // First Contentful Paint
-    const fcpEntry = performance.getEntriesByType('paint').find(
-      entry => entry.name === 'first-contentful-paint'
-    );
-    if (fcpEntry) {
-      metricsRef.current.fcp = fcpEntry.startTime;
-    }
+  useEffect(() => {
+    const startTime = performance.now();
+    
+    // Measure initial load
+    const measureLoad = () => {
+      const loadTime = performance.now() - startTime;
+      
+      // Measure memory if available
+      const memoryUsage = (performance as any).memory?.usedJSHeapSize;
+      
+      setMetrics({
+        loadTime,
+        renderTime: loadTime,
+        memoryUsage,
+        isLoading: false
+      });
+    };
 
-    // Largest Contentful Paint
+    // Use requestAnimationFrame to measure after render
+    requestAnimationFrame(measureLoad);
+
+    // Performance observer for monitoring
     if ('PerformanceObserver' in window) {
-      const lcpObserver = new PerformanceObserver((entryList) => {
-        const entries = entryList.getEntries();
-        const lastEntry = entries[entries.length - 1];
-        metricsRef.current.lcp = lastEntry.startTime;
+      const observer = new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        entries.forEach((entry) => {
+          if (entry.entryType === 'measure') {
+            console.log(`Performance measure: ${entry.name} - ${entry.duration}ms`);
+          }
+        });
       });
       
-      try {
-        lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
-      } catch (e) {
-        console.warn('LCP observation not supported');
-      }
-
-      // Cumulative Layout Shift
-      const clsObserver = new PerformanceObserver((entryList) => {
-        let clsValue = 0;
-        for (const entry of entryList.getEntries()) {
-          if (!(entry as any).hadRecentInput) {
-            clsValue += (entry as any).value;
-          }
-        }
-        metricsRef.current.cls = clsValue;
-      });
-
-      try {
-        clsObserver.observe({ entryTypes: ['layout-shift'] });
-      } catch (e) {
-        console.warn('CLS observation not supported');
-      }
-
-      // First Input Delay
-      const fidObserver = new PerformanceObserver((entryList) => {
-        for (const entry of entryList.getEntries()) {
-          metricsRef.current.fid = (entry as any).processingStart - entry.startTime;
-        }
-      });
-
-      try {
-        fidObserver.observe({ entryTypes: ['first-input'] });
-      } catch (e) {
-        console.warn('FID observation not supported');
-      }
+      observer.observe({ entryTypes: ['measure', 'navigation'] });
+      
+      return () => observer.disconnect();
     }
   }, []);
 
-  // Optimize bundle loading
-  const optimizeBundleLoading = useCallback(() => {
-    // Preload critical chunks
-    const criticalChunks = [
-      '/src/components/ui/button.tsx',
-      '/src/components/ui/card.tsx',
-      '/src/lib/utils.ts'
-    ];
+  const markStart = (name: string) => {
+    performance.mark(`${name}-start`);
+  };
 
-    criticalChunks.forEach(chunk => {
-      const link = document.createElement('link');
-      link.rel = 'modulepreload';
-      link.href = chunk;
-      document.head.appendChild(link);
-    });
-  }, []);
-
-  // Optimize memory usage
-  const optimizeMemory = useCallback(() => {
-    // Clean up event listeners and observers periodically
-    const cleanup = () => {
-      // Force garbage collection if available (dev mode)
-      if ('gc' in window && typeof (window as any).gc === 'function') {
-        (window as any).gc();
-      }
-    };
-
-    // Run cleanup every 30 seconds
-    const cleanupInterval = setInterval(cleanup, 30000);
-    
-    return () => clearInterval(cleanupInterval);
-  }, []);
-
-  // Debounce function for performance
-  const debounce = useCallback((func: Function, wait: number) => {
-    let timeout: NodeJS.Timeout;
-    return function executedFunction(...args: any[]) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }, []);
-
-  // Throttle function for performance  
-  const throttle = useCallback((func: Function, limit: number) => {
-    let inThrottle: boolean;
-    return function executedFunction(...args: any[]) {
-      if (!inThrottle) {
-        func.apply(this, args);
-        inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    measurePerformance();
-    optimizeBundleLoading();
-    const memoryCleanup = optimizeMemory();
-
-    return () => {
-      if (memoryCleanup) memoryCleanup();
-    };
-  }, [measurePerformance, optimizeBundleLoading, optimizeMemory]);
+  const markEnd = (name: string) => {
+    performance.mark(`${name}-end`);
+    performance.measure(name, `${name}-start`, `${name}-end`);
+  };
 
   return {
-    metrics: metricsRef.current,
-    debounce,
-    throttle
+    metrics,
+    markStart,
+    markEnd
   };
 }

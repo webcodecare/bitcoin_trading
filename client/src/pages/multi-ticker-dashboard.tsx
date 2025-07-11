@@ -1,19 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useSupabaseRealtime, type RealtimeAlert } from "@/hooks/useSupabaseRealtime";
 import Sidebar from "@/components/layout/Sidebar";
-import TradingViewRealWidget from "@/components/charts/TradingViewRealWidget";
-import HeatmapChart from "@/components/charts/HeatmapChart";
-import CycleChart from "@/components/charts/CycleChart";
-import AdvancedForecastChart from "@/components/charts/AdvancedForecastChart";
-import TickerSelector from "@/components/ui/ticker-selector";
-import CategoryFilter from "@/components/ui/category-filter";
 import SubscriptionGuard, { useFeatureAccess } from "@/components/auth/SubscriptionGuard";
+
+// Lazy load heavy components
+const TradingViewRealWidget = lazy(() => import("@/components/charts/TradingViewRealWidget"));
+const HeatmapChart = lazy(() => import("@/components/charts/HeatmapChart"));
+const CycleChart = lazy(() => import("@/components/charts/CycleChart"));
+const AdvancedForecastChart = lazy(() => import("@/components/charts/AdvancedForecastChart"));
+const TickerSelector = lazy(() => import("@/components/ui/ticker-selector"));
+const CategoryFilter = lazy(() => import("@/components/ui/category-filter"));
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   TrendingUp, 
@@ -218,11 +221,13 @@ export default function MultiTickerDashboard() {
                     <CardTitle>Your Cryptocurrency Watchlist</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <TickerSelector
-                      selectedTickers={selectedTickers}
-                      onTickerToggle={handleTickerToggle}
-                      maxTickers={10}
-                    />
+                    <Suspense fallback={<Skeleton className="h-32 w-full" />}>
+                      <TickerSelector
+                        selectedTickers={selectedTickers}
+                        onTickerToggle={handleTickerToggle}
+                        maxTickers={10}
+                      />
+                    </Suspense>
                   </CardContent>
                 </Card>
 

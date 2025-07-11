@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { AdminGuard, PermissionGuard } from "@/components/auth/PermissionGuard";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { TopBar } from "@/components/layout/TopBar";
+import LazyLoader from "@/components/common/LazyLoader";
+import Sidebar from "@/components/layout/Sidebar";
+import TopBar from "@/components/layout/TopBar";
 import { Users, UserPlus, Edit, Trash2, Shield, Key, Settings, Search, Crown, UserCheck } from "lucide-react";
 
 interface AdminUser {
@@ -38,7 +40,7 @@ interface UserRole {
   userCount: number;
 }
 
-export default function AdminUserRoles() {
+function AdminUserRolesContent() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("");
@@ -498,5 +500,13 @@ export default function AdminUserRoles() {
         </div>
       </div>
     </AdminGuard>
+  );
+}
+
+export default function AdminUserRoles() {
+  return (
+    <LazyLoader>
+      <AdminUserRolesContent />
+    </LazyLoader>
   );
 }
