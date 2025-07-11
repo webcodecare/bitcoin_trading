@@ -518,16 +518,16 @@ export default function TradingPlayground() {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
               {/* Performance Chart */}
               <Card className="bg-gray-800 border-gray-700 lg:col-span-2">
-                <CardHeader className="pb-2 md:pb-3">
-                  <CardTitle className="text-white flex items-center text-xs sm:text-sm md:text-base">
+                <CardHeader className="p-3 sm:p-4 md:pb-3">
+                  <CardTitle className="text-white flex items-center text-sm sm:text-base md:text-lg">
                     <BarChart3 className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Portfolio Performance
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-3 md:p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <AdvancedSimulationChart 
                     data={balanceHistory}
                     width={300}
@@ -558,13 +558,13 @@ export default function TradingPlayground() {
 
               {/* Simulation Settings */}
               <Card className="bg-gray-800 border-gray-700 lg:col-span-1">
-                <CardHeader className="pb-2 md:pb-3">
-                  <CardTitle className="text-white flex items-center text-xs sm:text-sm md:text-base">
+                <CardHeader className="p-3 sm:p-4 md:pb-3">
+                  <CardTitle className="text-white flex items-center text-sm sm:text-base md:text-lg">
                     <Settings className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Settings
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 md:space-y-3 p-2 sm:p-3 md:p-4">
+                <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-4 md:p-6">
                   <div>
                     <Label className="text-gray-300">Initial Balance</Label>
                     <Input
@@ -593,11 +593,11 @@ export default function TradingPlayground() {
                       className="mt-2"
                       disabled={isSimulationRunning}
                     />
-                    <span className="text-sm text-gray-400">{simulationSettings.riskPercentage}%</span>
+                    <span className="text-xs text-gray-400 mt-1 block">{simulationSettings.riskPercentage}%</span>
                   </div>
 
                   <div>
-                    <Label className="text-gray-300">Market Condition</Label>
+                    <Label className="text-xs sm:text-sm text-gray-300">Market Condition</Label>
                     <Select
                       value={simulationSettings.marketCondition}
                       onValueChange={(value: 'bull' | 'bear' | 'sideways' | 'volatile') => 
@@ -605,7 +605,7 @@ export default function TradingPlayground() {
                       }
                       disabled={isSimulationRunning}
                     >
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white text-sm mt-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -618,7 +618,7 @@ export default function TradingPlayground() {
                   </div>
 
                   <div>
-                    <Label className="text-gray-300">Simulation Speed</Label>
+                    <Label className="text-xs sm:text-sm text-gray-300">Simulation Speed</Label>
                     <Select
                       value={simulationSettings.simulationSpeed.toString()}
                       onValueChange={(value) => setSimulationSettings(prev => ({ 
@@ -627,7 +627,7 @@ export default function TradingPlayground() {
                       }))}
                       disabled={isSimulationRunning}
                     >
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white text-sm mt-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -641,7 +641,7 @@ export default function TradingPlayground() {
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label className="text-gray-300">Auto-Trade Signals</Label>
+                      <Label className="text-xs sm:text-sm text-gray-300">Auto-Trade Signals</Label>
                       <Switch
                         checked={simulationSettings.autoTrade}
                         onCheckedChange={(checked) => setSimulationSettings(prev => ({ 
@@ -652,7 +652,7 @@ export default function TradingPlayground() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <Label className="text-gray-300">Enable Stop Loss</Label>
+                      <Label className="text-xs sm:text-sm text-gray-300">Enable Stop Loss</Label>
                       <Switch
                         checked={simulationSettings.enableStopLoss}
                         onCheckedChange={(checked) => setSimulationSettings(prev => ({ 
@@ -664,7 +664,7 @@ export default function TradingPlayground() {
 
                     {simulationSettings.enableStopLoss && (
                       <div>
-                        <Label className="text-gray-300">Stop Loss (%)</Label>
+                        <Label className="text-xs sm:text-sm text-gray-300">Stop Loss (%)</Label>
                         <Slider
                           value={[simulationSettings.stopLossPercentage]}
                           onValueChange={(value) => setSimulationSettings(prev => ({ 
@@ -677,12 +677,12 @@ export default function TradingPlayground() {
                           className="mt-2"
                           disabled={isSimulationRunning}
                         />
-                        <span className="text-sm text-gray-400">{simulationSettings.stopLossPercentage}%</span>
+                        <span className="text-xs text-gray-400 mt-1 block">{simulationSettings.stopLossPercentage}%</span>
                       </div>
                     )}
 
                     <div className="flex items-center justify-between">
-                      <Label className="text-gray-300">Enable Take Profit</Label>
+                      <Label className="text-xs sm:text-sm text-gray-300">Enable Take Profit</Label>
                       <Switch
                         checked={simulationSettings.enableTakeProfit}
                         onCheckedChange={(checked) => setSimulationSettings(prev => ({ 
@@ -694,7 +694,7 @@ export default function TradingPlayground() {
 
                     {simulationSettings.enableTakeProfit && (
                       <div>
-                        <Label className="text-gray-300">Take Profit (%)</Label>
+                        <Label className="text-xs sm:text-sm text-gray-300">Take Profit (%)</Label>
                         <Slider
                           value={[simulationSettings.takeProfitPercentage]}
                           onValueChange={(value) => setSimulationSettings(prev => ({ 
@@ -707,7 +707,7 @@ export default function TradingPlayground() {
                           className="mt-2"
                           disabled={isSimulationRunning}
                         />
-                        <span className="text-sm text-gray-400">{simulationSettings.takeProfitPercentage}%</span>
+                        <span className="text-xs text-gray-400 mt-1 block">{simulationSettings.takeProfitPercentage}%</span>
                       </div>
                     )}
                   </div>
@@ -716,8 +716,8 @@ export default function TradingPlayground() {
 
               {/* Live Signals */}
               <Card className="bg-gray-800 border-gray-700 lg:col-span-1">
-                <CardHeader className="pb-2 md:pb-3">
-                  <CardTitle className="text-white flex items-center text-xs sm:text-sm md:text-base">
+                <CardHeader className="p-3 sm:p-4 md:pb-3">
+                  <CardTitle className="text-white flex items-center text-sm sm:text-base md:text-lg">
                     <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Live Signals
                     {isSimulationRunning && (
@@ -729,7 +729,7 @@ export default function TradingPlayground() {
                     )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 sm:p-3 md:p-4">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="space-y-2 md:space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
                     <AnimatePresence>
                       {liveSignals.map((signal) => (
@@ -802,10 +802,10 @@ export default function TradingPlayground() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
               {/* Open Positions */}
               <Card className="bg-gray-800 border-gray-700">
-                <CardHeader className="pb-2 md:pb-3">
-                  <CardTitle className="text-white text-xs sm:text-sm md:text-base">Open Positions</CardTitle>
+                <CardHeader className="p-3 sm:p-4 md:pb-3">
+                  <CardTitle className="text-white text-sm sm:text-base md:text-lg">Open Positions</CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 sm:p-3 md:p-4">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="space-y-2 md:space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
                     {openPositions.map((position) => {
                       const currentPrice = marketPrices?.[position.symbol] || position.entryPrice;
@@ -818,17 +818,17 @@ export default function TradingPlayground() {
                       return (
                         <div
                           key={position.id}
-                          className="p-3 rounded-lg bg-gray-750 border border-gray-600"
+                          className="p-2 sm:p-3 rounded-lg bg-gray-750 border border-gray-600"
                         >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2 sm:gap-0">
+                            <div className="flex items-center space-x-1 sm:space-x-2">
                               {position.action === 'buy' ? (
-                                <TrendingUp className="w-4 h-4 text-green-500" />
+                                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-green-500" />
                               ) : (
-                                <TrendingDown className="w-4 h-4 text-red-500" />
+                                <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
                               )}
-                              <span className="text-white font-medium">{position.symbol}</span>
-                              <Badge variant={position.action === 'buy' ? 'default' : 'destructive'}>
+                              <span className="text-white font-medium text-sm sm:text-base">{position.symbol}</span>
+                              <Badge variant={position.action === 'buy' ? 'default' : 'destructive'} className="text-xs">
                                 {position.action.toUpperCase()}
                               </Badge>
                             </div>
@@ -836,13 +836,13 @@ export default function TradingPlayground() {
                               size="sm"
                               variant="outline"
                               onClick={() => closePosition(position.id)}
-                              className="border-gray-600 text-gray-300 hover:text-white"
+                              className="border-gray-600 text-gray-300 hover:text-white text-xs px-2 py-1 self-start sm:self-auto"
                             >
                               Close
                             </Button>
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div className="grid grid-cols-2 gap-1 sm:gap-2 text-xs sm:text-sm">
                             <div>
                               <span className="text-gray-400">Entry: </span>
                               <span className="text-white">${position.entryPrice}</span>
@@ -863,8 +863,8 @@ export default function TradingPlayground() {
                             </div>
                           </div>
                           
-                          <div className="mt-2">
-                            <span className={`text-sm ${unrealizedPnLPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          <div className="mt-1 sm:mt-2">
+                            <span className={`text-xs sm:text-sm font-medium ${unrealizedPnLPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                               {unrealizedPnLPercentage >= 0 ? '+' : ''}{unrealizedPnLPercentage.toFixed(2)}%
                             </span>
                           </div>
@@ -873,9 +873,9 @@ export default function TradingPlayground() {
                     })}
                     
                     {openPositions.length === 0 && (
-                      <div className="text-center py-8">
-                        <BarChart3 className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                        <p className="text-gray-500">No open positions</p>
+                      <div className="text-center py-6 sm:py-8">
+                        <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500 mx-auto mb-2" />
+                        <p className="text-gray-500 text-sm sm:text-base">No open positions</p>
                       </div>
                     )}
                   </div>
@@ -884,10 +884,10 @@ export default function TradingPlayground() {
               
               {/* Trade History */}
               <Card className="bg-gray-800 border-gray-700">
-                <CardHeader className="pb-2 md:pb-3">
-                  <CardTitle className="text-white text-xs sm:text-sm md:text-base">Recent Trades</CardTitle>
+                <CardHeader className="p-3 sm:p-4 md:pb-3">
+                  <CardTitle className="text-white text-sm sm:text-base md:text-lg">Recent Trades</CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 sm:p-3 md:p-4">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -926,9 +926,9 @@ export default function TradingPlayground() {
                   </div>
                   
                   {closedPositions.length === 0 && (
-                    <div className="text-center py-8">
-                      <BarChart3 className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                      <p className="text-gray-500">No completed trades yet</p>
+                    <div className="text-center py-6 sm:py-8">
+                      <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500 mx-auto mb-2" />
+                      <p className="text-gray-500 text-sm sm:text-base">No completed trades yet</p>
                     </div>
                   )}
                 </CardContent>
