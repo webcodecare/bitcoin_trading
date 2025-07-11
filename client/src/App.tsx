@@ -36,7 +36,7 @@ const AdminPayments = lazy(() => import("@/pages/admin/payments"));
 const AdminSubscriptions = lazy(() => import("@/pages/admin/subscriptions"));
 const AdminContent = lazy(() => import("@/pages/admin/content"));
 const AdminTestUsers = lazy(() => import("@/pages/admin/test-users"));
-const Alerts = lazy(() => import("@/pages/alerts"));
+const Alerts = lazy(() => import("@/pages/alerts-simple"));
 const Settings = lazy(() => import("@/pages/settings"));
 const Subscription = lazy(() => import("@/pages/subscription"));
 const BitcoinAnalytics = lazy(() => import("@/pages/bitcoin-analytics"));
