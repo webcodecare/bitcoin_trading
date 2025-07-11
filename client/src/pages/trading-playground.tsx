@@ -130,7 +130,11 @@ export default function TradingPlayground() {
   });
 
   // Performance tracking
-  const [balanceHistory, setBalanceHistory] = useState<{time: number, balance: number, pnl: number}[]>([]);
+  const [balanceHistory, setBalanceHistory] = useState<{time: number, balance: number, pnl: number}[]>([{
+    time: Date.now(),
+    balance: 10000,
+    pnl: 0
+  }]);
   const [riskMetrics, setRiskMetrics] = useState({
     sharpeRatio: 0,
     maxDrawdown: 0,
@@ -514,10 +518,10 @@ export default function TradingPlayground() {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
               {/* Performance Chart */}
-              <Card className="bg-gray-800 border-gray-700 lg:col-span-2">
-                <CardHeader className="pb-3">
+              <Card className="bg-gray-800 border-gray-700 xl:col-span-2">
+                <CardHeader className="pb-2 md:pb-3">
                   <CardTitle className="text-white flex items-center text-sm md:text-base">
                     <BarChart3 className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Portfolio Performance
@@ -553,14 +557,14 @@ export default function TradingPlayground() {
               </Card>
 
               {/* Simulation Settings */}
-              <Card className="bg-gray-800 border-gray-700 lg:col-span-1">
-                <CardHeader className="pb-3">
+              <Card className="bg-gray-800 border-gray-700 xl:col-span-1">
+                <CardHeader className="pb-2 md:pb-3">
                   <CardTitle className="text-white flex items-center text-sm md:text-base">
                     <Settings className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Simulation Settings
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 md:space-y-4">
+                <CardContent className="space-y-2 md:space-y-3 p-3 md:p-4">
                   <div>
                     <Label className="text-gray-300">Initial Balance</Label>
                     <Input
@@ -711,8 +715,8 @@ export default function TradingPlayground() {
               </Card>
 
               {/* Live Signals */}
-              <Card className="bg-gray-800 border-gray-700 lg:col-span-1">
-                <CardHeader className="pb-3">
+              <Card className="bg-gray-800 border-gray-700 xl:col-span-1">
+                <CardHeader className="pb-2 md:pb-3">
                   <CardTitle className="text-white flex items-center text-sm md:text-base">
                     <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Live Signals
@@ -725,7 +729,7 @@ export default function TradingPlayground() {
                     )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-3 md:p-6">
+                <CardContent className="p-2 md:p-3">
                   <div className="space-y-2 md:space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
                     <AnimatePresence>
                       {liveSignals.map((signal) => (
@@ -798,10 +802,10 @@ export default function TradingPlayground() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               {/* Open Positions */}
               <Card className="bg-gray-800 border-gray-700">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-2 md:pb-3">
                   <CardTitle className="text-white text-sm md:text-base">Open Positions</CardTitle>
                 </CardHeader>
-                <CardContent className="p-3 md:p-6">
+                <CardContent className="p-2 md:p-4">
                   <div className="space-y-2 md:space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
                     {openPositions.map((position) => {
                       const currentPrice = marketPrices?.[position.symbol] || position.entryPrice;
@@ -877,63 +881,61 @@ export default function TradingPlayground() {
                   </div>
                 </CardContent>
               </Card>
+              
+              {/* Trade History */}
+              <Card className="bg-gray-800 border-gray-700">
+                <CardHeader className="pb-2 md:pb-3">
+                  <CardTitle className="text-white text-sm md:text-base">Recent Trades</CardTitle>
+                </CardHeader>
+                <CardContent className="p-2 md:p-4">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-gray-700">
+                          <TableHead className="text-gray-300 text-xs md:text-sm">Time</TableHead>
+                          <TableHead className="text-gray-300 text-xs md:text-sm">Symbol</TableHead>
+                          <TableHead className="text-gray-300 text-xs md:text-sm">Action</TableHead>
+                          <TableHead className="text-gray-300 text-xs md:text-sm hidden sm:table-cell">Entry</TableHead>
+                          <TableHead className="text-gray-300 text-xs md:text-sm hidden sm:table-cell">Exit</TableHead>
+                          <TableHead className="text-gray-300 text-xs md:text-sm hidden md:table-cell">Qty</TableHead>
+                          <TableHead className="text-gray-300 text-xs md:text-sm">P&L</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {closedPositions.map((position) => (
+                          <TableRow key={position.id} className="border-gray-700">
+                            <TableCell className="text-gray-300 text-xs md:text-sm">
+                              {position.timestamp.toLocaleTimeString()}
+                            </TableCell>
+                            <TableCell className="text-white text-xs md:text-sm">{position.symbol}</TableCell>
+                            <TableCell>
+                              <Badge variant={position.action === 'buy' ? 'default' : 'destructive'} className="text-xs">
+                                {position.action.toUpperCase()}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-white text-xs md:text-sm hidden sm:table-cell">${position.entryPrice}</TableCell>
+                            <TableCell className="text-white text-xs md:text-sm hidden sm:table-cell">${position.exitPrice}</TableCell>
+                            <TableCell className="text-white text-xs md:text-sm hidden md:table-cell">{position.quantity.toFixed(6)}</TableCell>
+                            <TableCell className={`text-xs md:text-sm ${position.pnl! >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                              {position.pnl! >= 0 ? '+' : ''}${position.pnl}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {closedPositions.length === 0 && (
+                    <div className="text-center py-8">
+                      <BarChart3 className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                      <p className="text-gray-500">No completed trades yet</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Trade History */}
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-white text-sm md:text-base">Recent Trades</CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 md:p-6">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-gray-700">
-                        <TableHead className="text-gray-300 text-xs md:text-sm">Time</TableHead>
-                        <TableHead className="text-gray-300 text-xs md:text-sm">Symbol</TableHead>
-                        <TableHead className="text-gray-300 text-xs md:text-sm">Action</TableHead>
-                        <TableHead className="text-gray-300 text-xs md:text-sm">Entry</TableHead>
-                        <TableHead className="text-gray-300 text-xs md:text-sm">Exit</TableHead>
-                        <TableHead className="text-gray-300 text-xs md:text-sm">Qty</TableHead>
-                        <TableHead className="text-gray-300 text-xs md:text-sm">P&L</TableHead>
-                        <TableHead className="text-gray-300 text-xs md:text-sm">P&L %</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {closedPositions.map((position) => (
-                        <TableRow key={position.id} className="border-gray-700">
-                          <TableCell className="text-gray-300 text-xs md:text-sm">
-                            {position.timestamp.toLocaleTimeString()}
-                          </TableCell>
-                          <TableCell className="text-white text-xs md:text-sm">{position.symbol}</TableCell>
-                          <TableCell>
-                            <Badge variant={position.action === 'buy' ? 'default' : 'destructive'} className="text-xs">
-                              {position.action.toUpperCase()}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-white text-xs md:text-sm">${position.entryPrice}</TableCell>
-                          <TableCell className="text-white text-xs md:text-sm">${position.exitPrice}</TableCell>
-                          <TableCell className="text-white text-xs md:text-sm">{position.quantity.toFixed(6)}</TableCell>
-                          <TableCell className={`text-xs md:text-sm ${position.pnl! >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {position.pnl! >= 0 ? '+' : ''}${position.pnl}
-                          </TableCell>
-                          <TableCell className={`text-xs md:text-sm ${position.pnlPercentage! >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {position.pnlPercentage! >= 0 ? '+' : ''}{position.pnlPercentage}%
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                
-                {closedPositions.length === 0 && (
-                  <div className="text-center py-8">
-                    <BarChart3 className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                    <p className="text-gray-500">No completed trades yet</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+
             </SubscriptionGuard>
           </div>
         </div>
