@@ -59,6 +59,7 @@ const UserProgress = lazy(() => import("@/pages/user-progress"));
 const MoodBoard = lazy(() => import("@/pages/mood-board-simple"));
 const NotificationCenter = lazy(() => import("@/pages/notification-center"));
 const NotificationSetup = lazy(() => import("@/pages/notification-setup"));
+const NotificationDashboard = lazy(() => import("@/pages/notification-dashboard"));
 const Preferences = lazy(() => import("@/pages/preferences"));
 const AdvancedPortfolio = lazy(() => import("@/pages/advanced-portfolio-simple"));
 
@@ -339,6 +340,13 @@ function Router() {
         <AuthGuard>
           <Suspense fallback={<LoadingScreen />}>
             <NotificationSetup />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/notification-dashboard">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <NotificationDashboard />
           </Suspense>
         </AuthGuard>
       </Route>
