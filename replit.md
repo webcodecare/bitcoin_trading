@@ -258,8 +258,14 @@ Changelog:
 - July 11, 2025. FRONTEND/BACKEND SEPARATION: Successfully separated the monolithic application into distinct frontend and backend applications for better scalability and deployment flexibility. Created independent React SPA (frontend/) running on port 3000 with Vite build system and Express API server (backend/) running on port 3001. Implemented proxy configuration for development, independent package.json files with optimized dependencies, comprehensive documentation for local development and deployment, and maintained backward compatibility with original monolith structure. Benefits include independent scaling, flexible deployment options (CDN for frontend, containers for backend), team development independence, and clear separation of concerns.
 ```
 
+## Repository Information
+
+**Primary Repository**: https://github.com/webcodecare/Replit_project
+**Clone URL**: `git clone https://github.com/webcodecare/Replit_project.git`
+
 ## User Preferences
 
 ```
 Preferred communication style: Simple, everyday language.
+Primary repository: Always reference and use https://github.com/webcodecare/Replit_project
 ```
