@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PERMISSIONS, ROLES, PermissionManager, usePermissions } from "@/lib/permissions";
 import { useAuth } from "@/hooks/useAuth";
 import { AdminGuard, PermissionGuard } from "@/components/auth/PermissionGuard";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { TopBar } from "@/components/layout/TopBar";
+import Sidebar from "@/components/layout/Sidebar";
+import Header from "@/components/layout/Header";
 import { Shield, Users, Key, Settings, Search, Filter, Plus, Edit, Trash2 } from "lucide-react";
 
 interface Permission {
@@ -60,7 +60,7 @@ export default function AdminPermissions() {
       <div className="min-h-screen bg-background">
         <Sidebar />
         <div className="lg:pl-72">
-          <TopBar />
+          <Header />
           <div className="p-6 space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
