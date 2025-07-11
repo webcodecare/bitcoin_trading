@@ -170,17 +170,31 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
   const userTier = user?.subscriptionTier || "free";
   
   // Debug logging for subscription filtering
-  console.log("Sidebar DEBUG: user=", user);
+  console.log("Sidebar DEBUG: user object=", user);
   console.log("Sidebar DEBUG: userTier=", userTier);
+  console.log("Sidebar DEBUG: user?.subscriptionTier=", user?.subscriptionTier);
   console.log("Sidebar DEBUG: allUserNavItems count=", allUserNavItems.length);
   
-  const userNavItems = allUserNavItems.filter(item => {
-    const hasPermission = hasAccess(userTier, item.requiredFeature);
-    console.log(`Sidebar DEBUG: ${item.title} (${item.requiredFeature}) = ${hasPermission}`);
-    return hasPermission;
-  });
+  // Apply subscription-based filtering
+  let userNavItems: typeof allUserNavItems = [];
   
-  console.log("Sidebar DEBUG: filtered userNavItems count=", userNavItems.length);
+  if (!user) {
+    // If user is not authenticated, show only basic free features
+    console.log("Sidebar DEBUG: User not authenticated, showing free tier only");
+    userNavItems = allUserNavItems.filter(item => 
+      hasAccess("free", item.requiredFeature)
+    );
+  } else {
+    // User is authenticated, apply tier-based filtering
+    userNavItems = allUserNavItems.filter(item => {
+      const hasPermission = hasAccess(userTier, item.requiredFeature);
+      console.log(`Sidebar DEBUG: ${item.title} (${item.requiredFeature}) -> ${hasPermission} [${userTier} tier]`);
+      return hasPermission;
+    });
+  }
+  
+  console.log("Sidebar DEBUG: Final filtered userNavItems count=", userNavItems.length);
+  console.log("Sidebar DEBUG: Filtered items:", userNavItems.map(item => item.title));
 
   const adminNavItems = [
     {
