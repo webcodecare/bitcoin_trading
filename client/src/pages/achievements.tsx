@@ -159,13 +159,13 @@ export default function AchievementsPage() {
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      <div className="flex-1 p-6 overflow-y-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Achievements</h1>
-          <p className="text-muted-foreground">Track your progress and unlock rewards</p>
+      <div className="flex-1 p-4 md:p-6 overflow-y-auto ml-0 md:ml-0">
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Achievements</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Track your progress and unlock rewards</p>
           
           {/* User Progress Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4 md:mt-6">
             <Card>
               <CardContent className="p-4 text-center">
                 <Trophy className="h-8 w-8 mx-auto mb-2 text-yellow-500" />

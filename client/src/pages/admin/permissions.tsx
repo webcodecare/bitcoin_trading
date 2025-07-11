@@ -59,14 +59,14 @@ export default function AdminPermissions() {
     }>
       <div className="min-h-screen bg-background">
         <Sidebar />
-        <div className="lg:pl-72">
+        <div className="lg:pl-72 ml-0 md:ml-0">
           <Header />
-          <div className="p-6 space-y-6">
+          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">Permission Management</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Permission Management</h1>
+                <p className="text-sm md:text-base text-muted-foreground">
                   Manage role-based access control and user permissions
                 </p>
               </div>
