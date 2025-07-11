@@ -48,10 +48,10 @@ const Privacy = lazy(() => import("@/pages/privacy"));
 const Terms = lazy(() => import("@/pages/terms"));
 const Pricing = lazy(() => import("@/pages/pricing"));
 
-// Advanced feature pages
-const AdvancedAlerts = lazy(() => import("@/pages/advanced-alerts"));
-const MultiTicker = lazy(() => import("@/pages/multi-ticker-dashboard"));
-const TradingPlayground = lazy(() => import("@/pages/trading-playground"));
+// Advanced feature pages - using simplified versions to prevent black screens
+const AdvancedAlerts = lazy(() => import("@/pages/advanced-alerts-simple"));
+const MultiTicker = lazy(() => import("@/pages/multi-ticker-simple"));
+const TradingPlayground = lazy(() => import("@/pages/trading-playground-simple"));
 const LiveStreaming = lazy(() => import("@/pages/live-streaming"));
 const HistoricalOHLC = lazy(() => import("@/pages/historical-ohlc"));
 const Achievements = lazy(() => import("@/pages/achievements"));
@@ -60,7 +60,7 @@ const MoodBoard = lazy(() => import("@/pages/mood-board"));
 const NotificationCenter = lazy(() => import("@/pages/notification-center"));
 const NotificationSetup = lazy(() => import("@/pages/notification-setup"));
 const Preferences = lazy(() => import("@/pages/preferences"));
-const AdvancedPortfolio = lazy(() => import("@/pages/advanced-portfolio"));
+const AdvancedPortfolio = lazy(() => import("@/pages/advanced-portfolio-simple"));
 
 // Loading component for better UX
 const LoadingScreen = () => (
