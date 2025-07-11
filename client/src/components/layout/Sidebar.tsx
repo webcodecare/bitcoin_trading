@@ -168,9 +168,19 @@ export default function Sidebar({ className, isOpen = false, onClose }: SidebarP
 
   // Filter navigation items based on user's subscription tier
   const userTier = user?.subscriptionTier || "free";
-  const userNavItems = allUserNavItems.filter(item => 
-    hasAccess(userTier, item.requiredFeature)
-  );
+  
+  // Debug logging for subscription filtering
+  console.log("Sidebar DEBUG: user=", user);
+  console.log("Sidebar DEBUG: userTier=", userTier);
+  console.log("Sidebar DEBUG: allUserNavItems count=", allUserNavItems.length);
+  
+  const userNavItems = allUserNavItems.filter(item => {
+    const hasPermission = hasAccess(userTier, item.requiredFeature);
+    console.log(`Sidebar DEBUG: ${item.title} (${item.requiredFeature}) = ${hasPermission}`);
+    return hasPermission;
+  });
+  
+  console.log("Sidebar DEBUG: filtered userNavItems count=", userNavItems.length);
 
   const adminNavItems = [
     {
