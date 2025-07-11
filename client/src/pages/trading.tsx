@@ -210,8 +210,14 @@ export default function TradingPage() {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                     className="h-full"
                   >
-                    <Suspense fallback={<div className="h-[400px] w-full bg-muted animate-pulse rounded-lg" />}>
-                      <TradingViewWidget symbol={selectedTicker} />
+                    <Suspense fallback={<div className="h-[400px] w-full bg-muted animate-pulse rounded-lg flex items-center justify-center"><div className="text-muted-foreground">Loading Chart...</div></div>}>
+                      <TradingViewWidget 
+                        symbol={`BINANCE:${selectedTicker}`}
+                        theme="dark"
+                        height={600}
+                        enableTrading={true}
+                        showSignals={true}
+                      />
                     </Suspense>
                   </motion.div>
                 </CardContent>

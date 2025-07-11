@@ -222,7 +222,7 @@ export default function Dashboard() {
                       <CardTitle>Price Chart</CardTitle>
                     </CardHeader>
                     <CardContent className="p-2">
-                      <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                      <Suspense fallback={<div className="h-64 w-full bg-muted animate-pulse rounded-lg flex items-center justify-center"><div className="text-muted-foreground">Loading Chart...</div></div>}>
                         <TradingViewRealWidget ticker={selectedTickers[0] || "BTCUSDT"} />
                       </Suspense>
                     </CardContent>
