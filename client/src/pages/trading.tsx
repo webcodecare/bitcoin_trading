@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
-import TradingViewWidget from "@/components/charts/TradingViewWidget";
-import ProfessionalTradingInterface from "@/components/trading/ProfessionalTradingInterface";
-import MoodBoardWidget from "@/components/trading/MoodBoardWidget";
+
+// Lazy load heavy components
+const TradingViewWidget = lazy(() => import("@/components/charts/TradingViewWidget"));
+const ProfessionalTradingInterface = lazy(() => import("@/components/trading/ProfessionalTradingInterface"));
+const MoodBoardWidget = lazy(() => import("@/components/trading/MoodBoardWidget"));
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -208,13 +210,9 @@ export default function TradingPage() {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                     className="h-full"
                   >
-                    <TradingViewWidget 
-                      symbol={`BINANCE:${selectedTicker}`}
-                      theme="dark"
-                      height={600}
-                      enableTrading={true}
-                      showSignals={true}
-                    />
+                    <Suspense fallback={<div className="h-[400px] w-full bg-muted animate-pulse rounded-lg" />}>
+                      <TradingViewWidget symbol={selectedTicker} />
+                    </Suspense>
                   </motion.div>
                 </CardContent>
               </Card>
@@ -230,10 +228,12 @@ export default function TradingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
               >
-                <ProfessionalTradingInterface 
-                  symbol={selectedTicker}
-                  currentPrice={currentPrice}
-                />
+                <Suspense fallback={<div className="h-64 w-full bg-muted animate-pulse rounded-lg" />}>
+                  <ProfessionalTradingInterface 
+                    symbol={selectedTicker}
+                    currentPrice={currentPrice}
+                  />
+                </Suspense>
               </motion.div>
             </div>
             
@@ -244,7 +244,9 @@ export default function TradingPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
               >
-                <MoodBoardWidget />
+                <Suspense fallback={<div className="h-64 w-full bg-muted animate-pulse rounded-lg" />}>
+                  <MoodBoardWidget />
+                </Suspense>
               </motion.div>
             </div>
           </div>
