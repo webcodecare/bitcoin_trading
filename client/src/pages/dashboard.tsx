@@ -19,7 +19,10 @@ import {
   Activity,
   BarChart3,
   LineChart,
-  PieChart
+  PieChart,
+  DollarSign,
+  Zap,
+  AlertTriangle
 } from "lucide-react";
 import { useState, useEffect, lazy, Suspense } from "react";
 
@@ -174,6 +177,126 @@ export default function Dashboard() {
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
+                {/* Market Statistics, Professional Features, and Market Information */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Market Statistics */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4" />
+                        Market Statistics
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Total Market Cap:</span>
+                          <span className="font-semibold">$2.45T</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">24h Volume:</span>
+                          <span className="font-semibold">$89.2B</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">BTC Dominance:</span>
+                          <span className="font-semibold">42.8%</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Active Cryptos:</span>
+                          <span className="font-semibold">2.4M+</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Market Trend:</span>
+                          <Badge variant="outline" className="text-green-600">Bullish</Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Professional Features */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Target className="h-4 w-4" />
+                        Professional Features
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Activity className="h-4 w-4 text-blue-500" />
+                            <span className="text-sm">RSI & MACD Indicators</span>
+                          </div>
+                          <Badge variant="outline" className="text-green-600">Active</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-purple-500" />
+                            <span className="text-sm">Bollinger Bands</span>
+                          </div>
+                          <Badge variant="outline" className="text-green-600">Active</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <BarChart3 className="h-4 w-4 text-orange-500" />
+                            <span className="text-sm">Volume Analysis</span>
+                          </div>
+                          <Badge variant="outline" className="text-green-600">Active</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                            <span className="text-sm">Price Alerts</span>
+                          </div>
+                          <Badge variant="outline" className="text-blue-600">Available</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Zap className="h-4 w-4 text-pink-500" />
+                            <span className="text-sm">Chart Patterns</span>
+                          </div>
+                          <Badge variant="outline" className="text-blue-600">Available</Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Market Information */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Market Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">24h Volume:</span>
+                          <span className="font-semibold">$2.4B</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">24h High:</span>
+                          <span className="font-semibold text-green-600">$72,450</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">24h Low:</span>
+                          <span className="font-semibold text-red-600">$68,230</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Market Cap:</span>
+                          <span className="font-semibold">$1.37T</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Fear & Greed:</span>
+                          <Badge variant="outline" className="text-yellow-600">Neutral 52</Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
                 {/* Active Tickers Display */}
                 <Card>
                   <CardHeader>
