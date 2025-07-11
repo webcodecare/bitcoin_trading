@@ -56,7 +56,7 @@ const LiveStreaming = lazy(() => import("@/pages/live-streaming"));
 const HistoricalOHLC = lazy(() => import("@/pages/historical-ohlc"));
 const Achievements = lazy(() => import("@/pages/achievements"));
 const UserProgress = lazy(() => import("@/pages/user-progress"));
-const MoodBoard = lazy(() => import("@/pages/mood-board"));
+const MoodBoard = lazy(() => import("@/pages/mood-board-simple"));
 const NotificationCenter = lazy(() => import("@/pages/notification-center"));
 const NotificationSetup = lazy(() => import("@/pages/notification-setup"));
 const Preferences = lazy(() => import("@/pages/preferences"));
