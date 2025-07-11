@@ -8,6 +8,7 @@ import { useEffect, lazy, Suspense } from "react";
 import SessionWarning from "@/components/auth/SessionWarning";
 import PerformanceOptimizer from "@/components/common/PerformanceOptimizer";
 import AuthGuard from "@/components/auth/AuthGuard";
+import { SubscriptionGuard } from "@/components/auth/SubscriptionGuard";
 
 // Critical pages loaded immediately
 import NotFound from "@/pages/not-found";
