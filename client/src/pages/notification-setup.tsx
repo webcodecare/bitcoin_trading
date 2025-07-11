@@ -227,51 +227,58 @@ export default function NotificationSetup() {
       <div className="flex">
         <Sidebar />
         
-        <main className="flex-1 ml-64 p-6">
+        <main className="flex-1 ml-0 md:ml-64 p-4 md:p-6">
           <div className="max-w-6xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Notification Setup</h1>
-              <p className="text-gray-400">Configure how you receive trading signals and market alerts</p>
+            <div className="mb-6 md:mb-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Notification Setup</h1>
+              <p className="text-sm md:text-base text-gray-400">Configure how you receive trading signals and market alerts</p>
             </div>
 
-            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="email" className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  Email
+            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4 md:space-y-6">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
+                <TabsTrigger value="email" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                  <Mail className="w-3 h-3 md:w-4 md:h-4" />
+                  <span className="hidden sm:inline">Email</span>
+                  <span className="sm:hidden">📧</span>
                 </TabsTrigger>
-                <TabsTrigger value="sms" className="flex items-center gap-2">
-                  <Smartphone className="w-4 h-4" />
-                  SMS
+                <TabsTrigger value="sms" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                  <Smartphone className="w-3 h-3 md:w-4 md:h-4" />
+                  <span className="hidden sm:inline">SMS</span>
+                  <span className="sm:hidden">📱</span>
                 </TabsTrigger>
-                <TabsTrigger value="telegram" className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Telegram
+                <TabsTrigger value="telegram" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                  <MessageSquare className="w-3 h-3 md:w-4 md:h-4" />
+                  <span className="hidden sm:inline">Telegram</span>
+                  <span className="sm:hidden">💬</span>
                 </TabsTrigger>
-                <TabsTrigger value="advanced" className="flex items-center gap-2">
-                  <Settings className="w-4 h-4" />
-                  Advanced
+                <TabsTrigger value="advanced" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                  <Settings className="w-3 h-3 md:w-4 md:h-4" />
+                  <span className="hidden lg:inline">Advanced</span>
+                  <span className="lg:hidden">⚙️</span>
                 </TabsTrigger>
-                <TabsTrigger value="setup" className="flex items-center gap-2">
-                  <Info className="w-4 h-4" />
-                  Setup Guide
+                <TabsTrigger value="setup" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+                  <Info className="w-3 h-3 md:w-4 md:h-4" />
+                  <span className="hidden lg:inline">Setup Guide</span>
+                  <span className="lg:hidden">ℹ️</span>
                 </TabsTrigger>
               </TabsList>
 
               {/* Email Tab */}
               <TabsContent value="email">
                 <Card className="bg-gray-900/50 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3 text-white">
-                      <Mail className="w-5 h-5" />
-                      Email Notifications
-                      <Badge variant="secondary" className="bg-green-900/50 text-green-300">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3 text-white text-base md:text-lg">
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 md:w-5 md:h-5" />
+                        Email Notifications
+                      </div>
+                      <Badge variant="secondary" className="bg-green-900/50 text-green-300 text-xs self-start sm:self-auto">
                         <CheckCircle className="w-3 h-3 mr-1" />
                         Configured
                       </Badge>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
                     <div className="p-4 bg-green-900/20 border border-green-800 rounded-lg">
                       <div className="flex items-center gap-2 text-green-300 mb-2">
                         <CheckCircle className="w-4 h-4" />
@@ -315,15 +322,17 @@ export default function NotificationSetup() {
               {/* SMS Tab */}
               <TabsContent value="sms">
                 <Card className="bg-gray-900/50 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3 text-white">
-                      <Smartphone className="w-5 h-5" />
-                      SMS Alerts
-                      <Badge variant="secondary" className={
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3 text-white text-base md:text-lg">
+                      <div className="flex items-center gap-2">
+                        <Smartphone className="w-4 h-4 md:w-5 md:h-5" />
+                        SMS Alerts
+                      </div>
+                      <Badge variant="secondary" className={`text-xs self-start sm:self-auto ${
                         smsStatus?.configured 
                           ? "bg-green-900/50 text-green-300" 
                           : "bg-yellow-900/50 text-yellow-300"
-                      }>
+                      }`}>
                         {smsStatus?.configured ? (
                           <>
                             <CheckCircle className="w-3 h-3 mr-1" />
@@ -338,7 +347,7 @@ export default function NotificationSetup() {
                       </Badge>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
                     {!smsStatus?.configured ? (
                       <div className="p-4 bg-yellow-900/20 border border-yellow-800 rounded-lg">
                         <div className="flex items-center gap-2 text-yellow-300 mb-2">
@@ -369,18 +378,18 @@ export default function NotificationSetup() {
                     <div className="space-y-4">
                       <div>
                         <Label className="text-white">Phone Number</Label>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <Input
                             placeholder="+1 (555) 123-4567"
                             value={phoneNumber}
                             onChange={(e) => setPhoneNumber(e.target.value)}
-                            className="bg-gray-800 border-gray-700 text-white"
+                            className="bg-gray-800 border-gray-700 text-white flex-1"
                             disabled={!smsStatus?.configured}
                           />
                           <Button 
                             onClick={handleSmsVerify}
                             disabled={smsVerifyMutation.isPending}
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-blue-600 hover:bg-blue-700 sm:w-auto w-full text-sm"
                           >
                             {smsVerifyMutation.isPending ? 'Sending...' : 'Verify'}
                           </Button>
@@ -402,12 +411,12 @@ export default function NotificationSetup() {
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label className="text-white">Critical Alerts Only</Label>
-                          <p className="text-sm text-gray-400">Only send SMS for high-confidence signals</p>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex-1">
+                          <Label className="text-white text-sm md:text-base">Critical Alerts Only</Label>
+                          <p className="text-xs md:text-sm text-gray-400">Only send SMS for high-confidence signals</p>
                         </div>
-                        <Switch checked={true} disabled={!smsStatus?.configured} />
+                        <Switch checked={true} disabled={!smsStatus?.configured} className="self-start sm:self-auto" />
                       </div>
                     </div>
                   </CardContent>
@@ -417,15 +426,17 @@ export default function NotificationSetup() {
               {/* Telegram Tab */}
               <TabsContent value="telegram">
                 <Card className="bg-gray-900/50 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3 text-white">
-                      <Bot className="w-5 h-5" />
-                      Telegram Bot
-                      <Badge variant="secondary" className={
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-3 text-white text-base md:text-lg">
+                      <div className="flex items-center gap-2">
+                        <Bot className="w-4 h-4 md:w-5 md:h-5" />
+                        Telegram Bot
+                      </div>
+                      <Badge variant="secondary" className={`text-xs self-start sm:self-auto ${
                         telegramStatus?.configured 
                           ? "bg-green-900/50 text-green-300" 
                           : "bg-yellow-900/50 text-yellow-300"
-                      }>
+                      }`}>
                         {telegramStatus?.configured ? (
                           <>
                             <CheckCircle className="w-3 h-3 mr-1" />
@@ -440,7 +451,7 @@ export default function NotificationSetup() {
                       </Badge>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
                     {!telegramStatus?.configured ? (
                       <div className="p-4 bg-yellow-900/20 border border-yellow-800 rounded-lg">
                         <div className="flex items-center gap-2 text-yellow-300 mb-2">
@@ -500,17 +511,17 @@ export default function NotificationSetup() {
 
                           <div>
                             <Label className="text-white">Telegram Chat ID</Label>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <Input
                                 placeholder="123456789"
                                 value={telegramChatId}
                                 onChange={(e) => setTelegramChatId(e.target.value)}
-                                className="bg-gray-800 border-gray-700 text-white"
+                                className="bg-gray-800 border-gray-700 text-white flex-1"
                               />
                               <Button 
                                 onClick={handleTelegramValidate}
                                 disabled={telegramValidateMutation.isPending}
-                                className="bg-blue-600 hover:bg-blue-700"
+                                className="bg-blue-600 hover:bg-blue-700 sm:w-auto w-full text-sm"
                               >
                                 {telegramValidateMutation.isPending ? 'Validating...' : 'Validate'}
                               </Button>
@@ -539,20 +550,20 @@ export default function NotificationSetup() {
                             </div>
                           )}
 
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <Label className="text-white">Rich Formatting</Label>
-                              <p className="text-sm text-gray-400">Send messages with charts and formatting</p>
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex-1">
+                              <Label className="text-white text-sm md:text-base">Rich Formatting</Label>
+                              <p className="text-xs md:text-sm text-gray-400">Send messages with charts and formatting</p>
                             </div>
-                            <Switch checked={true} />
+                            <Switch checked={true} className="self-start sm:self-auto" />
                           </div>
 
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <Label className="text-white">Signal Previews</Label>
-                              <p className="text-sm text-gray-400">Include price charts in messages</p>
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex-1">
+                              <Label className="text-white text-sm md:text-base">Signal Previews</Label>
+                              <p className="text-xs md:text-sm text-gray-400">Include price charts in messages</p>
                             </div>
-                            <Switch checked={true} />
+                            <Switch checked={true} className="self-start sm:self-auto" />
                           </div>
                         </div>
                       </>
@@ -564,13 +575,13 @@ export default function NotificationSetup() {
               {/* Advanced Tab */}
               <TabsContent value="advanced">
                 <Card className="bg-gray-900/50 border-gray-800">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3 text-white">
-                      <Settings className="w-5 h-5" />
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 md:gap-3 text-white text-base md:text-lg">
+                      <Settings className="w-4 h-4 md:w-5 md:h-5" />
                       Advanced Settings
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
                     <div className="space-y-4">
                       <div>
                         <Label className="text-white">Discord Webhook URL</Label>
@@ -599,28 +610,28 @@ export default function NotificationSetup() {
                       <div className="space-y-4">
                         <h4 className="font-medium text-white">Notification Preferences</h4>
                         
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label className="text-white">Sound Alerts</Label>
-                            <p className="text-sm text-gray-400">Play notification sounds in browser</p>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="flex-1">
+                            <Label className="text-white text-sm md:text-base">Sound Alerts</Label>
+                            <p className="text-xs md:text-sm text-gray-400">Play notification sounds in browser</p>
                           </div>
-                          <Switch />
+                          <Switch className="self-start sm:self-auto" />
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label className="text-white">Desktop Notifications</Label>
-                            <p className="text-sm text-gray-400">Show browser notifications when page is not active</p>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="flex-1">
+                            <Label className="text-white text-sm md:text-base">Desktop Notifications</Label>
+                            <p className="text-xs md:text-sm text-gray-400">Show browser notifications when page is not active</p>
                           </div>
-                          <Switch />
+                          <Switch className="self-start sm:self-auto" />
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Label className="text-white">Quiet Hours</Label>
-                            <p className="text-sm text-gray-400">Disable notifications from 10 PM to 8 AM</p>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="flex-1">
+                            <Label className="text-white text-sm md:text-base">Quiet Hours</Label>
+                            <p className="text-xs md:text-sm text-gray-400">Disable notifications from 10 PM to 8 AM</p>
                           </div>
-                          <Switch />
+                          <Switch className="self-start sm:self-auto" />
                         </div>
                       </div>
                     </div>
@@ -630,11 +641,11 @@ export default function NotificationSetup() {
 
               {/* Setup Guide Tab */}
               <TabsContent value="setup">
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                   <Card className="bg-gray-900/50 border-gray-800">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-3 text-white">
-                        <Info className="w-5 h-5" />
+                    <CardHeader className="pb-4">
+                      <CardTitle className="flex items-center gap-2 md:gap-3 text-white text-base md:text-lg">
+                        <Info className="w-4 h-4 md:w-5 md:h-5" />
                         Setup Guide
                       </CardTitle>
                     </CardHeader>
