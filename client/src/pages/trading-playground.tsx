@@ -401,7 +401,7 @@ export default function TradingPlayground() {
     <div className="min-h-screen bg-gray-900">
       <div className="flex">
         <Sidebar />
-        <div className="flex-1 ml-0 md:ml-0">
+        <div className="flex-1 ml-0 md:ml-64">
           <Header />
           <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             <SubscriptionGuard feature="tradingPlayground">
@@ -411,19 +411,19 @@ export default function TradingPlayground() {
                 <h1 className="text-2xl md:text-3xl font-bold text-white">Trading Playground</h1>
                 <p className="text-sm md:text-base text-gray-400 mt-1">Practice trading with real-time signals and simulated portfolio</p>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
                 <Button
                   onClick={() => setIsSimulationRunning(!isSimulationRunning)}
-                  className={`${isSimulationRunning ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+                  className={`text-xs sm:text-sm ${isSimulationRunning ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
                 >
                   {isSimulationRunning ? (
                     <>
-                      <Pause className="w-4 h-4 mr-2" />
+                      <Pause className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                       Pause Simulation
                     </>
                   ) : (
                     <>
-                      <Play className="w-4 h-4 mr-2" />
+                      <Play className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                       Start Simulation
                     </>
                   )}
@@ -431,26 +431,26 @@ export default function TradingPlayground() {
                 <Button
                   onClick={resetSimulation}
                   variant="outline"
-                  className="border-gray-600 text-gray-300 hover:text-white"
+                  className="text-xs sm:text-sm border-gray-600 text-gray-300 hover:text-white"
                 >
-                  <RotateCcw className="w-4 h-4 mr-2" />
+                  <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                   Reset
                 </Button>
               </div>
             </div>
 
             {/* Portfolio Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
               <Card className="bg-gray-800 border-gray-700">
-                <CardContent className="p-4">
+                <CardContent className="p-3 md:p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-400">Current Balance</p>
-                      <p className="text-2xl font-bold text-white">
+                      <p className="text-xs md:text-sm text-gray-400">Current Balance</p>
+                      <p className="text-lg md:text-2xl font-bold text-white">
                         ${currentBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     </div>
-                    <DollarSign className="w-8 h-8 text-green-500" />
+                    <DollarSign className="w-6 h-6 md:w-8 md:h-8 text-green-500" />
                   </div>
                   <div className="mt-2">
                     <span className={`text-sm ${simulationStats.totalPnLPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
@@ -461,16 +461,16 @@ export default function TradingPlayground() {
               </Card>
 
               <Card className="bg-gray-800 border-gray-700">
-                <CardContent className="p-4">
+                <CardContent className="p-3 md:p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-400">Win Rate</p>
-                      <p className="text-2xl font-bold text-white">{simulationStats.winRate.toFixed(1)}%</p>
+                      <p className="text-xs md:text-sm text-gray-400">Win Rate</p>
+                      <p className="text-lg md:text-2xl font-bold text-white">{simulationStats.winRate.toFixed(1)}%</p>
                     </div>
-                    <Target className="w-8 h-8 text-blue-500" />
+                    <Target className="w-6 h-6 md:w-8 md:h-8 text-blue-500" />
                   </div>
                   <div className="mt-2">
-                    <span className="text-sm text-gray-400">
+                    <span className="text-xs md:text-sm text-gray-400">
                       {simulationStats.winningTrades}W / {simulationStats.losingTrades}L
                     </span>
                   </div>
@@ -478,18 +478,18 @@ export default function TradingPlayground() {
               </Card>
 
               <Card className="bg-gray-800 border-gray-700">
-                <CardContent className="p-4">
+                <CardContent className="p-3 md:p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-400">Total P&L</p>
-                      <p className={`text-2xl font-bold ${simulationStats.totalPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      <p className="text-xs md:text-sm text-gray-400">Total P&L</p>
+                      <p className={`text-lg md:text-2xl font-bold ${simulationStats.totalPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         {simulationStats.totalPnL >= 0 ? '+' : ''}${simulationStats.totalPnL.toFixed(2)}
                       </p>
                     </div>
-                    <BarChart3 className="w-8 h-8 text-purple-500" />
+                    <BarChart3 className="w-6 h-6 md:w-8 md:h-8 text-purple-500" />
                   </div>
                   <div className="mt-2">
-                    <span className="text-sm text-gray-400">
+                    <span className="text-xs md:text-sm text-gray-400">
                       {simulationStats.totalTrades} trades
                     </span>
                   </div>
@@ -497,16 +497,16 @@ export default function TradingPlayground() {
               </Card>
 
               <Card className="bg-gray-800 border-gray-700">
-                <CardContent className="p-4">
+                <CardContent className="p-3 md:p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-400">Open Positions</p>
-                      <p className="text-2xl font-bold text-white">{openPositions.length}</p>
+                      <p className="text-xs md:text-sm text-gray-400">Open Positions</p>
+                      <p className="text-lg md:text-2xl font-bold text-white">{openPositions.length}</p>
                     </div>
-                    <Award className="w-8 h-8 text-yellow-500" />
+                    <Award className="w-6 h-6 md:w-8 md:h-8 text-yellow-500" />
                   </div>
                   <div className="mt-2">
-                    <span className="text-sm text-gray-400">
+                    <span className="text-xs md:text-sm text-gray-400">
                       Active trades
                     </span>
                   </div>
@@ -514,37 +514,37 @@ export default function TradingPlayground() {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
               {/* Performance Chart */}
               <Card className="bg-gray-800 border-gray-700 lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <BarChart3 className="w-5 h-5 mr-2" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white flex items-center text-sm md:text-base">
+                    <BarChart3 className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Portfolio Performance
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-3 md:p-6">
                   <AdvancedSimulationChart 
                     data={balanceHistory}
-                    width={400}
-                    height={200}
+                    width={300}
+                    height={160}
                   />
-                  <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+                  <div className="mt-3 md:mt-4 grid grid-cols-3 gap-2 md:gap-4 text-center">
                     <div>
-                      <p className="text-sm text-gray-400">Max Drawdown</p>
-                      <p className="text-lg font-semibold text-red-400">
+                      <p className="text-xs md:text-sm text-gray-400">Max Drawdown</p>
+                      <p className="text-sm md:text-lg font-semibold text-red-400">
                         {simulationStats.maxDrawdown.toFixed(2)}%
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-400">Profit Factor</p>
-                      <p className="text-lg font-semibold text-green-400">
+                      <p className="text-xs md:text-sm text-gray-400">Profit Factor</p>
+                      <p className="text-sm md:text-lg font-semibold text-green-400">
                         {riskMetrics.profitFactor.toFixed(2)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-400">Volatility</p>
-                      <p className="text-lg font-semibold text-yellow-400">
+                      <p className="text-xs md:text-sm text-gray-400">Volatility</p>
+                      <p className="text-sm md:text-lg font-semibold text-yellow-400">
                         {riskMetrics.volatility.toFixed(2)}%
                       </p>
                     </div>
@@ -554,13 +554,13 @@ export default function TradingPlayground() {
 
               {/* Simulation Settings */}
               <Card className="bg-gray-800 border-gray-700 lg:col-span-1">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <Settings className="w-5 h-5 mr-2" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white flex items-center text-sm md:text-base">
+                    <Settings className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Simulation Settings
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3 md:space-y-4">
                   <div>
                     <Label className="text-gray-300">Initial Balance</Label>
                     <Input
@@ -712,9 +712,9 @@ export default function TradingPlayground() {
 
               {/* Live Signals */}
               <Card className="bg-gray-800 border-gray-700 lg:col-span-1">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <AlertTriangle className="w-5 h-5 mr-2" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white flex items-center text-sm md:text-base">
+                    <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                     Live Signals
                     {isSimulationRunning && (
                       <motion.div
@@ -725,8 +725,8 @@ export default function TradingPlayground() {
                     )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                <CardContent className="p-3 md:p-6">
+                  <div className="space-y-2 md:space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
                     <AnimatePresence>
                       {liveSignals.map((signal) => (
                         <motion.div
@@ -795,14 +795,14 @@ export default function TradingPlayground() {
 
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               {/* Open Positions */}
               <Card className="bg-gray-800 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Open Positions</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-sm md:text-base">Open Positions</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                <CardContent className="p-3 md:p-6">
+                  <div className="space-y-2 md:space-y-3 max-h-48 md:max-h-64 overflow-y-auto">
                     {openPositions.map((position) => {
                       const currentPrice = marketPrices?.[position.symbol] || position.entryPrice;
                       const priceDiff = position.action === 'buy' 
@@ -881,48 +881,50 @@ export default function TradingPlayground() {
 
             {/* Trade History */}
             <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white">Recent Trades</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white text-sm md:text-base">Recent Trades</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-gray-700">
-                      <TableHead className="text-gray-300">Time</TableHead>
-                      <TableHead className="text-gray-300">Symbol</TableHead>
-                      <TableHead className="text-gray-300">Action</TableHead>
-                      <TableHead className="text-gray-300">Entry Price</TableHead>
-                      <TableHead className="text-gray-300">Exit Price</TableHead>
-                      <TableHead className="text-gray-300">Quantity</TableHead>
-                      <TableHead className="text-gray-300">P&L</TableHead>
-                      <TableHead className="text-gray-300">P&L %</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {closedPositions.map((position) => (
-                      <TableRow key={position.id} className="border-gray-700">
-                        <TableCell className="text-gray-300">
-                          {position.timestamp.toLocaleTimeString()}
-                        </TableCell>
-                        <TableCell className="text-white">{position.symbol}</TableCell>
-                        <TableCell>
-                          <Badge variant={position.action === 'buy' ? 'default' : 'destructive'}>
-                            {position.action.toUpperCase()}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-white">${position.entryPrice}</TableCell>
-                        <TableCell className="text-white">${position.exitPrice}</TableCell>
-                        <TableCell className="text-white">{position.quantity.toFixed(6)}</TableCell>
-                        <TableCell className={position.pnl! >= 0 ? 'text-green-500' : 'text-red-500'}>
-                          {position.pnl! >= 0 ? '+' : ''}${position.pnl}
-                        </TableCell>
-                        <TableCell className={position.pnlPercentage! >= 0 ? 'text-green-500' : 'text-red-500'}>
-                          {position.pnlPercentage! >= 0 ? '+' : ''}{position.pnlPercentage}%
-                        </TableCell>
+              <CardContent className="p-3 md:p-6">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-gray-700">
+                        <TableHead className="text-gray-300 text-xs md:text-sm">Time</TableHead>
+                        <TableHead className="text-gray-300 text-xs md:text-sm">Symbol</TableHead>
+                        <TableHead className="text-gray-300 text-xs md:text-sm">Action</TableHead>
+                        <TableHead className="text-gray-300 text-xs md:text-sm">Entry</TableHead>
+                        <TableHead className="text-gray-300 text-xs md:text-sm">Exit</TableHead>
+                        <TableHead className="text-gray-300 text-xs md:text-sm">Qty</TableHead>
+                        <TableHead className="text-gray-300 text-xs md:text-sm">P&L</TableHead>
+                        <TableHead className="text-gray-300 text-xs md:text-sm">P&L %</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {closedPositions.map((position) => (
+                        <TableRow key={position.id} className="border-gray-700">
+                          <TableCell className="text-gray-300 text-xs md:text-sm">
+                            {position.timestamp.toLocaleTimeString()}
+                          </TableCell>
+                          <TableCell className="text-white text-xs md:text-sm">{position.symbol}</TableCell>
+                          <TableCell>
+                            <Badge variant={position.action === 'buy' ? 'default' : 'destructive'} className="text-xs">
+                              {position.action.toUpperCase()}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-white text-xs md:text-sm">${position.entryPrice}</TableCell>
+                          <TableCell className="text-white text-xs md:text-sm">${position.exitPrice}</TableCell>
+                          <TableCell className="text-white text-xs md:text-sm">{position.quantity.toFixed(6)}</TableCell>
+                          <TableCell className={`text-xs md:text-sm ${position.pnl! >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {position.pnl! >= 0 ? '+' : ''}${position.pnl}
+                          </TableCell>
+                          <TableCell className={`text-xs md:text-sm ${position.pnlPercentage! >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {position.pnlPercentage! >= 0 ? '+' : ''}{position.pnlPercentage}%
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
                 
                 {closedPositions.length === 0 && (
                   <div className="text-center py-8">
