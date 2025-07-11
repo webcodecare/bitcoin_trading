@@ -59,24 +59,24 @@ export default function MoodBoardSimple() {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="ml-64 flex-1">
+        <div className="ml-0 md:ml-64 flex-1">
           {/* Top Bar */}
-          <header className="bg-card border-b border-border p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Activity className="h-6 w-6" />
-                <h1 className="text-2xl font-bold">Market Mood Board</h1>
+          <header className="bg-card border-b border-border p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-2 md:space-x-3">
+                <Activity className="h-5 w-5 md:h-6 md:w-6" />
+                <h1 className="text-xl md:text-2xl font-bold">Market Mood Board</h1>
               </div>
-              <Badge variant="outline" className="text-emerald-400">
+              <Badge variant="outline" className="text-emerald-400 text-xs md:text-sm self-start sm:self-auto">
                 Community Sentiment
               </Badge>
             </div>
           </header>
 
           {/* Mood Board Content */}
-          <div className="p-6">
-            <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4">
+          <div className="p-4 md:p-6">
+            <Tabs defaultValue="overview" className="space-y-4 md:space-y-6">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="market">Market Mood</TabsTrigger>
                 <TabsTrigger value="community">Community</TabsTrigger>
@@ -85,7 +85,7 @@ export default function MoodBoardSimple() {
 
               <TabsContent value="overview" className="space-y-6">
                 {/* Current Market Sentiment */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {marketMoods.map((item, index) => {
                     const IconComponent = item.icon;
                     return (
@@ -116,7 +116,7 @@ export default function MoodBoardSimple() {
                     <CardTitle>How are you feeling about the market today?</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                       {userMoods.map((mood, index) => {
                         const IconComponent = mood.icon;
                         return (
