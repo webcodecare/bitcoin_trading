@@ -21,7 +21,7 @@ const MultiTickerDashboard = lazy(() => import("@/pages/multi-ticker-dashboard")
 const Trading = lazy(() => import("@/pages/trading"));
 const Admin = lazy(() => import("@/pages/admin"));
 const AdminUsers = lazy(() => import("@/pages/admin/users"));
-const AdminUserRoles = lazy(() => import("@/pages/admin/user-roles-simple"));
+const AdminUserRoles = lazy(() => import("@/pages/admin/user-roles-working"));
 const AdminTickers = lazy(() => import("@/pages/admin/tickers"));
 const AdminSignals = lazy(() => import("@/pages/admin/signals"));
 const AdminAlerts = lazy(() => import("@/pages/admin/alerts"));
