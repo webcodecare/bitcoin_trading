@@ -20,6 +20,17 @@ const Dashboard = lazy(() => import("@/pages/dashboard"));
 const MultiTickerDashboard = lazy(() => import("@/pages/multi-ticker-dashboard"));
 const Trading = lazy(() => import("@/pages/trading"));
 const Admin = lazy(() => import("@/pages/admin"));
+const AdminUsers = lazy(() => import("@/pages/admin/users"));
+const AdminUserRoles = lazy(() => import("@/pages/admin/user-roles"));
+const AdminTickers = lazy(() => import("@/pages/admin/tickers"));
+const AdminSignals = lazy(() => import("@/pages/admin/signals"));
+const AdminAlerts = lazy(() => import("@/pages/admin/alerts"));
+const AdminNotifications = lazy(() => import("@/pages/admin/notifications"));
+const AdminLogs = lazy(() => import("@/pages/admin/logs"));
+const AdminAnalytics = lazy(() => import("@/pages/admin/analytics"));
+const AdminIntegrations = lazy(() => import("@/pages/admin/integrations"));
+const AdminReports = lazy(() => import("@/pages/admin/reports"));
+const AdminPermissions = lazy(() => import("@/pages/admin/permissions"));
 const Alerts = lazy(() => import("@/pages/alerts"));
 const Settings = lazy(() => import("@/pages/settings"));
 const Subscription = lazy(() => import("@/pages/subscription"));
@@ -76,6 +87,83 @@ function Router() {
         <AuthGuard>
           <Suspense fallback={<LoadingScreen />}>
             <Admin />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/users">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminUsers />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/user-roles">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminUserRoles />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/tickers">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminTickers />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/signals">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminSignals />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/alerts">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminAlerts />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/notifications">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminNotifications />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/logs">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminLogs />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/analytics">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminAnalytics />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/integrations">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminIntegrations />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/reports">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminReports />
+          </Suspense>
+        </AuthGuard>
+      </Route>
+      <Route path="/admin/permissions">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <AdminPermissions />
           </Suspense>
         </AuthGuard>
       </Route>
