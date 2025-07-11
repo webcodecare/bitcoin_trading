@@ -1,6 +1,6 @@
 # Deployment Guide - Separated Architecture
 
-This guide covers deploying the CryptoStrategy Pro platform using the separated frontend and backend architecture.
+This guide covers deploying the Bitcoin Trading platform using the separated frontend and backend architecture.
 
 ## Deployment Overview
 

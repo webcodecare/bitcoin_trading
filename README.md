@@ -1,4 +1,4 @@
-# CryptoStrategy Pro - Separated Architecture
+# Bitcoin Trading Platform - Separated Architecture
 
 A professional cryptocurrency trading platform with separated frontend and backend architecture for better scalability and maintainability.
 

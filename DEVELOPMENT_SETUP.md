@@ -1,6 +1,6 @@
 # Local Development Setup Guide
 
-This guide explains how to run the CryptoStrategy Pro platform locally using the separated frontend and backend architecture.
+This guide explains how to run the Bitcoin Trading platform locally using the separated frontend and backend architecture.
 
 ## Prerequisites
 
@@ -17,8 +17,8 @@ Before starting, ensure you have the following installed:
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd crypto-strategy-pro
+git clone https://github.com/webcodecare/bitcoin_trading.git
+cd bitcoin_trading
 
 # Install dependencies for both applications
 cd backend && npm install
