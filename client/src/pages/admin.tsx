@@ -306,68 +306,69 @@ export default function Admin() {
                           <TableHead className="min-w-[100px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
-                    <TableBody>
-                      {users?.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium text-sm md:text-base">
-                                {user.firstName} {user.lastName}
+                      <TableBody>
+                        {users?.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium text-sm md:text-base">
+                                  {user.firstName} {user.lastName}
+                                </div>
+                                <div className="text-xs md:text-sm text-muted-foreground">{user.email}</div>
+                                <div className="sm:hidden mt-1 flex gap-2">
+                                  <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
+                                    {user.role}
+                                  </Badge>
+                                  <Badge variant={user.isActive ? 'default' : 'secondary'} className="text-xs">
+                                    {user.isActive ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                </div>
                               </div>
-                              <div className="text-xs md:text-sm text-muted-foreground">{user.email}</div>
-                              <div className="sm:hidden mt-1 flex gap-2">
-                                <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
-                                  {user.role}
-                                </Badge>
-                                <Badge variant={user.isActive ? 'default' : 'secondary'} className="text-xs">
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                                {user.role}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <div className="flex items-center space-x-2">
+                                <UISwitch
+                                  checked={user.isActive}
+                                  onCheckedChange={(checked: boolean) =>
+                                    updateUserMutation.mutate({
+                                      userId: user.id,
+                                      updates: { isActive: checked },
+                                    })
+                                  }
+                                />
+                                <span className="text-sm">
                                   {user.isActive ? 'Active' : 'Inactive'}
-                                </Badge>
+                                </span>
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                              {user.role}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            <div className="flex items-center space-x-2">
-                              <UISwitch
-                                checked={user.isActive}
-                                onCheckedChange={(checked: boolean) =>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs md:text-sm"
+                                onClick={() =>
                                   updateUserMutation.mutate({
                                     userId: user.id,
-                                    updates: { isActive: checked },
+                                    updates: { role: user.role === 'admin' ? 'user' : 'admin' },
                                   })
                                 }
-                              />
-                              <span className="text-sm">
-                                {user.isActive ? 'Active' : 'Inactive'}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {new Date(user.createdAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs md:text-sm"
-                              onClick={() =>
-                                updateUserMutation.mutate({
-                                  userId: user.id,
-                                  updates: { role: user.role === 'admin' ? 'user' : 'admin' },
-                                })
-                              }
-                            >
-                              {user.role === 'admin' ? 'Remove' : 'Make Admin'}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                              >
+                                {user.role === 'admin' ? 'Remove' : 'Make Admin'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
