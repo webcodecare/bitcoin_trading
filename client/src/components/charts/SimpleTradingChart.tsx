@@ -57,8 +57,8 @@ export default function SimpleTradingChart({
     const width = rect.width;
     const height = rect.height;
 
-    // Clear canvas
-    ctx.fillStyle = '#0a0a0a';
+    // Clear canvas with TradingView-style background
+    ctx.fillStyle = '#1e222d';
     ctx.fillRect(0, 0, width, height);
 
     if (priceHistory.length < 2) return;
@@ -68,8 +68,8 @@ export default function SimpleTradingChart({
     const maxPrice = Math.max(...priceHistory);
     const priceRange = maxPrice - minPrice || 1;
 
-    // Draw grid
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    // Draw grid (TradingView style)
+    ctx.strokeStyle = '#2a2e39';
     ctx.lineWidth = 1;
     
     // Horizontal grid lines
@@ -81,8 +81,8 @@ export default function SimpleTradingChart({
       ctx.stroke();
     }
 
-    // Draw price line
-    ctx.strokeStyle = '#00d4aa';
+    // Draw price line (TradingView blue)
+    ctx.strokeStyle = '#2196f3';
     ctx.lineWidth = 2;
     ctx.beginPath();
 
@@ -104,7 +104,7 @@ export default function SimpleTradingChart({
       const lastPrice = priceHistory[priceHistory.length - 1];
       const lastY = height - ((lastPrice - minPrice) / priceRange) * height;
       
-      ctx.fillStyle = '#00d4aa';
+      ctx.fillStyle = '#2196f3';
       ctx.beginPath();
       ctx.arc(width - 10, lastY, 4, 0, 2 * Math.PI);
       ctx.fill();
