@@ -158,7 +158,7 @@ export default function Dashboard() {
 
             {/* Enhanced Dashboard Tabs */}
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-6">
+              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 mb-6">
                 <TabsTrigger value="overview" className="flex items-center space-x-2 text-xs lg:text-sm">
                   <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">Overview</span>
@@ -166,16 +166,23 @@ export default function Dashboard() {
                 </TabsTrigger>
                 <TabsTrigger value="charts" className="flex items-center space-x-2 text-xs lg:text-sm">
                   <LineChart className="h-4 w-4" />
-                  <span>Charts</span>
+                  <span className="hidden sm:inline">Charts</span>
+                  <span className="sm:hidden">Chart</span>
                 </TabsTrigger>
                 <TabsTrigger value="analytics" className="flex items-center space-x-2 text-xs lg:text-sm">
                   <PieChart className="h-4 w-4" />
                   <span className="hidden sm:inline">Analytics</span>
                   <span className="sm:hidden">Data</span>
                 </TabsTrigger>
+                <TabsTrigger value="market-stats" className="flex items-center space-x-2 text-xs lg:text-sm">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="hidden sm:inline">Market Stats</span>
+                  <span className="sm:hidden">Stats</span>
+                </TabsTrigger>
                 <TabsTrigger value="alerts" className="flex items-center space-x-2 text-xs lg:text-sm">
                   <Bell className="h-4 w-4" />
-                  <span>Alerts</span>
+                  <span className="hidden sm:inline">Alerts</span>
+                  <span className="sm:hidden">Alert</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -352,79 +359,6 @@ export default function Dashboard() {
               </TabsContent>
 
               <TabsContent value="analytics" className="space-y-6">
-                {/* Enhanced Widgets Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-                    <PriceWidget 
-                      widget={{
-                        id: 'price-1',
-                        type: 'price',
-                        title: 'BTC Price Tracker',
-                        position: 0,
-                        size: 'medium',
-                        settings: { ticker: 'BTCUSDT', showChart: true },
-                        enabled: true
-                      }}
-                      onUpdateSettings={() => {}}
-                      onRemove={() => {}}
-                      onToggleEnabled={() => {}}
-                    />
-                  </Suspense>
-                  
-                  <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-                    <PortfolioWidget 
-                      widget={{
-                        id: 'portfolio-1',
-                        type: 'portfolio',
-                        title: 'Portfolio Overview',
-                        position: 1,
-                        size: 'medium',
-                        settings: { showAllocation: true, showPnL: true },
-                        enabled: true
-                      }}
-                      onUpdateSettings={() => {}}
-                      onRemove={() => {}}
-                      onToggleEnabled={() => {}}
-                    />
-                  </Suspense>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-                    <SignalsWidget 
-                      widget={{
-                        id: 'signals-1',
-                        type: 'signals',
-                        title: 'Latest Signals',
-                        position: 2,
-                        size: 'medium',
-                        settings: { limit: 5, autoRefresh: true },
-                        enabled: true
-                      }}
-                      onUpdateSettings={() => {}}
-                      onRemove={() => {}}
-                      onToggleEnabled={() => {}}
-                    />
-                  </Suspense>
-                  
-                  <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-                    <AlertsWidget 
-                      widget={{
-                        id: 'alerts-1',
-                        type: 'alerts',
-                        title: 'Active Alerts',
-                        position: 3,
-                        size: 'medium',
-                        settings: { showOnlyActive: true },
-                        enabled: true
-                      }}
-                      onUpdateSettings={() => {}}
-                      onRemove={() => {}}
-                      onToggleEnabled={() => {}}
-                    />
-                  </Suspense>
-                </div>
-
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Card>
                     <CardHeader>
@@ -446,6 +380,188 @@ export default function Dashboard() {
                         <span>Win Rate</span>
                         <span className="font-semibold text-green-400">87.5%</span>
                       </div>
+                      <div className="flex justify-between">
+                        <span>Avg. Hold Time</span>
+                        <span className="font-semibold">2.3 days</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Best Performer</span>
+                        <span className="font-semibold">BTCUSDT</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="market-stats" className="space-y-6">
+                {/* Market Statistics Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <TrendingUp className="h-5 w-5 text-green-400" />
+                        <span>Market Overview</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex justify-between">
+                        <span>Market Cap</span>
+                        <span className="font-semibold">$2.41T</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>24h Volume</span>
+                        <span className="font-semibold">$89.2B</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>BTC Dominance</span>
+                        <span className="font-semibold">54.2%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Fear & Greed</span>
+                        <Badge className="bg-orange-500">Neutral (52)</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <BarChart3 className="h-5 w-5 text-blue-400" />
+                        <span>Top Gainers</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <span className="text-sm">SOL</span>
+                        </div>
+                        <span className="text-green-400 font-semibold">+12.5%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <span className="text-sm">ADA</span>
+                        </div>
+                        <span className="text-green-400 font-semibold">+8.9%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <span className="text-sm">MATIC</span>
+                        </div>
+                        <span className="text-green-400 font-semibold">+7.2%</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <TrendingDown className="h-5 w-5 text-red-400" />
+                        <span>Top Losers</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                          <span className="text-sm">DOGE</span>
+                        </div>
+                        <span className="text-red-400 font-semibold">-5.2%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                          <span className="text-sm">LTC</span>
+                        </div>
+                        <span className="text-red-400 font-semibold">-3.8%</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                          <span className="text-sm">XRP</span>
+                        </div>
+                        <span className="text-red-400 font-semibold">-2.1%</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Professional Features */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <PieChart className="h-5 w-5 text-purple-400" />
+                        <span>Professional Features</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <Button variant="outline" className="h-16 flex-col space-y-1" asChild>
+                          <Link href="/advanced-portfolio">
+                            <TrendingUp className="h-5 w-5" />
+                            <span className="text-xs">Portfolio</span>
+                          </Link>
+                        </Button>
+                        <Button variant="outline" className="h-16 flex-col space-y-1" asChild>
+                          <Link href="/trading-playground">
+                            <Target className="h-5 w-5" />
+                            <span className="text-xs">Simulator</span>
+                          </Link>
+                        </Button>
+                        <Button variant="outline" className="h-16 flex-col space-y-1" asChild>
+                          <Link href="/advanced-alerts">
+                            <Bell className="h-5 w-5" />
+                            <span className="text-xs">Alerts</span>
+                          </Link>
+                        </Button>
+                        <Button variant="outline" className="h-16 flex-col space-y-1" asChild>
+                          <Link href="/historical-ohlc">
+                            <BarChart3 className="h-5 w-5" />
+                            <span className="text-xs">OHLC Data</span>
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <Activity className="h-5 w-5 text-cyan-400" />
+                        <span>Market Information</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex justify-between">
+                        <span>Market Trend</span>
+                        <Badge className="bg-green-500">Bullish</Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Volatility</span>
+                        <span className="font-semibold">Medium</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Support Level</span>
+                        <span className="font-semibold">$65,200</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Resistance</span>
+                        <span className="font-semibold">$71,500</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>RSI</span>
+                        <span className="font-semibold text-orange-400">58.3</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>MACD Signal</span>
+                        <Badge variant="outline" className="text-green-400">Buy</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
                       <div className="flex justify-between">
                         <span>Avg. Hold Time</span>
                         <span className="font-semibold">2.3 days</span>
