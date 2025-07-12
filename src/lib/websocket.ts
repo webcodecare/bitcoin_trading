@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback } from "react";
+import { buildWsUrl } from "./config";
 
 export interface WebSocketMessage {
   type: string;
@@ -17,10 +18,8 @@ export class WebSocketManager {
   private isConnecting = false;
 
   constructor() {
-    // Only initialize WebSocket in production or when explicitly needed
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const port = window.location.port || (protocol === "wss:" ? "443" : "80");
-    this.url = `${protocol}//${window.location.hostname}:${port}/ws`;
+    // Use configured WebSocket URL
+    this.url = buildWsUrl() + '/ws';
   }
 
   connect(): Promise<void> {
