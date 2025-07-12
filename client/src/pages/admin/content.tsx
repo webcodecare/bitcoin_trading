@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import Sidebar from "@/components/layout/Sidebar";
+import Header from "@/components/layout/Header";
 import { FileText, Edit, Save, Plus, Trash2, Star, Quote, DollarSign, Eye } from "lucide-react";
 
 interface CMSBlock {
@@ -261,31 +263,35 @@ export default function AdminContent() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Content Management</h1>
-          <p className="text-muted-foreground">Manage home page content, testimonials, and pricing information</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Sidebar />
+      <div className="lg:pl-72">
+        <Header />
+        <div className="p-4 sm:p-6 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold">Content Management</h1>
+              <p className="text-muted-foreground">Manage home page content, testimonials, and pricing information</p>
+            </div>
+          </div>
 
       <Tabs defaultValue="cms" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="cms">Website Content</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="cms">Content</TabsTrigger>
           <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing Content</TabsTrigger>
+          <TabsTrigger value="pricing">Pricing</TabsTrigger>
         </TabsList>
 
         <TabsContent value="cms" className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <h2 className="text-xl font-semibold">Website Content Blocks</h2>
-            <Button onClick={handleCreateBlock}>
+            <Button onClick={handleCreateBlock} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add Content Block
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {blocksLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="animate-pulse">
@@ -323,7 +329,7 @@ export default function AdminContent() {
                       <div className="text-xs text-muted-foreground">
                         Order: {block.order} • Modified: {new Date(block.lastModified).toLocaleDateString()}
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -338,6 +344,7 @@ export default function AdminContent() {
                           size="sm"
                           onClick={() => deleteBlockMutation.mutate(block.id)}
                           disabled={deleteBlockMutation.isPending}
+                          className="sm:w-auto"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -351,15 +358,15 @@ export default function AdminContent() {
         </TabsContent>
 
         <TabsContent value="testimonials" className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <h2 className="text-xl font-semibold">Customer Testimonials</h2>
-            <Button onClick={handleCreateTestimonial}>
+            <Button onClick={handleCreateTestimonial} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add Testimonial
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {testimonialsLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <Card key={i} className="animate-pulse">
@@ -397,12 +404,12 @@ export default function AdminContent() {
                       <p className="text-sm text-muted-foreground line-clamp-3">
                         "{testimonial.content}"
                       </p>
-                      <div className="flex space-x-2">
+                      <div className="flex">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditTestimonial(testimonial)}
-                          className="flex-1"
+                          className="w-full"
                         >
                           <Edit className="h-4 w-4 mr-1" />
                           Edit
@@ -629,6 +636,8 @@ export default function AdminContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </div>
+      </div>
     </div>
   );
 }

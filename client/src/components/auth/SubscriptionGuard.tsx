@@ -1,105 +1,152 @@
-import React from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { hasAccess, getUpgradeMessage, getPlanBadgeColor } from "@/lib/subscriptionUtils";
-import { PermissionManager } from "@/lib/permissions";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
-import { Lock, Crown, Zap, Star, ArrowRight } from "lucide-react";
+import React from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { hasAccess } from '@/lib/subscriptionUtils';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Crown, Lock, ArrowUp } from 'lucide-react';
+import { Link } from 'wouter';
 
 interface SubscriptionGuardProps {
   children: React.ReactNode;
-  feature: string;
-  fallback?: React.ReactNode;
-  showUpgrade?: boolean;
+  requiredFeature: string;
+  fallbackMessage?: string;
 }
 
-export default function SubscriptionGuard({ 
+export function SubscriptionGuard({ 
   children, 
-  feature, 
-  fallback, 
-  showUpgrade = true 
+  requiredFeature, 
+  fallbackMessage 
 }: SubscriptionGuardProps) {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Card className="w-full max-w-md mx-4">
+          <CardHeader className="text-center">
+            <Lock className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <CardTitle>Authentication Required</CardTitle>
+            <CardDescription>
+              Please log in to access this feature
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Link href="/login">
+              <Button className="w-full">
+                Log In
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const userTier = user?.subscriptionTier || "free";
+  const hasPermission = hasAccess(userTier, requiredFeature);
   
-  // Debug logging
-  console.log(`SubscriptionGuard DEBUG: feature=${feature}, userTier=${userTier}, user=`, user);
-  
-  // Try both subscription-based and permission-based access
-  const hasFeatureAccess = hasAccess(userTier, feature as any) || PermissionManager.canAccessFeature(user, feature);
-  
-  console.log(`SubscriptionGuard DEBUG: hasFeatureAccess=${hasFeatureAccess} for ${feature}`);
-  
-  if (hasFeatureAccess) {
+  // If user has permission, render children
+  if (hasPermission) {
     return <>{children}</>;
   }
-  
-  if (fallback) {
-    return <>{fallback}</>;
-  }
-  
-  if (!showUpgrade) {
-    return null;
-  }
-  
+
+  // Show upgrade prompt
+  const upgradeMessages: Record<string, { title: string; description: string; requiredTier: string }> = {
+    tradingPlayground: {
+      title: "Trading Playground",
+      description: "Practice trading with virtual funds",
+      requiredTier: "Basic"
+    },
+    advancedCharts: {
+      title: "Advanced Charts",
+      description: "Professional chart analysis tools",
+      requiredTier: "Basic"
+    },
+    heatmapAnalysis: {
+      title: "200-Week Heatmap",
+      description: "Advanced market cycle analysis",
+      requiredTier: "Basic"
+    },
+    cycleForecasting: {
+      title: "Cycle Forecasting",
+      description: "AI-powered market predictions",
+      requiredTier: "Premium"
+    },
+    advancedAlerts: {
+      title: "Advanced Alerts",
+      description: "Custom alert conditions and triggers",
+      requiredTier: "Premium"
+    },
+    portfolioManagement: {
+      title: "Portfolio Management",
+      description: "Professional portfolio tracking",
+      requiredTier: "Basic"
+    },
+    smsAlerts: {
+      title: "SMS Alerts",
+      description: "Real-time SMS notifications",
+      requiredTier: "Basic"
+    },
+    telegramAlerts: {
+      title: "Telegram Alerts",
+      description: "Telegram bot notifications",
+      requiredTier: "Premium"
+    },
+    pushNotifications: {
+      title: "Push Notifications",
+      description: "Browser push notifications",
+      requiredTier: "Basic"
+    }
+  };
+
+  const featureInfo = upgradeMessages[requiredFeature] || {
+    title: "Premium Feature",
+    description: fallbackMessage || "This feature requires a subscription upgrade",
+    requiredTier: "Basic"
+  };
+
   return (
-    <Card className="border-2 border-dashed border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
-      <CardHeader className="text-center">
-        <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-          <Lock className="h-8 w-8 text-primary" />
-        </div>
-        <CardTitle className="flex items-center justify-center gap-2">
-          <Crown className="h-5 w-5 text-yellow-500" />
-          Premium Feature
-        </CardTitle>
-        <CardDescription>
-          {getUpgradeMessage(feature)}
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="text-center space-y-4">
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-sm text-muted-foreground">Current Plan:</span>
-          <Badge className={getPlanBadgeColor(userTier)}>
-            {userTier.charAt(0).toUpperCase() + userTier.slice(1)}
-          </Badge>
-        </div>
-        
-        <div className="space-y-2">
-          <Button asChild className="w-full">
-            <Link href="/pricing">
-              <Zap className="h-4 w-4 mr-2" />
-              Upgrade Now
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Link>
-          </Button>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <Card className="w-full max-w-lg mx-4">
+        <CardHeader className="text-center">
+          <Crown className="h-12 w-12 mx-auto text-yellow-500 mb-4" />
+          <CardTitle className="text-2xl">Upgrade Required</CardTitle>
+          <CardDescription className="text-lg">
+            {featureInfo.title}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <p className="text-gray-600 dark:text-gray-300">
+            {featureInfo.description}
+          </p>
           
-          <Button variant="outline" asChild className="w-full">
-            <Link href="/subscription">
-              <Star className="h-4 w-4 mr-2" />
-              View Plans
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              <strong>Current Plan:</strong> {userTier.charAt(0).toUpperCase() + userTier.slice(1)}
+              <br />
+              <strong>Required:</strong> {featureInfo.requiredTier} or higher
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Link href="/subscriptions">
+              <Button className="w-full bg-yellow-500 hover:bg-yellow-600 text-white">
+                <ArrowUp className="h-4 w-4 mr-2" />
+                Upgrade to {featureInfo.requiredTier}
+              </Button>
             </Link>
-          </Button>
-        </div>
-        
-        <p className="text-xs text-muted-foreground">
-          Unlock this feature and many more with a subscription upgrade
-        </p>
-      </CardContent>
-    </Card>
+            
+            <Link href="/dashboard">
+              <Button variant="outline" className="w-full">
+                Back to Dashboard
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
-// Hook for feature access checking
-export function useFeatureAccess(feature: string) {
-  const { user } = useAuth();
-  const userTier = user?.subscriptionTier || "free";
-  
-  return {
-    hasAccess: hasAccess(userTier, feature as any),
-    userTier,
-    upgradeMessage: getUpgradeMessage(feature),
-  };
-}
+export default SubscriptionGuard;

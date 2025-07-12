@@ -58,7 +58,7 @@ export default function SubscriptionPage() {
     return (
       <div className="flex h-screen bg-background">
         <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden ml-0 md:ml-64">
           <div className="flex-1 overflow-y-auto">
             <div className="container mx-auto px-4 py-8">
               <Card>
@@ -79,24 +79,24 @@ export default function SubscriptionPage() {
     <Suspense fallback={<LoadingSkeleton />}>
       <div className="flex h-screen bg-background">
         <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden ml-0 md:ml-64">
           <div className="flex-1 overflow-y-auto">
-            <div className="container mx-auto px-4 py-6 space-y-6">
+            <div className="container mx-auto px-4 py-4 md:py-6 space-y-4 md:space-y-6">
               {/* Header */}
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight">Subscription Center</h1>
-                  <p className="text-muted-foreground">
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Subscription Center</h1>
+                  <p className="text-sm md:text-base text-muted-foreground">
                     Manage your cryptocurrency subscriptions and monitor real-time charts
                   </p>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="flex items-center gap-1">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                  <Badge variant="outline" className="flex items-center gap-1 text-xs md:text-sm">
                     <Star className="h-3 w-3" />
                     {user?.subscriptionTier || 'Free'} Plan
                   </Badge>
-                  <Badge variant="secondary" className="flex items-center gap-1">
+                  <Badge variant="secondary" className="flex items-center gap-1 text-xs md:text-sm">
                     <Activity className="h-3 w-3" />
                     Active User
                   </Badge>
@@ -106,22 +106,22 @@ export default function SubscriptionPage() {
       <Separator />
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
         {/* Subscription Management - Takes up 2 columns on XL screens */}
         <div className="xl:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <Settings className="h-4 w-4 md:h-5 md:w-5" />
                 Subscription Management
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">
+              <div className="text-center py-6 md:py-8">
+                <p className="text-sm md:text-base text-muted-foreground mb-4">
                   Subscription management is temporarily under maintenance.
                 </p>
-                <Button variant="outline">
+                <Button variant="outline" className="text-xs md:text-sm">
                   Configure Subscriptions
                 </Button>
               </div>
