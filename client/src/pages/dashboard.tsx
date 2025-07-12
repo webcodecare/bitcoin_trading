@@ -29,6 +29,12 @@ const CycleChart = lazy(() => import("@/components/charts/CycleChart"));
 const TickerSelector = lazy(() => import("@/components/ui/ticker-selector"));
 const TradingViewRealWidget = lazy(() => import("@/components/charts/TradingViewRealWidget"));
 
+// Import dashboard widgets for enhanced experience
+const PriceWidget = lazy(() => import("@/components/dashboard/widgets/PriceWidget"));
+const SignalsWidget = lazy(() => import("@/components/dashboard/widgets/SignalsWidget"));
+const PortfolioWidget = lazy(() => import("@/components/dashboard/widgets/PortfolioWidget"));
+const AlertsWidget = lazy(() => import("@/components/dashboard/widgets/AlertsWidget"));
+
 interface AlertSignal {
   id: string;
   ticker: string;
@@ -174,6 +180,43 @@ export default function Dashboard() {
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
+                {/* Advanced Dashboard Access */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Activity className="h-5 w-5" />
+                      <span>Dashboard Widgets</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                      <Button asChild variant="outline" className="h-20 flex-col space-y-2">
+                        <Link href="/dashboard-widgets">
+                          <PieChart className="h-6 w-6" />
+                          <span className="text-sm">Advanced Widgets</span>
+                          <span className="text-xs text-muted-foreground">Customizable dashboard</span>
+                        </Link>
+                      </Button>
+                      
+                      <Button asChild variant="outline" className="h-20 flex-col space-y-2">
+                        <Link href="/multi-ticker-dashboard">
+                          <BarChart3 className="h-6 w-6" />
+                          <span className="text-sm">Multi-Ticker</span>
+                          <span className="text-xs text-muted-foreground">Compare cryptocurrencies</span>
+                        </Link>
+                      </Button>
+                      
+                      <Button asChild variant="outline" className="h-20 flex-col space-y-2">
+                        <Link href="/trading-playground">
+                          <TrendingUp className="h-6 w-6" />
+                          <span className="text-sm">Trading Playground</span>
+                          <span className="text-xs text-muted-foreground">Practice trading</span>
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Active Tickers Display */}
                 <Card>
                   <CardHeader>
@@ -309,6 +352,79 @@ export default function Dashboard() {
               </TabsContent>
 
               <TabsContent value="analytics" className="space-y-6">
+                {/* Enhanced Widgets Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+                    <PriceWidget 
+                      widget={{
+                        id: 'price-1',
+                        type: 'price',
+                        title: 'BTC Price Tracker',
+                        position: 0,
+                        size: 'medium',
+                        settings: { ticker: 'BTCUSDT', showChart: true },
+                        enabled: true
+                      }}
+                      onUpdateSettings={() => {}}
+                      onRemove={() => {}}
+                      onToggleEnabled={() => {}}
+                    />
+                  </Suspense>
+                  
+                  <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+                    <PortfolioWidget 
+                      widget={{
+                        id: 'portfolio-1',
+                        type: 'portfolio',
+                        title: 'Portfolio Overview',
+                        position: 1,
+                        size: 'medium',
+                        settings: { showAllocation: true, showPnL: true },
+                        enabled: true
+                      }}
+                      onUpdateSettings={() => {}}
+                      onRemove={() => {}}
+                      onToggleEnabled={() => {}}
+                    />
+                  </Suspense>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+                    <SignalsWidget 
+                      widget={{
+                        id: 'signals-1',
+                        type: 'signals',
+                        title: 'Latest Signals',
+                        position: 2,
+                        size: 'medium',
+                        settings: { limit: 5, autoRefresh: true },
+                        enabled: true
+                      }}
+                      onUpdateSettings={() => {}}
+                      onRemove={() => {}}
+                      onToggleEnabled={() => {}}
+                    />
+                  </Suspense>
+                  
+                  <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+                    <AlertsWidget 
+                      widget={{
+                        id: 'alerts-1',
+                        type: 'alerts',
+                        title: 'Active Alerts',
+                        position: 3,
+                        size: 'medium',
+                        settings: { showOnlyActive: true },
+                        enabled: true
+                      }}
+                      onUpdateSettings={() => {}}
+                      onRemove={() => {}}
+                      onToggleEnabled={() => {}}
+                    />
+                  </Suspense>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Card>
                     <CardHeader>
