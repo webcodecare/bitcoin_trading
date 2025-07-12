@@ -52,7 +52,7 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     try {
       // Get token from localStorage for authentication
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("token");
       
       const headers: Record<string, string> = {};
       if (token) {
