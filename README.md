@@ -1,105 +1,108 @@
-# CryptoStrategy Pro - Frontend
+# Cryptocurrency Trading Platform
 
-React-based frontend application for the CryptoStrategy Pro cryptocurrency trading platform.
+A comprehensive cryptocurrency trading platform with real-time market data, advanced analytics, and TradingView webhook integration.
 
-## Features
+## 🚀 Quick Start
 
-- **Real-time Trading Interface**: Professional TradingView charts with live market data
-- **Multi-ticker Dashboard**: Support for 25+ cryptocurrencies across different categories
-- **User Authentication**: JWT-based authentication with role-based access control
-- **Responsive Design**: Mobile-first design with Tailwind CSS
-- **Performance Optimized**: Lazy loading, code splitting, and performance monitoring
-- **Advanced Charts**: Interactive charts with technical indicators and signal overlays
-
-## Tech Stack
-
-- **Frontend**: React 18 + TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS + Radix UI
-- **State Management**: TanStack React Query + React Context
-- **Routing**: Wouter
-- **Charts**: Lightweight Charts + TradingView widgets
-- **Animations**: Framer Motion
-
-## Quick Start
-
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-2. **Set up environment variables**:
-   ```bash
-   cp .env.example .env
-   ```
-   Update the API base URL in `.env`:
-   ```
-   VITE_API_BASE_URL=http://localhost:3001
-   VITE_WS_URL=ws://localhost:3001
-   ```
-
-3. **Start development server**:
-   ```bash
-   npm run dev
-   ```
-
-4. **Build for production**:
-   ```bash
-   npm run build
-   ```
-
-## Architecture
-
-### Component Structure
-- `/components/ui/` - Reusable UI components (shadcn/ui)
-- `/components/layout/` - Layout components (Sidebar, TopBar, etc.)
-- `/components/charts/` - Chart components (TradingView, Lightweight Charts)
-- `/components/auth/` - Authentication components
-- `/components/trading/` - Trading-specific components
-
-### Pages Structure
-- `/pages/` - Page components for routing
-- `/pages/admin/` - Admin dashboard pages
-- `/pages/auth/` - Authentication pages
-
-### Utilities
-- `/lib/` - Utility functions and configurations
-- `/hooks/` - Custom React hooks
-- `/services/` - API service functions
-- `/types/` - TypeScript type definitions
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `VITE_API_BASE_URL` | Backend API URL | `http://localhost:3001` |
-| `VITE_WS_URL` | WebSocket URL | `ws://localhost:3001` |
-
-## Development
-
-- **Port**: 3000
-- **Proxy**: API calls are proxied to backend on port 3001
-- **Hot Reload**: Enabled for fast development
-
-## Performance Features
-
-- **Code Splitting**: Automatic route-based code splitting
-- **Lazy Loading**: Heavy components are lazy-loaded
-- **Bundle Analysis**: Optimized vendor chunks
-- **Performance Monitoring**: Built-in performance tracking
-
-## Build & Deploy
-
-The frontend builds to static files that can be deployed to any static hosting service:
-
+### Option 1: Full Development (Both Frontend & Backend)
 ```bash
-npm run build
-npm run preview  # Preview production build
+npm run dev
 ```
 
-## API Integration
+### Option 2: Frontend Only (Connect to Live Backend)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Frontend runs on `http://localhost:3000` and connects to live backend at `https://swiftlead.site/api`
 
-The frontend communicates with the backend via:
-- REST API endpoints (`/api/*`)
-- WebSocket connections for real-time updates
-- Authentication via JWT tokens stored in localStorage
+### Option 3: Backend Only
+```bash
+cd backend
+npm install
+npm run dev
+```
+Backend runs on `http://localhost:3001`
+
+## 📁 Project Structure
+
+```
+├── frontend/     # React.js Application (Port 3000)
+├── backend/      # Node.js API Server (Port 3001)  
+└── *.md         # Documentation
+```
+
+## ✨ Key Features
+
+- **Real-time Market Data** - Live cryptocurrency prices (28+ pairs)
+- **Advanced Charts** - TradingView integration with technical analysis
+- **Trading Signals** - Buy/sell alerts with webhook support
+- **User Management** - Authentication, subscriptions, role-based access
+- **Admin Dashboard** - Complete platform management
+- **Mobile Responsive** - Optimized for all devices
+- **Notification System** - Email, SMS, Telegram alerts
+
+## 🌐 Live Backend
+
+Your backend is deployed and running 24/7:
+- **API**: https://swiftlead.site/api
+- **Database**: PostgreSQL (Neon) with live data
+- **Status**: ✅ Active with 28 cryptocurrencies
+
+## 📖 Documentation
+
+- [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) - Deploy frontend and backend separately
+- [`DEVELOPMENT_SETUP.md`](DEVELOPMENT_SETUP.md) - Local development configuration
+- [`PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md) - Clean folder organization
+- [`replit.md`](replit.md) - Complete project overview
+
+## 🔧 Environment Setup
+
+### Frontend (`frontend/.env`)
+```bash
+VITE_API_BASE_URL=https://swiftlead.site/api
+VITE_WS_URL=wss://swiftlead.site
+```
+
+### Backend (`backend/.env`)  
+```bash
+NODE_ENV=development
+PORT=3001
+DATABASE_URL=postgresql://neondb_owner:...
+JWT_SECRET=your-secure-jwt-secret
+```
+
+## 🚀 Deployment
+
+Deploy frontend and backend on different platforms:
+
+**Popular Combinations:**
+- Frontend: Vercel/Netlify
+- Backend: Railway/Render/Heroku
+
+See [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) for detailed instructions.
+
+## 🧪 API Testing
+
+Test your live backend:
+```bash
+curl https://swiftlead.site/api/tickers
+curl https://swiftlead.site/api/market/price/BTCUSDT
+```
+
+## 📊 Tech Stack
+
+**Frontend:**
+- React 18 + TypeScript
+- Vite + Tailwind CSS
+- TanStack Query + Wouter
+- Radix UI + Shadcn/ui
+
+**Backend:**
+- Node.js + Express
+- PostgreSQL + Drizzle ORM  
+- WebSocket + JWT Auth
+- TradingView Webhooks
+
+Your platform is ready for professional development and deployment!
