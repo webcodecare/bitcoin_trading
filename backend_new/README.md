@@ -1,205 +1,158 @@
-# CryptoStrategy Pro - Backend
+# Bitcoin Trading Platform - Backend
 
-Node.js/Express backend API for the CryptoStrategy Pro cryptocurrency trading platform.
+A comprehensive cryptocurrency trading platform backend API built with Express.js and TypeScript.
 
-## Features
+## 🚀 Features
 
-- **RESTful API**: Comprehensive REST endpoints for all platform features
-- **WebSocket Server**: Real-time trading signals and market data
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: JWT-based authentication with bcrypt password hashing
-- **Rate Limiting**: Configurable rate limiting for API endpoints
-- **Security**: Helmet security headers, CORS, input validation
-- **Notifications**: Multi-channel notifications (Email, SMS, Telegram)
-- **Webhook Support**: TradingView webhook integration
-- **Background Jobs**: Scheduled notification processing
+- **28 Cryptocurrency Tickers** - Support for major cryptocurrencies
+- **Real-time Trading Signals** - WebSocket-based live updates
+- **TradingView Webhook Integration** - Receive alerts from TradingView
+- **Role-based Authentication** - JWT-based auth with admin/user roles
+- **PostgreSQL Database** - Robust data persistence with Drizzle ORM
+- **Comprehensive API** - 147 endpoints for all platform features
+- **Rate Limiting & Security** - Production-ready security middleware
 
-## Tech Stack
+## 🏗️ Architecture
 
-- **Runtime**: Node.js + Express.js
-- **Database**: PostgreSQL (Neon serverless)
-- **ORM**: Drizzle ORM with Zod validation
-- **Authentication**: JWT + bcrypt
-- **Real-time**: WebSocket (ws library)
-- **Notifications**: Twilio (SMS), Telegram Bot API, SendGrid (Email)
-- **Security**: Helmet, CORS, express-rate-limit
-- **Background Jobs**: Node.js timers for scheduled tasks
+```
+backend/
+├── src/
+│   ├── index.ts          # Main server entry point
+│   ├── routes.ts         # All API routes (147 endpoints)
+│   ├── schema.ts         # Database schema definitions
+│   ├── config.ts         # Environment configuration
+│   ├── db.ts            # Database connection
+│   ├── middleware/      # Authentication & security middleware
+│   └── services/        # Business logic services
+├── railway.json         # Railway deployment config
+├── render.yaml          # Render deployment config
+├── Dockerfile           # Docker containerization
+└── package.json         # Dependencies and scripts
+```
 
-## Quick Start
+## 🔧 Local Development
 
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database
+- Environment variables configured
 
-2. **Set up environment variables**:
-   ```bash
-   cp .env.example .env
-   ```
-   Update the database and API keys in `.env`:
-   ```
-   DATABASE_URL=postgresql://...
-   JWT_SECRET=your-secret-key
-   TWILIO_ACCOUNT_SID=your-twilio-sid
-   TWILIO_AUTH_TOKEN=your-twilio-token
-   TELEGRAM_BOT_TOKEN=your-telegram-token
-   ```
+### Setup
+```bash
+# Install dependencies
+npm install
 
-3. **Push database schema**:
-   ```bash
-   npm run db:push
-   ```
+# Configure environment
+cp .env.example .env
+# Edit .env with your configuration
 
-4. **Start development server**:
-   ```bash
-   npm run dev
-   ```
+# Run database migrations
+npm run db:push
 
-5. **Build for production**:
-   ```bash
-   npm run build
-   npm start
-   ```
+# Start development server
+npm run dev
+```
 
-## API Endpoints
+The backend will start on `http://localhost:3001`
+
+## 🌐 Deployment
+
+### Railway (Recommended)
+1. Connect your GitHub repository to Railway
+2. Set root directory to `backend_new` 
+3. Railway auto-configures using `railway.json`
+4. Add environment variables in Railway dashboard
+
+### Render
+1. Connect your GitHub repository to Render
+2. Set root directory to `backend_new`
+3. Render auto-configures using `render.yaml` 
+4. Add environment variables in Render dashboard
+
+### Docker
+```bash
+# Build container
+docker build -t bitcoin-trading-backend .
+
+# Run container
+docker run -p 3001:3001 \
+  -e DATABASE_URL=your-db-url \
+  -e JWT_SECRET=your-jwt-secret \
+  bitcoin-trading-backend
+```
+
+## 📋 Environment Variables
+
+### Required
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - Secret for JWT token signing
+- `SESSION_SECRET` - Secret for session management
+
+### Optional (Enhanced Features)
+- `BINANCE_API_KEY` - For live market data
+- `OPENAI_API_KEY` - For AI-powered features
+- `STRIPE_SECRET_KEY` - For payment processing
+- `TWILIO_ACCOUNT_SID` - For SMS notifications
+- `TELEGRAM_BOT_TOKEN` - For Telegram alerts
+
+## 🔌 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
 - `POST /api/auth/logout` - User logout
-- `GET /api/auth/profile` - Get user profile
 
 ### Market Data
-- `GET /api/market/price/:symbol` - Get current price
+- `GET /api/market/price/{symbol}` - Get current price
 - `GET /api/tickers` - Get available tickers
-- `GET /api/ohlc/:symbol` - Get OHLC data
+- `GET /api/ohlc` - Get OHLC data for charts
 
 ### Trading Signals
-- `GET /api/signals/:symbol` - Get trading signals
+- `GET /api/signals/{symbol}` - Get trading signals
 - `POST /api/webhook/alerts` - TradingView webhook endpoint
 
-### User Management
-- `GET /api/users` - Get users (admin only)
-- `POST /api/users` - Create user (admin only)
-- `PUT /api/users/:id` - Update user (admin only)
-- `DELETE /api/users/:id` - Delete user (admin only)
+### Admin
+- `GET /api/admin/users` - User management
+- `POST /api/admin/signals` - Manual signal injection
+- `GET /api/admin/analytics` - Platform analytics
 
-### Notifications
-- `POST /api/notifications/send` - Send notification
-- `GET /api/notifications/history` - Get notification history
-
-## Database Schema
-
-### Core Tables
-- `users` - User accounts and authentication
-- `user_settings` - User preferences and notification settings
-- `available_tickers` - Cryptocurrency symbols configuration
-- `subscriptions` - User subscriptions to trading pairs
-- `alert_signals` - Trading signals and alerts
-- `ohlc_data` - Price data for charts
-
-### Notification System
-- `notification_queue` - Pending notifications
-- `notification_templates` - Message templates
-- `notification_logs` - Delivery tracking
-- `notification_channels` - Channel configurations
-
-### Analytics
-- `heatmap_data` - 200-week SMA analysis
-- `cycle_data` - Market cycle analysis
-- `forecast_data` - Predictive analytics
-
-## Security Features
-
-- **Rate Limiting**: 100 requests per 15 minutes per IP
-- **CORS**: Configured for frontend origins
-- **Helmet**: Security headers
-- **Input Validation**: Zod schema validation
-- **Authentication**: JWT with secure token handling
-- **Password Hashing**: bcrypt with salt rounds
-
-## WebSocket Events
-
+### WebSocket Events
 - `price_update` - Real-time price updates
-- `signal_alert` - New trading signals
-- `notification` - System notifications
-- `user_activity` - User activity updates
+- `new_signal` - Trading signal alerts
+- `system_notification` - System messages
 
-## Background Services
+## 🏥 Health Checks
 
-### Notification Processor
-- Runs every 30 seconds
-- Processes queued notifications
-- Handles retry logic with exponential backoff
-- Supports Email, SMS, and Telegram delivery
+- `GET /api/health` - Application health status
+- Returns database connectivity and service status
 
-### Market Data Fetcher
-- Fetches real-time price data from Binance API
-- Fallback to synthetic data for demo purposes
-- Caches data to reduce API calls
+## 🔒 Security Features
 
-## Environment Variables
+- JWT-based authentication
+- Rate limiting (100 requests/15 minutes)
+- CORS configuration
+- Helmet security headers
+- Input validation with Zod schemas
+- SQL injection prevention with parameterized queries
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `JWT_SECRET` | JWT signing secret | Yes |
-| `PORT` | Server port | No (default: 3001) |
-| `NODE_ENV` | Environment mode | No (default: development) |
-| `TWILIO_ACCOUNT_SID` | Twilio account SID | No |
-| `TWILIO_AUTH_TOKEN` | Twilio auth token | No |
-| `TELEGRAM_BOT_TOKEN` | Telegram bot token | No |
-| `SENDGRID_API_KEY` | SendGrid API key | No |
+## 📊 Database Schema
 
-## Deployment
+The backend uses a comprehensive PostgreSQL schema with:
+- User management and authentication
+- Cryptocurrency ticker data
+- Trading signals and alerts
+- OHLC market data caching
+- Admin activity logging
+- Subscription management
 
-The backend can be deployed to any Node.js hosting service:
+## 🚀 Production Deployment URLs
 
-1. **Build the application**:
-   ```bash
-   npm run build
-   ```
+After deployment:
+- **Railway**: `https://your-app.railway.app`
+- **Render**: `https://your-app.onrender.com`
+- **Health Check**: `https://your-backend-url/api/health`
+- **API Documentation**: Available at root endpoint
 
-2. **Start production server**:
-   ```bash
-   npm start
-   ```
+## 📞 Support
 
-3. **Database Migration**:
-   ```bash
-   npm run db:push
-   ```
-
-## Development
-
-- **Port**: 3001
-- **Hot Reload**: Enabled with tsx in development
-- **Logging**: Structured logging with timestamps
-- **Error Handling**: Comprehensive error handling middleware
-
-## API Documentation
-
-The API follows REST conventions with consistent response formats:
-
-### Success Response
-```json
-{
-  "success": true,
-  "data": { ... },
-  "message": "Operation successful"
-}
-```
-
-### Error Response
-```json
-{
-  "success": false,
-  "error": "Error description",
-  "code": "ERROR_CODE"
-}
-```
-
-### Rate Limit Headers
-- `X-RateLimit-Limit`: Request limit
-- `X-RateLimit-Remaining`: Remaining requests
-- `X-RateLimit-Reset`: Reset time
+For deployment assistance or technical questions, refer to the main project documentation or contact the development team.
