@@ -97,6 +97,13 @@ function Router() {
           </Suspense>
         </AuthGuard>
       </Route>
+      <Route path="/multi-ticker">
+        <AuthGuard>
+          <Suspense fallback={<LoadingScreen />}>
+            <MultiTickerDashboard />
+          </Suspense>
+        </AuthGuard>
+      </Route>
       <Route path="/trading">
         <AuthGuard>
           <Suspense fallback={<LoadingScreen />}>
