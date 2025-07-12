@@ -180,7 +180,8 @@ export default function TradingViewWidget({
     ctx.fillStyle = theme === 'dark' ? '#0a0a0a' : '#ffffff';
     ctx.fillRect(0, 0, width, height);
 
-    // Calculate price range
+    // Calculate price range (with null check)
+    if (!priceHistory || priceHistory.length === 0) return;
     const minPrice = Math.min(...priceHistory);
     const maxPrice = Math.max(...priceHistory);
     const priceRange = maxPrice - minPrice || 1;
@@ -235,16 +236,18 @@ export default function TradingViewWidget({
     ctx.lineWidth = lineWidth;
     ctx.beginPath();
 
-    priceHistory.forEach((price, index) => {
-      const x = (width / (priceHistory.length - 1)) * index;
-      const y = chartHeight - ((price - minPrice) / priceRange) * chartHeight;
+    if (priceHistory && priceHistory.length > 0) {
+      priceHistory.forEach((price, index) => {
+        const x = (width / (priceHistory.length - 1)) * index;
+        const y = chartHeight - ((price - minPrice) / priceRange) * chartHeight;
 
-      if (index === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    });
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+    }
 
     ctx.stroke();
 

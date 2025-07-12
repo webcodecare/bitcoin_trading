@@ -17,7 +17,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://tradingview.com", "https://*.tradingview.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "wss:", "ws:", "https://api.binance.com", "https://api.coingecko.com"],
+      connectSrc: ["'self'", "http://localhost:5000", "ws://localhost:5000", "wss:", "ws:", "https://api.binance.com", "https://api.coingecko.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -31,14 +31,15 @@ app.use(helmet({
   }
 }));
 
-// CORS configuration
+// CORS configuration - allow all origins in development
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://your-domain.com'] // Replace with your production domain
-    : true,
+    : true, // Allow all origins in development
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200 // For legacy browser support
 }));
 
 // Trust proxy for rate limiting
