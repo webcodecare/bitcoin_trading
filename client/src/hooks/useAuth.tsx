@@ -46,7 +46,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["/api/user/profile", token],
-    queryFn: () => token ? authAPI.getProfile(token) : null,
+    queryFn: async () => {
+      if (!token) return null;
+      try {
+        return await authAPI.getProfile(token);
+      } catch (error) {
+        console.error("Profile query error:", error);
+        return null; // Return null instead of throwing
+      }
+    },
     enabled: !!token,
     retry: false,
   });

@@ -56,34 +56,44 @@ export const authAPI = {
   },
 
   async getProfile(token: string): Promise<ProfileResponse> {
-    const response = await fetch("/api/user/profile", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      const response = await fetch("/api/user/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error("Failed to get profile");
+      if (!response.ok) {
+        throw new Error(`Failed to get profile: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Profile fetch error:", error);
+      throw error;
     }
-
-    return await response.json();
   },
 
   async updateSettings(token: string, settings: Partial<UserSettings>): Promise<UserSettings> {
-    const response = await fetch("/api/user/settings", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(settings),
-    });
+    try {
+      const response = await fetch("/api/user/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(settings),
+      });
 
-    if (!response.ok) {
-      throw new Error("Failed to update settings");
+      if (!response.ok) {
+        throw new Error(`Failed to update settings: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Settings update error:", error);
+      throw error;
     }
-
-    return await response.json();
   },
 };
 
