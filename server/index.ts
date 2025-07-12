@@ -89,17 +89,26 @@ async function initializeServices() {
   // Notification processor starts automatically via scheduledProcessor import
 }
 
-// Register API routes
-const wsServer = await registerRoutes(app);
+// Initialize and start application
+(async () => {
+  try {
+    // Register API routes
+    const wsServer = await registerRoutes(app);
 
-// Start services
-await initializeServices();
+    // Start services
+    await initializeServices();
 
-// Setup Vite for development (serving frontend + backend together)
-if (config.nodeEnv === 'development') {
-  await setupVite(app, server);
-}
+    // Setup Vite for development (serving frontend + backend together)
+    if (config.nodeEnv === 'development') {
+      await setupVite(app, server);
+    }
 
-server.listen(port, "0.0.0.0", () => {
-  log(`Server running on port ${port}`);
-});
+    server.listen(port, "0.0.0.0", () => {
+      log(`Server running on port ${port}`);
+    });
+
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+})();
