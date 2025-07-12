@@ -27,12 +27,17 @@ const frontend = spawn('npm', ['run', 'dev'], {
 
 // Wait for services to start
 setTimeout(() => {
-  // Proxy API requests to backend
+  // Proxy API requests to backend (preserve /api path)
   app.use('/api', createProxyMiddleware({
     target: 'http://localhost:3001',
     changeOrigin: true,
-    pathRewrite: {
-      '^/api': '/api'
+    logLevel: 'debug',
+    onProxyReq: (proxyReq, req, res) => {
+      console.log(`🔄 Proxying: ${req.method} ${req.url} → http://localhost:3001${req.url}`);
+    },
+    onError: (err, req, res) => {
+      console.error(`❌ Proxy error: ${err.message}`);
+      res.status(500).json({ error: 'Proxy error', message: err.message });
     }
   }));
 
@@ -42,6 +47,18 @@ setTimeout(() => {
     changeOrigin: true,
     ws: true
   }));
+
+  // Health check endpoint
+  app.get('/health', (req, res) => {
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      services: {
+        frontend: 'http://localhost:3000',
+        backend: 'http://localhost:3001'
+      }
+    });
+  });
 
   // Proxy everything else to frontend
   app.use('/', createProxyMiddleware({
@@ -54,8 +71,9 @@ setTimeout(() => {
     console.log(`🌐 Combined server running on port ${PORT}`);
     console.log(`📱 Frontend: http://localhost:3000 (proxied through port ${PORT})`);
     console.log(`🔧 Backend API: http://localhost:3001 (proxied through port ${PORT}/api)`);
+    console.log(`🩺 Health check: http://localhost:${PORT}/health`);
   });
-}, 3000);
+}, 5000);
 
 // Handle process cleanup
 process.on('SIGTERM', () => {
