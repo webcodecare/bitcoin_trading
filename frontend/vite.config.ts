@@ -34,12 +34,12 @@ export default defineConfig({
     host: "0.0.0.0",
     proxy: {
       "/api": {
-        target: "http://localhost:3001",
+        target: "https://swiftlead.site",
         changeOrigin: true,
         secure: false,
       },
       "/socket.io": {
-        target: "http://localhost:3001",
+        target: "ws://swiftlead.site",
         changeOrigin: true,
         ws: true,
       },
