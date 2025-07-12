@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { cycleIndicatorData, forecastData, cycleForecastModels } from "@shared/schema";
+import { cycleIndicatorData, forecastData, cycleForecastModels } from "../schema.js";
 import { eq, desc, and, gte } from "drizzle-orm";
 
 // Advanced cycle forecasting algorithms implementation

@@ -3,7 +3,7 @@ import { Server } from "socket.io";
 import express from "express";
 import { registerRoutes } from "./routes.js";
 import { initializeTickers } from "./init-tickers.js";
-import { startNotificationProcessor } from "./services/scheduledProcessor.js";
+import { scheduledProcessor } from "./services/scheduledProcessor.js";
 import { config } from "./config.js";
 import helmet from "helmet";
 import cors from "cors";
@@ -14,9 +14,9 @@ import { eq } from "drizzle-orm";
 import { smsService } from "./services/smsService.js";
 import { telegramService } from "./services/telegramService.js";
 import rateLimit from "express-rate-limit";
-import { securityMiddleware } from "./middleware/security.js";
-import { encryptionMiddleware } from "./middleware/encryption.js";
-import { dataValidationMiddleware } from "./middleware/dataValidation.js";
+// import { securityMiddleware } from "./middleware/security.js";
+// import { encryptionMiddleware } from "./middleware/encryption.js";
+// import { dataValidationMiddleware } from "./middleware/dataValidation.js";
 
 const app = express();
 const port = config.port;
@@ -65,9 +65,9 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // Security middleware
-app.use(securityMiddleware);
-app.use(encryptionMiddleware);
-app.use(dataValidationMiddleware);
+// app.use(securityMiddleware);
+// app.use(encryptionMiddleware);
+// app.use(dataValidationMiddleware);
 
 // Initialize services
 if (process.env.NODE_ENV === 'development') {
@@ -87,7 +87,7 @@ async function initializeServices() {
   }
 
   // Start notification processor
-  startNotificationProcessor();
+  // startNotificationProcessor();
 }
 
 // Register API routes
