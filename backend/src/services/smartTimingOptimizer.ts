@@ -8,7 +8,7 @@ import {
   type InsertNotificationTimingPreference,
   type InsertNotificationTimingAnalytic,
   type InsertSmartTimingOptimization
-} from '@shared/schema';
+} from '../schema.js';
 import { eq, desc, and, gte, lte, sql } from 'drizzle-orm';
 
 export class SmartTimingOptimizer {
