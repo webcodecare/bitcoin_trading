@@ -158,16 +158,16 @@ export default function Alerts() {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="ml-0 md:ml-64 flex-1">
-          <div className="container mx-auto px-4 py-4 md:py-8">
-            <Tabs defaultValue="signals" className="space-y-4 md:space-y-6">
-              <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-0">
-                <TabsTrigger value="signals" className="flex items-center gap-2 text-xs sm:text-sm">
-                  <Target className="h-3 w-3 sm:h-4 sm:w-4" />
+        <div className="ml-64 flex-1">
+          <div className="container mx-auto px-4 py-8">
+            <Tabs defaultValue="signals" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signals" className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
                   Trading Signals
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="flex items-center gap-2 text-xs sm:text-sm">
-                  <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
+                <TabsTrigger value="settings" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
                   Alert Settings
                 </TabsTrigger>
               </TabsList>

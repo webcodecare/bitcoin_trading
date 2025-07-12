@@ -17,20 +17,10 @@ export class WebSocketManager {
   private isConnecting = false;
 
   constructor() {
-    // Get WebSocket URL from environment variables
-    const wsUrl = import.meta.env.VITE_WS_URL;
-    
-    if (wsUrl) {
-      // Use configured WebSocket URL
-      this.url = `${wsUrl}/ws`;
-    } else {
-      // Fallback to auto-detect based on current location
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const port = window.location.port || (protocol === "wss:" ? "443" : "80");
-      this.url = `${protocol}//${window.location.hostname}:${port}/ws`;
-    }
-    
-    console.log('WebSocket URL configured:', this.url);
+    // Only initialize WebSocket in production or when explicitly needed
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const port = window.location.port || (protocol === "wss:" ? "443" : "80");
+    this.url = `${protocol}//${window.location.hostname}:${port}/ws`;
   }
 
   connect(): Promise<void> {

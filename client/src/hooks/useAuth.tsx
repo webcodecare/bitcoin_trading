@@ -46,15 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["/api/user/profile", token],
-    queryFn: async () => {
-      if (!token) return null;
-      try {
-        return await authAPI.getProfile(token);
-      } catch (error) {
-        console.error("Profile query error:", error);
-        return null; // Return null instead of throwing
-      }
-    },
+    queryFn: () => token ? authAPI.getProfile(token) : null,
     enabled: !!token,
     retry: false,
   });
@@ -184,18 +176,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await updateSettingsMutation.mutateAsync(settings);
   };
 
-  // Debug authentication state
-  const sessionUser = SessionManager.getUser();
-  console.log("useAuth DEBUG: token=", !!token);
-  console.log("useAuth DEBUG: profileData?.user=", !!profileData?.user);
-  console.log("useAuth DEBUG: sessionUser=", sessionUser);
-  console.log("useAuth DEBUG: final user=", profileData?.user || sessionUser);
-
   const contextValue: AuthContextType = {
-    user: profileData?.user || sessionUser,
+    user: profileData?.user || SessionManager.getUser(),
     settings: profileData?.settings || null,
     isLoading: isLoading || loginMutation.isPending || registerMutation.isPending,
-    isAuthenticated: !!token && (!!profileData?.user || !!sessionUser),
+    isAuthenticated: !!token && (!!profileData?.user || !!SessionManager.getUser()),
     login,
     register,
     logout,

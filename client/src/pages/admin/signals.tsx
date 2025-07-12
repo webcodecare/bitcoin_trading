@@ -142,18 +142,18 @@ export default function AdminSignals() {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="ml-0 md:ml-64 flex-1">
+        <div className="ml-64 flex-1">
           {/* Top Bar */}
-          <header className="bg-card border-b border-border p-4 md:p-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <header className="bg-card border-b border-border p-6">
+            <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Activity className="h-5 w-5 md:h-6 md:w-6" />
-                <h1 className="text-xl md:text-2xl font-bold">Signal Logs</h1>
+                <Activity className="h-6 w-6" />
+                <h1 className="text-2xl font-bold">Signal Logs</h1>
               </div>
               <Dialog open={isSignalDialogOpen} onOpenChange={setIsSignalDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="crypto-gradient text-white text-xs md:text-sm">
-                    <Send className="mr-2 h-3 w-3 md:h-4 md:w-4" />
+                  <Button className="crypto-gradient text-white">
+                    <Send className="mr-2 h-4 w-4" />
                     Create Signal
                   </Button>
                 </DialogTrigger>
@@ -240,9 +240,9 @@ export default function AdminSignals() {
           </header>
 
           {/* Signals Content */}
-          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+          <div className="p-6 space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
