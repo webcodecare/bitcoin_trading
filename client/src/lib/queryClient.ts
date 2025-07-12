@@ -7,6 +7,8 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+import { config, buildApiUrl } from './config';
+
 export async function apiRequest(
   method: string,
   url: string,
@@ -23,7 +25,10 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(url, {
+  // Use full URL with API base URL
+  const fullUrl = url.startsWith('http') ? url : buildApiUrl(url);
+
+  const res = await fetch(fullUrl, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
@@ -48,7 +53,11 @@ export const getQueryFn: <T>(options: {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const res = await fetch(queryKey[0] as string, {
+    // Use full URL with API base URL
+    const url = queryKey[0] as string;
+    const fullUrl = url.startsWith('http') ? url : buildApiUrl(url);
+
+    const res = await fetch(fullUrl, {
       headers,
       credentials: "include",
     });

@@ -4,6 +4,7 @@ import express from "express";
 import { registerRoutes } from "./routes.js";
 import { initializeTickers } from "./init-tickers.js";
 import { startNotificationProcessor } from "./services/scheduledProcessor.js";
+import { config } from "./config.js";
 import helmet from "helmet";
 import cors from "cors";
 import { createPool } from "@neondatabase/serverless";
@@ -18,7 +19,7 @@ import { encryptionMiddleware } from "./middleware/encryption.js";
 import { dataValidationMiddleware } from "./middleware/dataValidation.js";
 
 const app = express();
-const port = Number(process.env.PORT) || 3001;
+const port = config.port;
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -40,11 +41,18 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
+// CORS Configuration using centralized config
+const corsOrigins = config.corsOrigin 
+  ? config.corsOrigin.split(',').map(origin => origin.trim())
+  : config.nodeEnv === 'production' 
+    ? ['*'] // Allow all origins for API-only deployment
+    : ['http://localhost:3000', 'http://localhost:5000', 'http://localhost:5173'];
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.com', /\.replit\.app$/]
-    : ['http://localhost:3000', 'http://localhost:5000', 'http://localhost:5173'],
-  credentials: true
+  origin: corsOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Rate limiting
