@@ -1,89 +1,90 @@
-# Development Setup Guide
+# 🛠️ Development Setup Guide
 
-## 🔧 **Local Development vs Live Backend**
+## 🚨 **Quick Fix for Localhost Issues**
 
-You have two options for running your frontend locally:
+If you see **"site can't be reached"** on localhost:5173, here are **3 simple solutions**:
 
-### **Option 1: Connect to Live Backend (Current Setup)**
-Your frontend connects to your deployed backend at `https://swiftlead.site/api`
+### **Solution 1: Use Your Live Backend (Recommended)**
+Your backend is already live and working perfectly! Just use it:
 
-**Current Configuration** (`client/.env`):
 ```bash
+cd frontend
+npm install
+npm run dev
+```
+
+This will:
+- Run frontend on `http://localhost:3000` 
+- Connect to your live backend at `https://swiftlead.site/api`
+- ✅ **No localhost issues!**
+
+### **Solution 2: Current Monolithic Setup**
+If you want to keep using port 5000:
+
+```bash
+npm run dev
+```
+
+This runs both frontend and backend together on port 5000.
+
+### **Solution 3: Fix Port Access (Advanced)**
+If localhost:5173 is not accessible, try:
+
+```bash
+cd frontend
+npm run dev -- --host 0.0.0.0
+```
+
+## 🎯 **Recommended Development Workflow**
+
+**For daily development, use Solution 1:**
+1. Your live backend is running 24/7 at `https://swiftlead.site/api`
+2. Run only the frontend locally on port 3000
+3. All your data, authentication, and APIs work instantly
+4. No need to manage local backend/database
+
+## 📁 **Project Structure**
+
+```
+📦 Your Clean Project/
+├── 📁 frontend/          # React App (Port 3000)
+├── 📁 backend/           # API Server (Port 3001) 
+└── 📄 *.md files         # Documentation
+```
+
+## 🔧 **Environment Configuration**
+
+### **Frontend** (`frontend/.env`)
+```bash
+# Using Live Backend (No localhost issues)
 VITE_API_BASE_URL=https://swiftlead.site/api
 VITE_WS_URL=wss://swiftlead.site
 ```
 
-**Benefits:**
-- ✅ Uses live data from your deployed backend
-- ✅ Same data as production
-- ✅ No need to run local backend
-- ✅ Tests real deployment configuration
-
-### **Option 2: Use Local Backend**
-Run both frontend and backend locally
-
-**Setup for Local Development:**
+### **Backend** (`backend/.env`) 
 ```bash
-# 1. Update client/.env for local backend
-VITE_API_BASE_URL=http://localhost:5000
-VITE_WS_URL=ws://localhost:5000
+# For local backend development only
+NODE_ENV=development
+PORT=3001
+DATABASE_URL=postgresql://neondb_owner:...
+```
 
-# 2. Start local backend (in another terminal)
+## ✅ **Why Use Live Backend?**
+
+1. **No Setup Required** - Backend already configured and running
+2. **Real Data** - 28 cryptocurrencies with live prices
+3. **No localhost Issues** - External URL always accessible
+4. **Professional** - Same setup as production
+5. **Fast Development** - Focus on frontend features
+
+## 🚀 **Quick Start**
+
+```bash
+# Option 1: Frontend only (recommended)
+cd frontend && npm run dev
+
+# Option 2: Full application  
 npm run dev
-
-# 3. Start frontend
-npm run dev
 ```
 
-## 🚀 **Testing Your Live Backend**
-
-Your live backend at `https://swiftlead.site/api` is working perfectly:
-
-### **Available Endpoints:**
-- `https://swiftlead.site/api/tickers` - 28 cryptocurrencies ✅
-- `https://swiftlead.site/api/market/price/BTCUSDT` - Live Bitcoin price ✅
-- `https://swiftlead.site/api/market/price/ETHUSDT` - Live Ethereum price ✅
-- `https://swiftlead.site/api/auth/login` - User authentication ✅
-
-### **Test Commands:**
-```bash
-# Test API endpoints
-curl https://swiftlead.site/api/tickers
-curl https://swiftlead.site/api/market/price/BTCUSDT
-curl https://swiftlead.site/api/market/price/ETHUSDT
-
-# Should return JSON data for all endpoints
-```
-
-## 🔄 **Switching Between Configurations**
-
-### **For Live Backend (Recommended):**
-```bash
-# client/.env
-VITE_API_BASE_URL=https://swiftlead.site/api
-VITE_WS_URL=wss://swiftlead.site
-```
-
-### **For Local Backend:**
-```bash
-# client/.env  
-VITE_API_BASE_URL=http://localhost:5000
-VITE_WS_URL=ws://localhost:5000
-```
-
-## 🐛 **Troubleshooting Proxy Errors**
-
-If you see `ECONNREFUSED 127.0.0.1:3001` errors, it means:
-1. Your environment variables are not being used properly
-2. The frontend is trying to proxy to `localhost:3001` instead of using your live backend
-
-**Solution:** Make sure your `client/.env` file has the correct live backend URL.
-
-## ✅ **Current Status**
-
-- **Live Backend**: `https://swiftlead.site/api` - ✅ Working
-- **Database**: PostgreSQL (Neon) - ✅ Active 24/7
-- **Cryptocurrencies**: 28 tickers loaded - ✅ Available
-- **API Endpoints**: All functional - ✅ Tested
-
-Your setup is ready for development with your live backend!
+Your cryptocurrency platform is ready for development!
