@@ -93,7 +93,8 @@ export const queryClient = new QueryClient({
       retry: false,
       onError: (error) => {
         console.error("Query error:", error);
-        // Silently handle errors to prevent unhandled rejections
+        // Return null for failed queries to prevent crashes
+        return null;
       },
     },
     mutations: {
