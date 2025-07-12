@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { hasAccess } from '@/lib/subscriptionUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Crown, Lock, Upgrade } from 'lucide-react';
+import { Crown, Lock, ArrowUp } from 'lucide-react';
 import { Link } from 'wouter';
 
 interface SubscriptionGuardProps {
@@ -132,7 +132,7 @@ export function SubscriptionGuard({
           <div className="flex flex-col gap-2">
             <Link href="/subscriptions">
               <Button className="w-full bg-yellow-500 hover:bg-yellow-600 text-white">
-                <Upgrade className="h-4 w-4 mr-2" />
+                <ArrowUp className="h-4 w-4 mr-2" />
                 Upgrade to {featureInfo.requiredTier}
               </Button>
             </Link>
