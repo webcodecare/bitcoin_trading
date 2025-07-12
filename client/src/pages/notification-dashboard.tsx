@@ -240,30 +240,31 @@ export default function NotificationDashboard() {
       <div className="flex">
         <Sidebar />
         
-        <div className="ml-64 flex-1">
+        <div className="ml-0 md:ml-64 flex-1">
           {/* Header */}
-          <header className="bg-card border-b border-border p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Activity className="h-6 w-6" />
+          <header className="bg-card border-b border-border p-3 sm:p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <Activity className="h-5 w-5 sm:h-6 sm:w-6" />
                 <div>
-                  <h1 className="text-2xl font-bold">Notification Dashboard</h1>
-                  <p className="text-muted-foreground">Multi-channel delivery monitoring and analytics</p>
+                  <h1 className="text-lg sm:text-xl md:text-2xl font-bold">Notification Dashboard</h1>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Multi-channel delivery monitoring and analytics</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 <Button
                   variant="outline"
                   size="sm"
+                  className="text-xs sm:text-sm px-2 sm:px-3"
                   onClick={() => {
                     queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
                     toast({ title: "Dashboard Refreshed", description: "Latest data loaded" });
                   }}
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                  <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   Refresh
                 </Button>
-                <Badge variant="outline" className="text-blue-400">
+                <Badge variant="outline" className="text-blue-400 text-xs">
                   <Zap className="h-3 w-3 mr-1" />
                   Real-time
                 </Badge>
@@ -271,64 +272,64 @@ export default function NotificationDashboard() {
             </div>
           </header>
 
-          <div className="p-6 space-y-6">
+          <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <Card>
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Sent</p>
-                      <p className="text-2xl font-bold">{stats?.totalSent || mockStats.totalSent}</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Sent</p>
+                      <p className="text-lg sm:text-xl md:text-2xl font-bold">{stats?.totalSent || mockStats.totalSent}</p>
                     </div>
-                    <Send className="h-8 w-8 text-blue-500" />
+                    <Send className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-blue-500" />
                   </div>
                   <div className="flex items-center mt-2">
-                    <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                    <span className="text-sm text-green-600">+12% from yesterday</span>
+                    <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 mr-1" />
+                    <span className="text-xs sm:text-sm text-green-600">+12% from yesterday</span>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Delivery Rate</p>
-                      <p className="text-2xl font-bold">{stats?.deliveryRate || mockStats.deliveryRate}%</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Delivery Rate</p>
+                      <p className="text-lg sm:text-xl md:text-2xl font-bold">{stats?.deliveryRate || mockStats.deliveryRate}%</p>
                     </div>
-                    <CheckCircle className="h-8 w-8 text-green-500" />
+                    <CheckCircle className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-green-500" />
                   </div>
                   <Progress value={stats?.deliveryRate || mockStats.deliveryRate} className="mt-2" />
                 </CardContent>
               </Card>
 
               <Card>
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Avg Delivery Time</p>
-                      <p className="text-2xl font-bold">{stats?.avgDeliveryTime || mockStats.avgDeliveryTime}s</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Avg Delivery Time</p>
+                      <p className="text-lg sm:text-xl md:text-2xl font-bold">{stats?.avgDeliveryTime || mockStats.avgDeliveryTime}s</p>
                     </div>
-                    <Clock className="h-8 w-8 text-yellow-500" />
+                    <Clock className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-yellow-500" />
                   </div>
                   <div className="flex items-center mt-2">
-                    <span className="text-sm text-muted-foreground">↓ 0.2s faster than average</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">↓ 0.2s faster than average</span>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardContent className="p-6">
+                <CardContent className="p-3 sm:p-4 md:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Failure Rate</p>
-                      <p className="text-2xl font-bold">{stats?.failureRate || mockStats.failureRate}%</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground">Failure Rate</p>
+                      <p className="text-lg sm:text-xl md:text-2xl font-bold">{stats?.failureRate || mockStats.failureRate}%</p>
                     </div>
-                    <XCircle className="h-8 w-8 text-red-500" />
+                    <XCircle className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-red-500" />
                   </div>
                   <div className="flex items-center mt-2">
-                    <span className="text-sm text-red-600">↑ 0.3% from yesterday</span>
+                    <span className="text-xs sm:text-sm text-red-600">↑ 0.3% from yesterday</span>
                   </div>
                 </CardContent>
               </Card>
@@ -336,36 +337,36 @@ export default function NotificationDashboard() {
 
             {/* Channel Health Status */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Globe className="h-5 w-5" />
+              <CardHeader className="p-3 sm:p-4 md:p-6">
+                <CardTitle className="flex items-center space-x-2 text-sm sm:text-base md:text-lg">
+                  <Globe className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>Channel Health Status</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <CardContent className="p-3 sm:p-4 md:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   {['email', 'sms', 'telegram', 'discord'].map((channel) => (
-                    <div key={channel} className="border rounded-lg p-4">
+                    <div key={channel} className="border rounded-lg p-3 sm:p-4">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-2">
                           {getChannelIcon(channel)}
-                          <span className="font-semibold capitalize">{channel}</span>
+                          <span className="text-sm sm:text-base font-semibold capitalize">{channel}</span>
                         </div>
                         {getHealthBadge('healthy')}
                       </div>
-                      <div className="space-y-2 text-sm">
+                      <div className="space-y-2 text-xs sm:text-sm">
                         <div className="flex justify-between">
                           <span>Uptime:</span>
                           <span className="font-medium">99.9%</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Rate Limit:</span>
-                          <Badge variant="outline" className="text-green-600">Normal</Badge>
+                          <Badge variant="outline" className="text-green-600 text-xs">Normal</Badge>
                         </div>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="w-full mt-2"
+                          className="w-full mt-2 text-xs sm:text-sm px-2 py-1"
                           onClick={() => testChannelMutation.mutate(channel)}
                           disabled={testChannelMutation.isPending}
                         >
@@ -379,22 +380,22 @@ export default function NotificationDashboard() {
             </Card>
 
             {/* Charts and Analytics */}
-            <Tabs defaultValue="overview" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="channels">By Channel</TabsTrigger>
-                <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                <TabsTrigger value="logs">Activity Logs</TabsTrigger>
+            <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-0">
+                <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+                <TabsTrigger value="channels" className="text-xs sm:text-sm">Channels</TabsTrigger>
+                <TabsTrigger value="timeline" className="text-xs sm:text-sm">Timeline</TabsTrigger>
+                <TabsTrigger value="logs" className="text-xs sm:text-sm">Logs</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="overview" className="space-y-4">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <TabsContent value="overview" className="space-y-3 sm:space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Delivery Success Rate</CardTitle>
+                    <CardHeader className="p-3 sm:p-4 md:p-6">
+                      <CardTitle className="text-sm sm:text-base md:text-lg">Delivery Success Rate</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
+                    <CardContent className="p-3 sm:p-4 md:p-6">
+                      <ResponsiveContainer width="100%" height={250}>
                         <PieChart>
                           <Pie
                             data={pieData}
@@ -417,11 +418,11 @@ export default function NotificationDashboard() {
                   </Card>
 
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Channel Performance</CardTitle>
+                    <CardHeader className="p-3 sm:p-4 md:p-6">
+                      <CardTitle className="text-sm sm:text-base md:text-lg">Channel Performance</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
+                    <CardContent className="p-3 sm:p-4 md:p-6">
+                      <ResponsiveContainer width="100%" height={250}>
                         <BarChart data={chartData}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="name" />
@@ -437,13 +438,13 @@ export default function NotificationDashboard() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="timeline" className="space-y-4">
+              <TabsContent value="timeline" className="space-y-3 sm:space-y-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>24-Hour Delivery Timeline</CardTitle>
+                  <CardHeader className="p-3 sm:p-4 md:p-6">
+                    <CardTitle className="text-sm sm:text-base md:text-lg">24-Hour Delivery Timeline</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={400}>
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <ResponsiveContainer width="100%" height={300}>
                       <LineChart data={timeSeriesData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="time" />
@@ -460,16 +461,16 @@ export default function NotificationDashboard() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="logs" className="space-y-4">
+              <TabsContent value="logs" className="space-y-3 sm:space-y-4">
                 <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>Recent Notification Activity</CardTitle>
-                      <div className="flex items-center space-x-2">
+                  <CardHeader className="p-3 sm:p-4 md:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+                      <CardTitle className="text-sm sm:text-base md:text-lg">Recent Notification Activity</CardTitle>
+                      <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 xs:gap-0 xs:space-x-2">
                         <select
                           value={selectedChannel}
                           onChange={(e) => setSelectedChannel(e.target.value)}
-                          className="px-3 py-1 border rounded text-sm"
+                          className="px-2 sm:px-3 py-1 border rounded text-xs sm:text-sm"
                         >
                           <option value="all">All Channels</option>
                           <option value="email">Email</option>
@@ -477,25 +478,26 @@ export default function NotificationDashboard() {
                           <option value="telegram">Telegram</option>
                           <option value="discord">Discord</option>
                         </select>
-                        <Button size="sm" variant="outline">
-                          <Download className="h-4 w-4 mr-2" />
+                        <Button size="sm" variant="outline" className="text-xs sm:text-sm px-2 sm:px-3">
+                          <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                           Export
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Channel</TableHead>
-                          <TableHead>Recipient</TableHead>
-                          <TableHead>Subject</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Sent At</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
+                  <CardContent className="p-3 sm:p-4 md:p-6">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-xs sm:text-sm p-1 sm:p-2">Channel</TableHead>
+                            <TableHead className="text-xs sm:text-sm p-1 sm:p-2 hidden sm:table-cell">Recipient</TableHead>
+                            <TableHead className="text-xs sm:text-sm p-1 sm:p-2">Subject</TableHead>
+                            <TableHead className="text-xs sm:text-sm p-1 sm:p-2">Status</TableHead>
+                            <TableHead className="text-xs sm:text-sm p-1 sm:p-2 hidden md:table-cell">Sent At</TableHead>
+                            <TableHead className="text-xs sm:text-sm p-1 sm:p-2 hidden lg:table-cell">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
                       <TableBody>
                         {/* Mock log entries for demonstration */}
                         {[
@@ -531,25 +533,26 @@ export default function NotificationDashboard() {
                           }
                         ].map((log) => (
                           <TableRow key={log.id}>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
+                            <TableCell className="p-1 sm:p-2">
+                              <div className="flex items-center space-x-1 sm:space-x-2">
                                 {getChannelIcon(log.type)}
-                                <span className="capitalize">{log.type}</span>
+                                <span className="text-xs sm:text-sm capitalize">{log.type}</span>
                               </div>
                             </TableCell>
-                            <TableCell className="font-mono text-sm">{log.recipient}</TableCell>
-                            <TableCell>{log.subject}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={getStatusColor(log.status)}>
+                            <TableCell className="text-xs sm:text-sm font-mono p-1 sm:p-2 hidden sm:table-cell">{log.recipient}</TableCell>
+                            <TableCell className="text-xs sm:text-sm p-1 sm:p-2 max-w-xs truncate">{log.subject}</TableCell>
+                            <TableCell className="p-1 sm:p-2">
+                              <Badge variant="outline" className={`${getStatusColor(log.status)} text-xs`}>
                                 {log.status}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">{log.sentAt}</TableCell>
-                            <TableCell>
+                            <TableCell className="text-xs sm:text-sm p-1 sm:p-2 text-muted-foreground hidden md:table-cell">{log.sentAt}</TableCell>
+                            <TableCell className="p-1 sm:p-2 hidden lg:table-cell">
                               {log.status === 'failed' && (
                                 <Button
                                   size="sm"
                                   variant="outline"
+                                  className="text-xs px-2 py-1"
                                   onClick={() => retryNotificationMutation.mutate(log.id)}
                                   disabled={retryNotificationMutation.isPending}
                                 >
@@ -561,7 +564,8 @@ export default function NotificationDashboard() {
                           </TableRow>
                         ))}
                       </TableBody>
-                    </Table>
+                      </Table>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

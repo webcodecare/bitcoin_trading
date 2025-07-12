@@ -176,11 +176,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await updateSettingsMutation.mutateAsync(settings);
   };
 
+  // Debug authentication state
+  const sessionUser = SessionManager.getUser();
+  console.log("useAuth DEBUG: token=", !!token);
+  console.log("useAuth DEBUG: profileData?.user=", !!profileData?.user);
+  console.log("useAuth DEBUG: sessionUser=", sessionUser);
+  console.log("useAuth DEBUG: final user=", profileData?.user || sessionUser);
+
   const contextValue: AuthContextType = {
-    user: profileData?.user || SessionManager.getUser(),
+    user: profileData?.user || sessionUser,
     settings: profileData?.settings || null,
     isLoading: isLoading || loginMutation.isPending || registerMutation.isPending,
-    isAuthenticated: !!token && (!!profileData?.user || !!SessionManager.getUser()),
+    isAuthenticated: !!token && (!!profileData?.user || !!sessionUser),
     login,
     register,
     logout,

@@ -133,7 +133,7 @@ export default function AchievementsPage() {
     return (
       <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
         <Sidebar />
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-4 md:p-6 ml-0 md:ml-64">
           <div className="mb-6">
             <h1 className="text-3xl font-bold">Achievements</h1>
             <p className="text-muted-foreground">Loading your progress...</p>
@@ -159,13 +159,13 @@ export default function AchievementsPage() {
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      <div className="flex-1 p-6 overflow-y-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Achievements</h1>
-          <p className="text-muted-foreground">Track your progress and unlock rewards</p>
+      <div className="flex-1 p-4 md:p-6 overflow-y-auto ml-0 md:ml-64">
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Achievements</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Track your progress and unlock rewards</p>
           
           {/* User Progress Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4 md:mt-6">
             <Card>
               <CardContent className="p-4 text-center">
                 <Trophy className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
@@ -199,7 +199,7 @@ export default function AchievementsPage() {
 
         {/* Achievement Categories */}
         <Tabs defaultValue="all" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="milestone">Milestone</TabsTrigger>
             <TabsTrigger value="trading">Trading</TabsTrigger>
@@ -210,7 +210,7 @@ export default function AchievementsPage() {
 
           {getCategories().map(category => (
             <TabsContent key={category} value={category} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {filterByCategory(category).map((achievement) => (
                   <Card 
                     key={achievement.id} 
@@ -220,13 +220,13 @@ export default function AchievementsPage() {
                         : 'border-gray-200'
                     }`}
                   >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                    <CardHeader className="pb-2 md:pb-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-center gap-2 md:gap-3">
                           {getIconComponent(achievement.iconType, achievement.iconColor)}
-                          <div>
-                            <CardTitle className="text-lg">{achievement.name}</CardTitle>
-                            <CardDescription className="text-sm">
+                          <div className="flex-1">
+                            <CardTitle className="text-base md:text-lg">{achievement.name}</CardTitle>
+                            <CardDescription className="text-xs md:text-sm">
                               {achievement.description}
                             </CardDescription>
                           </div>

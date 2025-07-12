@@ -246,14 +246,14 @@ export default function Admin() {
         <Sidebar />
         
         {/* Main Content */}
-        <div className="ml-64 flex-1">
+        <div className="ml-0 md:ml-64 flex-1">
           {/* Top Bar */}
-          <header className="bg-card border-b border-border p-6">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-muted-foreground">Last login: 2h ago</span>
-                <div className="w-8 h-8 bg-destructive rounded-full flex items-center justify-center text-destructive-foreground font-semibold">
+          <header className="bg-card border-b border-border p-4 md:p-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <h1 className="text-xl md:text-2xl font-bold">Admin Dashboard</h1>
+              <div className="flex items-center space-x-2 md:space-x-4">
+                <span className="text-xs md:text-sm text-muted-foreground">Last login: 2h ago</span>
+                <div className="w-6 h-6 md:w-8 md:h-8 bg-destructive rounded-full flex items-center justify-center text-destructive-foreground font-semibold text-sm">
                   A
                 </div>
               </div>
@@ -261,20 +261,20 @@ export default function Admin() {
           </header>
 
           {/* Admin Content */}
-          <div className="p-6 space-y-6">
+          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             {/* Admin Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {adminStats.map((stat, index) => {
                 const IconComponent = stat.icon;
                 return (
                   <Card key={index}>
-                    <CardContent className="p-6">
+                    <CardContent className="p-4 md:p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-muted-foreground">{stat.title}</p>
-                          <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground">{stat.title}</p>
+                          <p className={`text-lg md:text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                         </div>
-                        <IconComponent className={`h-8 w-8 ${stat.color}`} />
+                        <IconComponent className={`h-6 w-6 md:h-8 md:w-8 ${stat.color}`} />
                       </div>
                     </CardContent>
                   </Card>
@@ -285,7 +285,7 @@ export default function Admin() {
             {/* User Management */}
             <Card>
               <CardHeader>
-                <CardTitle>User Management</CardTitle>
+                <CardTitle className="text-lg md:text-xl">User Management</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoadingUsers ? (
@@ -295,69 +295,80 @@ export default function Admin() {
                     ))}
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users?.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">
-                                {user.firstName} {user.lastName}
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[200px]">User</TableHead>
+                          <TableHead className="hidden sm:table-cell">Role</TableHead>
+                          <TableHead className="hidden md:table-cell">Status</TableHead>
+                          <TableHead className="hidden lg:table-cell">Created</TableHead>
+                          <TableHead className="min-w-[100px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {users?.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium text-sm md:text-base">
+                                  {user.firstName} {user.lastName}
+                                </div>
+                                <div className="text-xs md:text-sm text-muted-foreground">{user.email}</div>
+                                <div className="sm:hidden mt-1 flex gap-2">
+                                  <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
+                                    {user.role}
+                                  </Badge>
+                                  <Badge variant={user.isActive ? 'default' : 'secondary'} className="text-xs">
+                                    {user.isActive ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                </div>
                               </div>
-                              <div className="text-sm text-muted-foreground">{user.email}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                              {user.role}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <UISwitch
-                                checked={user.isActive}
-                                onCheckedChange={(checked: boolean) =>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                                {user.role}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <div className="flex items-center space-x-2">
+                                <UISwitch
+                                  checked={user.isActive}
+                                  onCheckedChange={(checked: boolean) =>
+                                    updateUserMutation.mutate({
+                                      userId: user.id,
+                                      updates: { isActive: checked },
+                                    })
+                                  }
+                                />
+                                <span className="text-sm">
+                                  {user.isActive ? 'Active' : 'Inactive'}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs md:text-sm"
+                                onClick={() =>
                                   updateUserMutation.mutate({
                                     userId: user.id,
-                                    updates: { isActive: checked },
+                                    updates: { role: user.role === 'admin' ? 'user' : 'admin' },
                                   })
                                 }
-                              />
-                              <span className="text-sm">
-                                {user.isActive ? 'Active' : 'Inactive'}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(user.createdAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                updateUserMutation.mutate({
-                                  userId: user.id,
-                                  updates: { role: user.role === 'admin' ? 'user' : 'admin' },
-                                })
-                              }
-                            >
-                              {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                              >
+                                {user.role === 'admin' ? 'Remove' : 'Make Admin'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>

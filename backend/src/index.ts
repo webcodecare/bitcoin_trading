@@ -3,8 +3,7 @@ import { Server } from "socket.io";
 import express from "express";
 import { registerRoutes } from "./routes.js";
 import { initializeTickers } from "./init-tickers.js";
-import { scheduledProcessor } from "./services/scheduledProcessor.js";
-import { config } from "./config.js";
+import { startNotificationProcessor } from "./services/scheduledProcessor.js";
 import helmet from "helmet";
 import cors from "cors";
 import { createPool } from "@neondatabase/serverless";
@@ -14,12 +13,12 @@ import { eq } from "drizzle-orm";
 import { smsService } from "./services/smsService.js";
 import { telegramService } from "./services/telegramService.js";
 import rateLimit from "express-rate-limit";
-// import { securityMiddleware } from "./middleware/security.js";
-// import { encryptionMiddleware } from "./middleware/encryption.js";
-// import { dataValidationMiddleware } from "./middleware/dataValidation.js";
+import { securityMiddleware } from "./middleware/security.js";
+import { encryptionMiddleware } from "./middleware/encryption.js";
+import { dataValidationMiddleware } from "./middleware/dataValidation.js";
 
 const app = express();
-const port = config.port;
+const port = Number(process.env.PORT) || 3001;
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -41,15 +40,10 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS Configuration using centralized config
-const corsOrigins = config.corsOrigin 
-  ? config.corsOrigin.split(',').map(origin => origin.trim())
-  : config.nodeEnv === 'production' 
-    ? ['*'] // Allow all origins for API-only deployment
-    : ['http://localhost:3000', 'http://localhost:5000', 'http://localhost:5173'];
-
 app.use(cors({
-  origin: corsOrigins,
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['*'] // Allow all origins for API-only deployment
+    : ['http://localhost:3000', 'http://localhost:5000', 'http://localhost:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -65,9 +59,9 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // Security middleware
-// app.use(securityMiddleware);
-// app.use(encryptionMiddleware);
-// app.use(dataValidationMiddleware);
+app.use(securityMiddleware);
+app.use(encryptionMiddleware);
+app.use(dataValidationMiddleware);
 
 // Initialize services
 if (process.env.NODE_ENV === 'development') {
@@ -87,7 +81,7 @@ async function initializeServices() {
   }
 
   // Start notification processor
-  // startNotificationProcessor();
+  startNotificationProcessor();
 }
 
 // Register API routes

@@ -59,14 +59,14 @@ export default function NotificationCenterPage() {
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden ml-0 md:ml-64">
         <div className="flex-1 overflow-y-auto">
-          <div className="container mx-auto px-4 py-6 space-y-6">
+          <div className="container mx-auto px-4 py-4 md:py-6 space-y-4 md:space-y-6">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">Notification Center</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Notification Center</h1>
+                <p className="text-sm md:text-base text-muted-foreground">
                   Manage your real-time alerts and notification preferences
                 </p>
               </div>
