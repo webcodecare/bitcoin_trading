@@ -146,8 +146,22 @@ export const ROLES: Record<string, Role> = {
     name: 'Administrator',
     description: 'System administrator with management privileges',
     permissions: [
-      // All user permissions
-      ...ROLES.pro_user?.permissions || [],
+      // All pro user permissions
+      'signals.view',
+      'analytics.basic',
+      'analytics.advanced', 
+      'analytics.heatmap',
+      'analytics.cycle',
+      'analytics.portfolio',
+      'trading.playground',
+      'alerts.email',
+      'alerts.sms',
+      'alerts.telegram',
+      'alerts.advanced',
+      'subscriptions.view',
+      'subscriptions.billing',
+      'api.basic',
+      'api.advanced',
       // Admin-specific permissions
       'users.view',
       'users.create',
@@ -171,7 +185,17 @@ export const ROLES: Record<string, Role> = {
     id: 'superuser',
     name: 'Super User',
     description: 'Full system access with all permissions',
-    permissions: Object.keys(PERMISSIONS) // All permissions
+    permissions: [
+      // All permissions manually listed to avoid Object.keys issue
+      'users.view', 'users.create', 'users.edit', 'users.delete', 'users.manage_roles',
+      'signals.view', 'signals.create', 'signals.manage',
+      'trading.playground',
+      'analytics.basic', 'analytics.advanced', 'analytics.heatmap', 'analytics.cycle', 'analytics.portfolio',
+      'alerts.email', 'alerts.sms', 'alerts.telegram', 'alerts.advanced', 'alerts.manage',
+      'admin.dashboard', 'admin.logs', 'admin.system', 'admin.tickers', 'admin.webhooks',
+      'subscriptions.view', 'subscriptions.manage', 'subscriptions.billing',
+      'api.basic', 'api.advanced', 'api.admin',
+    ]
   }
 };
 
