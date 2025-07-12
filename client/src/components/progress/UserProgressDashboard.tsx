@@ -299,18 +299,18 @@ export default function UserProgressDashboard() {
       >
         <Card>
           <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                  <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500" />
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-6 w-6 text-yellow-500" />
                   User Progress Dashboard
                 </CardTitle>
-                <CardDescription className="text-sm">
+                <CardDescription>
                   Track your trading journey and unlock achievements
                 </CardDescription>
               </div>
-              <div className="text-left sm:text-right">
-                <div className="text-xl sm:text-2xl font-bold">Level {progress.level}</div>
+              <div className="text-right">
+                <div className="text-2xl font-bold">Level {progress.level}</div>
                 <div className="text-sm text-muted-foreground">
                   {progress.experiencePoints} / {progress.nextLevelXP} XP
                 </div>
@@ -328,30 +328,30 @@ export default function UserProgressDashboard() {
 
       {/* Progress Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-          <TabsTrigger value="achievements" className="text-xs sm:text-sm">Achievements</TabsTrigger>
-          <TabsTrigger value="milestones" className="text-xs sm:text-sm">Milestones</TabsTrigger>
-          <TabsTrigger value="skills" className="text-xs sm:text-sm">Skills</TabsTrigger>
-          <TabsTrigger value="custom" className="text-xs sm:text-sm">Custom</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="achievements">Achievements</TabsTrigger>
+          <TabsTrigger value="milestones">Milestones</TabsTrigger>
+          <TabsTrigger value="skills">Skills</TabsTrigger>
+          <TabsTrigger value="custom">Custom</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
             >
               <Card>
-                <CardContent className="p-4 sm:p-6">
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Total Trades</p>
-                      <p className="text-xl sm:text-2xl font-bold">{progress.totalTrades}</p>
+                      <p className="text-2xl font-bold">{progress.totalTrades}</p>
                     </div>
-                    <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500" />
+                    <BarChart3 className="h-8 w-8 text-blue-500" />
                   </div>
                   <div className="mt-2">
                     <p className="text-xs text-muted-foreground">
@@ -368,13 +368,13 @@ export default function UserProgressDashboard() {
               transition={{ delay: 0.2 }}
             >
               <Card>
-                <CardContent className="p-4 sm:p-6">
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Win Rate</p>
-                      <p className="text-xl sm:text-2xl font-bold">{progress.winRate}%</p>
+                      <p className="text-2xl font-bold">{progress.winRate}%</p>
                     </div>
-                    <Target className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
+                    <Target className="h-8 w-8 text-green-500" />
                   </div>
                   <div className="mt-2">
                     <Progress value={progress.winRate} className="h-2" />
@@ -389,13 +389,13 @@ export default function UserProgressDashboard() {
               transition={{ delay: 0.3 }}
             >
               <Card>
-                <CardContent className="p-4 sm:p-6">
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Total Profit</p>
-                      <p className="text-xl sm:text-2xl font-bold">${progress.totalProfit.toLocaleString()}</p>
+                      <p className="text-2xl font-bold">${progress.totalProfit.toLocaleString()}</p>
                     </div>
-                    <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
+                    <TrendingUp className="h-8 w-8 text-green-500" />
                   </div>
                   <div className="mt-2">
                     <p className="text-xs text-muted-foreground">
@@ -412,15 +412,15 @@ export default function UserProgressDashboard() {
               transition={{ delay: 0.4 }}
             >
               <Card>
-                <CardContent className="p-4 sm:p-6">
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Achievements</p>
-                      <p className="text-xl sm:text-2xl font-bold">
+                      <p className="text-2xl font-bold">
                         {progress.achievementsUnlocked}/{progress.totalAchievements}
                       </p>
                     </div>
-                    <Award className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500" />
+                    <Award className="h-8 w-8 text-purple-500" />
                   </div>
                   <div className="mt-2">
                     <Progress 

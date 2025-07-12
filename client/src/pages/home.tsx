@@ -211,10 +211,11 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             {/* Advanced BTC Chart with Buy/Sell Signals */}
             <TradingViewWidget 
-              symbol="BTCUSDT"
+              symbol="BINANCE:BTCUSDT"
               height={400}
-              theme="dark"
+              enableTrading={true}
               showSignals={true}
+              theme="dark"
             />
 
             {/* 200-Week Heatmap */}

@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Activity, TrendingUp, TrendingDown, Play, Pause, Maximize2, Settings } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { apiRequest } from "@/lib/queryClient";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { TrendingUp, TrendingDown, Activity, DollarSign } from "lucide-react";
 
 interface TradingViewWidgetProps {
   symbol?: string;
@@ -12,6 +18,15 @@ interface TradingViewWidgetProps {
   height?: number;
   enableTrading?: boolean;
   showSignals?: boolean;
+}
+
+interface Signal {
+  id: string;
+  ticker: string;
+  type: 'buy' | 'sell';
+  price: string;
+  timestamp: string;
+  notes?: string;
 }
 
 interface MarketData {
@@ -23,372 +38,558 @@ interface MarketData {
   low24h?: number;
 }
 
-interface OHLCData {
-  timestamp: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
-
 export default function TradingViewWidget({ 
-  symbol = 'BTCUSDT', 
+  symbol = 'BINANCE:BTCUSDT', 
   theme = 'dark',
   height = 600,
   enableTrading = true,
   showSignals = true
 }: TradingViewWidgetProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [priceHistory, setPriceHistory] = useState<OHLCData[]>([]);
+  const [tradeAmount, setTradeAmount] = useState('');
+  const [tradeMode, setTradeMode] = useState<'market' | 'limit'>('market');
+  const [limitPrice, setLimitPrice] = useState('');
+  const [priceHistory, setPriceHistory] = useState<number[]>([]);
   const [currentPrice, setCurrentPrice] = useState<number>(0);
-  const [isLive, setIsLive] = useState(true);
-  const [timeframe, setTimeframe] = useState('5m');
-  const [chartType, setChartType] = useState<'candle' | 'line'>('candle');
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [viewMode, setViewMode] = useState<'simple' | 'advanced' | 'professional'>('simple');
+  const [timeInterval, setTimeInterval] = useState<'1m' | '5m' | '15m' | '1h' | '4h' | '1d'>('5m');
+  const [isCompactMode, setIsCompactMode] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
-  // Fetch market data with robust error handling
-  const { data: marketData } = useQuery<MarketData>({
-    queryKey: [`/api/market/price/${symbol}`],
-    refetchInterval: isLive ? 5000 : false,
-    staleTime: 2000,
-    retry: false,
-    retryOnMount: false,
-    refetchOnWindowFocus: false,
-    onError: () => {
-      // Silently handle errors
+  // Get supported timeframes based on symbol
+  const getSupportedTimeframes = () => {
+    const ticker = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+    if (ticker === 'BTCUSDT' || ticker === 'BTCUSD') {
+      // Only show supported timeframes for BTCUSD
+      return ['1M', '1W', '1D', '12H', '4H', '1H', '30M'];
+    }
+    // Default timeframes for other symbols
+    return ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w'];
+  };
+
+  const supportedTimeframes = getSupportedTimeframes();
+
+  // Extract ticker from symbol (BINANCE:BTCUSDT -> BTCUSDT)
+  const ticker = symbol.includes(':') ? symbol.split(':')[1] : symbol;
+
+  // Fetch current market data
+  const { data: marketData } = useQuery({
+    queryKey: [`/api/market/price/${ticker}`],
+    refetchInterval: 5000, // Update every 5 seconds
+  });
+
+  // Fetch signals for this ticker
+  const { data: signals = [] } = useQuery({
+    queryKey: [`/api/signals/${ticker}`],
+  });
+
+  // Trading mutations
+  const buyMutation = useMutation({
+    mutationFn: async (data: { amount: number; price?: number }) => {
+      return apiRequest('POST', '/api/trading/buy', {
+        ticker,
+        amount: data.amount,
+        type: tradeMode,
+        price: data.price
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Buy Order Placed",
+        description: `Successfully placed ${tradeMode} buy order for ${ticker}`,
+      });
+      setTradeAmount('');
+      setLimitPrice('');
+    },
+    onError: (error) => {
+      toast({
+        title: "Trade Failed",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
-  // Generate realistic OHLC data
-  useEffect(() => {
-    const generateOHLCData = () => {
-      const data: OHLCData[] = [];
-      let price = marketData?.price || 67000;
-      const now = Date.now();
-      
-      for (let i = 49; i >= 0; i--) {
-        const timestamp = now - (i * 60000); // 1 minute intervals
-        const open = price;
-        const change = (Math.random() - 0.5) * 500;
-        const close = Math.max(60000, Math.min(75000, price + change));
-        const high = Math.max(open, close) + Math.random() * 200;
-        const low = Math.min(open, close) - Math.random() * 200;
-        const volume = 50000 + Math.random() * 100000;
-        
-        data.push({
-          timestamp,
-          open,
-          high: Math.min(75000, high),
-          low: Math.max(60000, low),
-          close,
-          volume
-        });
-        
-        price = close;
-      }
-      
-      setPriceHistory(data);
-      if (data.length > 0) {
-        setCurrentPrice(data[data.length - 1].close);
-      }
-    };
+  const sellMutation = useMutation({
+    mutationFn: async (data: { amount: number; price?: number }) => {
+      return apiRequest('POST', '/api/trading/sell', {
+        ticker,
+        amount: data.amount,
+        type: tradeMode,
+        price: data.price
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sell Order Placed", 
+        description: `Successfully placed ${tradeMode} sell order for ${ticker}`,
+      });
+      setTradeAmount('');
+      setLimitPrice('');
+    },
+    onError: (error) => {
+      toast({
+        title: "Trade Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
-    generateOHLCData();
+  // Update price history and current price
+  useEffect(() => {
+    if (marketData?.price) {
+      setCurrentPrice(marketData.price);
+      setPriceHistory(prev => {
+        const newHistory = [...prev, marketData.price];
+        return newHistory.slice(-100); // Keep last 100 price points
+      });
+    }
   }, [marketData]);
 
-  // Update current price in real-time
-  useEffect(() => {
-    if (marketData && isLive) {
-      setCurrentPrice(marketData.price);
-      
-      // Add new candle every 30 seconds
-      const interval = setInterval(() => {
-        setPriceHistory(prev => {
-          const lastCandle = prev[prev.length - 1];
-          if (!lastCandle) return prev;
-          
-          const now = Date.now();
-          const open = lastCandle.close;
-          const change = (Math.random() - 0.5) * 300;
-          const close = Math.max(60000, Math.min(75000, open + change));
-          const high = Math.max(open, close) + Math.random() * 150;
-          const low = Math.min(open, close) - Math.random() * 150;
-          const volume = 30000 + Math.random() * 80000;
-          
-          const newCandle: OHLCData = {
-            timestamp: now,
-            open,
-            high: Math.min(75000, high),
-            low: Math.max(60000, low),
-            close,
-            volume
-          };
-          
-          return [...prev.slice(-49), newCandle];
-        });
-      }, 30000);
+  // Generate additional chart data based on view mode
+  const getChartData = () => {
+    const baseData = {
+      volume: priceHistory.map(() => Math.random() * 1000000 + 500000),
+      rsi: priceHistory.map((_, i) => 30 + Math.sin(i * 0.1) * 20 + Math.random() * 10),
+      macd: priceHistory.map((_, i) => Math.sin(i * 0.05) * 500 + Math.random() * 200),
+    };
+    return baseData;
+  };
 
-      return () => clearInterval(interval);
-    }
-  }, [marketData, isLive]);
-
-  // Draw chart
+  // Draw chart on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || priceHistory.length === 0) return;
+    if (!canvas || priceHistory.length < 2) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Set canvas size
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * window.devicePixelRatio;
-    canvas.height = rect.height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    canvas.width = rect.width * devicePixelRatio;
+    canvas.height = rect.height * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
 
     const width = rect.width;
     const height = rect.height;
-    const chartHeight = height - 60;
-    const chartTop = 30;
+    const chartHeight = isCompactMode ? height * 0.8 : height;
 
-    // Clear with dark background
-    ctx.fillStyle = theme === 'dark' ? '#1e222d' : '#ffffff';
+    // Clear canvas
+    ctx.fillStyle = theme === 'dark' ? '#0a0a0a' : '#ffffff';
     ctx.fillRect(0, 0, width, height);
 
-    if (priceHistory.length < 2) return;
-
-    const prices = priceHistory.map(d => [d.low, d.high]).flat();
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
+    // Calculate price range
+    const minPrice = Math.min(...priceHistory);
+    const maxPrice = Math.max(...priceHistory);
     const priceRange = maxPrice - minPrice || 1;
 
-    // Draw grid
-    ctx.strokeStyle = theme === 'dark' ? '#2a2e39' : '#e1e5e9';
+    // Get additional data for advanced modes
+    const chartData = getChartData();
+
+    // Draw grid lines based on view mode
+    const gridIntensity = viewMode === 'simple' ? 0.3 : viewMode === 'advanced' ? 0.5 : 0.7;
+    ctx.strokeStyle = theme === 'dark' ? `rgba(255,255,255,${gridIntensity * 0.2})` : `rgba(0,0,0,${gridIntensity * 0.2})`;
     ctx.lineWidth = 1;
-    
+
     // Horizontal grid lines
-    for (let i = 0; i <= 5; i++) {
-      const y = chartTop + (chartHeight / 5) * i;
+    const gridLines = viewMode === 'simple' ? 3 : viewMode === 'advanced' ? 5 : 8;
+    for (let i = 0; i <= gridLines; i++) {
+      const y = (chartHeight / gridLines) * i;
       ctx.beginPath();
-      ctx.moveTo(40, y);
-      ctx.lineTo(width - 10, y);
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
       ctx.stroke();
+
+      // Price labels
+      const price = maxPrice - (priceRange / gridLines) * i;
+      ctx.fillStyle = theme === 'dark' ? '#888888' : '#666666';
+      ctx.font = isCompactMode ? '10px Arial' : '12px Arial';
+      ctx.fillText(`$${price.toFixed(viewMode === 'professional' ? 2 : 0)}`, 5, y - 5);
     }
 
     // Vertical grid lines
-    for (let i = 0; i <= 8; i++) {
-      const x = 40 + ((width - 50) / 8) * i;
+    const verticalLines = viewMode === 'simple' ? 6 : viewMode === 'advanced' ? 10 : 15;
+    for (let i = 0; i <= verticalLines; i++) {
+      const x = (width / verticalLines) * i;
       ctx.beginPath();
-      ctx.moveTo(x, chartTop);
-      ctx.lineTo(x, chartTop + chartHeight);
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, chartHeight);
       ctx.stroke();
+
+      // Time labels for professional mode
+      if (viewMode === 'professional' && i % 3 === 0) {
+        const timeAgo = Math.round((verticalLines - i) * (timeInterval === '1m' ? 1 : timeInterval === '5m' ? 5 : 15));
+        ctx.fillStyle = theme === 'dark' ? '#666666' : '#888888';
+        ctx.font = '10px Arial';
+        ctx.fillText(`-${timeAgo}${timeInterval.slice(-1)}`, x + 2, chartHeight + 12);
+      }
     }
 
-    // Draw candlesticks or line
-    const candleWidth = Math.max(2, (width - 50) / priceHistory.length - 1);
+    // Draw price line with different styles based on view mode
+    const lineWidth = viewMode === 'simple' ? 2 : viewMode === 'advanced' ? 3 : 2;
+    const lineColor = viewMode === 'simple' ? '#00d4aa' : viewMode === 'advanced' ? '#0ea5e9' : '#8b5cf6';
     
-    priceHistory.forEach((candle, index) => {
-      const x = 40 + ((width - 50) / priceHistory.length) * index;
-      
-      if (chartType === 'candle') {
-        // Draw candlestick
-        const openY = chartTop + chartHeight - ((candle.open - minPrice) / priceRange) * chartHeight;
-        const closeY = chartTop + chartHeight - ((candle.close - minPrice) / priceRange) * chartHeight;
-        const highY = chartTop + chartHeight - ((candle.high - minPrice) / priceRange) * chartHeight;
-        const lowY = chartTop + chartHeight - ((candle.low - minPrice) / priceRange) * chartHeight;
-        
-        const isGreen = candle.close > candle.open;
-        ctx.fillStyle = isGreen ? '#26a69a' : '#ef5350';
-        ctx.strokeStyle = isGreen ? '#26a69a' : '#ef5350';
-        
-        // Draw wick
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x + candleWidth/2, highY);
-        ctx.lineTo(x + candleWidth/2, lowY);
-        ctx.stroke();
-        
-        // Draw body
-        const bodyTop = Math.min(openY, closeY);
-        const bodyHeight = Math.abs(closeY - openY) || 1;
-        ctx.fillRect(x, bodyTop, candleWidth, bodyHeight);
-        
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+
+    priceHistory.forEach((price, index) => {
+      const x = (width / (priceHistory.length - 1)) * index;
+      const y = chartHeight - ((price - minPrice) / priceRange) * chartHeight;
+
+      if (index === 0) {
+        ctx.moveTo(x, y);
       } else {
-        // Draw line chart
-        ctx.strokeStyle = '#2196f3';
-        ctx.lineWidth = 2;
-        
-        const y = chartTop + chartHeight - ((candle.close - minPrice) / priceRange) * chartHeight;
-        
-        if (index === 0) {
-          ctx.beginPath();
-          ctx.moveTo(x + candleWidth/2, y);
-        } else {
-          ctx.lineTo(x + candleWidth/2, y);
-        }
-        
-        if (index === priceHistory.length - 1) {
-          ctx.stroke();
-        }
+        ctx.lineTo(x, y);
       }
     });
 
-    // Draw current price line
-    if (currentPrice > 0) {
-      const currentY = chartTop + chartHeight - ((currentPrice - minPrice) / priceRange) * chartHeight;
-      
-      ctx.strokeStyle = '#ffb74d';
+    ctx.stroke();
+
+    // Add technical indicators for advanced and professional modes
+    if (viewMode === 'advanced' || viewMode === 'professional') {
+      // Moving Average (Simple)
+      const ma20 = [];
+      for (let i = 0; i < priceHistory.length; i++) {
+        const start = Math.max(0, i - 19);
+        const subset = priceHistory.slice(start, i + 1);
+        ma20.push(subset.reduce((a, b) => a + b, 0) / subset.length);
+      }
+
+      ctx.strokeStyle = '#f59e0b';
       ctx.lineWidth = 1;
+      ctx.beginPath();
+      ma20.forEach((price, index) => {
+        const x = (width / (ma20.length - 1)) * index;
+        const y = chartHeight - ((price - minPrice) / priceRange) * chartHeight;
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.stroke();
+    }
+
+    // Professional mode: Add volume bars at bottom
+    if (viewMode === 'professional' && !isCompactMode) {
+      const volumeHeight = height * 0.2;
+      const volumeY = chartHeight + 20;
+      const maxVolume = Math.max(...chartData.volume);
+
+      ctx.fillStyle = theme === 'dark' ? 'rgba(100, 116, 139, 0.6)' : 'rgba(148, 163, 184, 0.6)';
+      chartData.volume.forEach((vol, index) => {
+        const x = (width / (chartData.volume.length - 1)) * index;
+        const barHeight = (vol / maxVolume) * volumeHeight;
+        ctx.fillRect(x - 1, volumeY + volumeHeight - barHeight, 2, barHeight);
+      });
+
+      // Volume label
+      ctx.fillStyle = theme === 'dark' ? '#64748b' : '#475569';
+      ctx.font = '10px Arial';
+      ctx.fillText('Volume', 5, volumeY + 10);
+    }
+
+    // Draw current price indicator
+    if (currentPrice > 0) {
+      const currentY = chartHeight - ((currentPrice - minPrice) / priceRange) * chartHeight;
+      
+      // Price line
+      ctx.strokeStyle = '#ffcc00';
+      ctx.lineWidth = viewMode === 'professional' ? 2 : 1;
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.moveTo(40, currentY);
-      ctx.lineTo(width - 10, currentY);
+      ctx.moveTo(0, currentY);
+      ctx.lineTo(width, currentY);
       ctx.stroke();
       ctx.setLineDash([]);
+
+      // Price label with background
+      const fontSize = isCompactMode ? 12 : 14;
+      ctx.font = `bold ${fontSize}px Arial`;
+      const priceText = `$${currentPrice.toFixed(viewMode === 'professional' ? 2 : 0)}`;
+      const textWidth = ctx.measureText(priceText).width;
       
-      // Price label
-      ctx.fillStyle = '#ffb74d';
-      ctx.font = 'bold 11px Arial';
-      ctx.textAlign = 'left';
-      ctx.fillText(`$${currentPrice.toFixed(2)}`, width - 80, currentY - 5);
+      // Background for price label
+      ctx.fillStyle = theme === 'dark' ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
+      ctx.fillRect(width - textWidth - 10, currentY - fontSize - 2, textWidth + 8, fontSize + 4);
+      
+      // Price text
+      ctx.fillStyle = '#ffcc00';
+      ctx.fillText(priceText, width - textWidth - 6, currentY - 2);
+
+      // Professional mode: Add price change indicator
+      if (viewMode === 'professional' && priceHistory.length > 1) {
+        const previousPrice = priceHistory[priceHistory.length - 2];
+        const change = currentPrice - previousPrice;
+        const changePercent = (change / previousPrice) * 100;
+        
+        ctx.font = '10px Arial';
+        const changeText = `${change >= 0 ? '+' : ''}${change.toFixed(2)} (${changePercent.toFixed(2)}%)`;
+        ctx.fillStyle = change >= 0 ? '#22c55e' : '#ef4444';
+        ctx.fillText(changeText, width - textWidth - 6, currentY + 12);
+      }
     }
 
-    // Draw price scale
-    ctx.fillStyle = theme === 'dark' ? '#787b86' : '#6a6d78';
-    ctx.font = '10px Arial';
-    ctx.textAlign = 'right';
-    
-    for (let i = 0; i <= 5; i++) {
-      const price = minPrice + (priceRange / 5) * (5 - i);
-      const y = chartTop + (chartHeight / 5) * i;
-      ctx.fillText(`$${price.toFixed(0)}`, 35, y + 3);
+    // Draw buy/sell signals with enhanced styling
+    if (showSignals && Array.isArray(signals) && signals.length > 0) {
+      signals.forEach((signal: Signal, index: number) => {
+        const signalPrice = parseFloat(signal.price);
+        const signalY = chartHeight - ((signalPrice - minPrice) / priceRange) * chartHeight;
+        const markerSize = viewMode === 'simple' ? 4 : viewMode === 'advanced' ? 6 : 8;
+        const signalX = width - 30 - (index * 25);
+        
+        // Signal marker with glow effect for professional mode
+        if (viewMode === 'professional') {
+          // Glow effect
+          ctx.shadowColor = signal.type === 'buy' ? '#22c55e' : '#ef4444';
+          ctx.shadowBlur = 10;
+        }
+        
+        ctx.fillStyle = signal.type === 'buy' ? '#22c55e' : '#ef4444';
+        ctx.beginPath();
+        ctx.arc(signalX, signalY, markerSize, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Reset shadow
+        ctx.shadowBlur = 0;
+
+        // Signal label with better positioning
+        if (viewMode === 'advanced' || viewMode === 'professional') {
+          ctx.fillStyle = signal.type === 'buy' ? '#22c55e' : '#ef4444';
+          ctx.font = isCompactMode ? '10px Arial' : '12px Arial';
+          const label = viewMode === 'professional' ? `${signal.type.toUpperCase()} $${signalPrice.toFixed(0)}` : signal.type.toUpperCase();
+          const labelWidth = ctx.measureText(label).width;
+          
+          // Background for label
+          ctx.fillStyle = theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)';
+          ctx.fillRect(signalX - labelWidth/2 - 2, signalY - markerSize - 18, labelWidth + 4, 14);
+          
+          // Label text
+          ctx.fillStyle = signal.type === 'buy' ? '#22c55e' : '#ef4444';
+          ctx.fillText(label, signalX - labelWidth/2, signalY - markerSize - 8);
+        }
+      });
     }
 
-    // Draw volume bars at bottom
-    const volumeHeight = 40;
-    const volumeTop = height - volumeHeight;
-    const maxVolume = Math.max(...priceHistory.map(d => d.volume));
+  }, [priceHistory, currentPrice, theme, showSignals, signals, viewMode, timeInterval, isCompactMode]);
+
+  const handleTrade = (action: 'buy' | 'sell') => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to trade",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const amount = parseFloat(tradeAmount);
+    if (!amount || amount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid trade amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const tradeData: { amount: number; price?: number } = { amount };
     
-    priceHistory.forEach((candle, index) => {
-      const x = 40 + ((width - 50) / priceHistory.length) * index;
-      const volumeBarHeight = (candle.volume / maxVolume) * volumeHeight * 0.8;
-      
-      ctx.fillStyle = candle.close > candle.open ? '#26a69a40' : '#ef535040';
-      ctx.fillRect(x, volumeTop + volumeHeight - volumeBarHeight, candleWidth, volumeBarHeight);
-    });
+    if (tradeMode === 'limit') {
+      const price = parseFloat(limitPrice);
+      if (!price || price <= 0) {
+        toast({
+          title: "Invalid Price",
+          description: "Please enter a valid limit price",
+          variant: "destructive",
+        });
+        return;
+      }
+      tradeData.price = price;
+    }
 
-  }, [priceHistory, currentPrice, chartType, theme]);
-
-  const change24h = marketData?.change24h || 0;
-  const changePercent = marketData ? (change24h / marketData.price) * 100 : 0;
+    if (action === 'buy') {
+      buyMutation.mutate(tradeData);
+    } else {
+      sellMutation.mutate(tradeData);
+    }
+  };
 
   return (
-    <Card className={`w-full ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              {symbol}
-            </CardTitle>
-            
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xl font-bold">
-                ${currentPrice.toLocaleString()}
+    <div className="space-y-4">
+      {/* Chart Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">{ticker} Trading Chart</h3>
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+            <span>Price: ${currentPrice.toFixed(2)}</span>
+            {marketData?.change24h && (
+              <span className={marketData.change24h >= 0 ? 'text-green-400' : 'text-red-400'}>
+                {marketData.change24h >= 0 ? '+' : ''}{marketData.change24h.toFixed(2)}%
               </span>
-              <Badge variant={changePercent >= 0 ? "default" : "destructive"} className="text-xs">
-                {changePercent >= 0 ? (
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                ) : (
-                  <TrendingDown className="h-3 w-3 mr-1" />
-                )}
-                {Math.abs(changePercent).toFixed(2)}%
-              </Badge>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Select value={timeframe} onValueChange={setTimeframe}>
-              <SelectTrigger className="w-20 h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1m">1M</SelectItem>
-                <SelectItem value="5m">5M</SelectItem>
-                <SelectItem value="15m">15M</SelectItem>
-                <SelectItem value="1h">1H</SelectItem>
-                <SelectItem value="4h">4H</SelectItem>
-                <SelectItem value="1d">1D</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setChartType(chartType === 'candle' ? 'line' : 'candle')}
-              className="h-8 px-2"
-            >
-              {chartType === 'candle' ? 'Line' : 'Candle'}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsLive(!isLive)}
-              className="h-8 w-8 p-0"
-            >
-              {isLive ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="h-8 w-8 p-0"
-            >
-              <Maximize2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="p-0">
-        <div className="relative w-full border-t" style={{ height: `${isFullscreen ? window.innerHeight - 120 : height}px` }}>
-          <canvas
-            ref={canvasRef}
-            className="w-full h-full cursor-crosshair"
-            style={{ width: '100%', height: '100%' }}
-          />
-          
-          {/* Status indicators */}
-          <div className="absolute top-4 left-4 flex gap-2">
-            <Badge variant={isLive ? "default" : "secondary"} className="text-xs">
-              <div className={`w-2 h-2 rounded-full mr-1 ${
-                isLive ? 'bg-green-400 animate-pulse' : 'bg-gray-400'
-              }`} />
-              {isLive ? 'LIVE' : 'PAUSED'}
-            </Badge>
-            
-            {marketData && (
-              <Badge variant="outline" className="text-xs">
-                Vol: {marketData.volume24h ? (marketData.volume24h / 1e6).toFixed(1) + 'M' : 'N/A'}
-              </Badge>
             )}
           </div>
-          
-          {/* Chart info */}
-          <div className="absolute top-4 right-4 text-right">
-            <div className="text-xs text-muted-foreground space-y-1">
-              {marketData && (
-                <>
-                  <div>H: ${marketData.high24h?.toFixed(2) || 'N/A'}</div>
-                  <div>L: ${marketData.low24h?.toFixed(2) || 'N/A'}</div>
-                </>
-              )}
+        </div>
+        <div className="flex items-center space-x-2">
+          <Badge variant="outline">Live</Badge>
+          <Badge variant={showSignals ? "default" : "secondary"}>
+            Signals {showSignals ? 'On' : 'Off'}
+          </Badge>
+        </div>
+      </div>
+
+      {/* One-Click View Mode Switcher */}
+      <Card className="bg-card border-border mb-4">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            {/* View Mode Buttons */}
+            <div className="flex items-center space-x-2">
+              <Label className="text-sm font-medium text-foreground">View Mode:</Label>
+              <div className="flex space-x-1">
+                <Button
+                  variant={viewMode === 'simple' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('simple')}
+                >
+                  Simple
+                </Button>
+                <Button
+                  variant={viewMode === 'advanced' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('advanced')}
+                >
+                  Advanced
+                </Button>
+                <Button
+                  variant={viewMode === 'professional' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('professional')}
+                >
+                  Pro
+                </Button>
+              </div>
+            </div>
+
+            {/* Time Interval Buttons */}
+            <div className="flex items-center space-x-2">
+              <Label className="text-sm font-medium text-foreground">Interval:</Label>
+              <div className="flex space-x-1">
+                {['1m', '5m', '15m', '1h', '4h', '1d'].map((interval) => (
+                  <Button
+                    key={interval}
+                    variant={timeInterval === interval ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setTimeInterval(interval as any)}
+                  >
+                    {interval}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Compact Mode Toggle */}
+            <div className="flex items-center space-x-2">
+              <Label className="text-sm font-medium text-foreground">Compact:</Label>
+              <Button
+                variant={isCompactMode ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setIsCompactMode(!isCompactMode)}
+              >
+                {isCompactMode ? 'On' : 'Off'}
+              </Button>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+
+          {/* View Mode Description */}
+          <div className="mt-3 text-xs text-muted-foreground">
+            {viewMode === 'simple' && "Basic price chart with essential trading tools"}
+            {viewMode === 'advanced' && "Enhanced chart with technical indicators and volume"}
+            {viewMode === 'professional' && "Full-featured chart with advanced analytics and order book"}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Chart Canvas */}
+      <div className="relative bg-card border border-border rounded-lg overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          className="w-full block"
+          style={{ height: `${height}px` }}
+        />
+        
+        {/* Loading overlay */}
+        {priceHistory.length < 2 && (
+          <div className="absolute inset-0 flex items-center justify-center bg-card/80">
+            <div className="text-center">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+              <p className="text-muted-foreground">Loading chart data...</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Signal Information Panel */}
+      {enableTrading && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground">Signal Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                This platform provides trading signals and market analysis. 
+                Trading signals are for informational purposes only.
+              </div>
+              
+              <div className="bg-muted p-4 rounded-lg">
+                <h4 className="font-semibold mb-2">Signal Features</h4>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  <li>• TradingView webhook integration</li>
+                  <li>• Real-time buy/sell signal alerts</li>
+                  <li>• Multiple timeframe support for BTCUSD</li>
+                  <li>• Historical signal tracking</li>
+                  <li>• Email and SMS notifications</li>
+                </ul>
+              </div>
+              
+              <div className="text-xs text-muted-foreground p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <strong>Disclaimer:</strong> This platform does not facilitate actual trading. 
+                All signals are for educational and informational purposes only. 
+                Users must execute trades on their own trading platforms.
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Signals */}
+      {showSignals && signals.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground">Recent Signals</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {signals.slice(0, 3).map((signal: Signal) => (
+                <div key={signal.id} className="flex items-center justify-between p-2 border border-border rounded">
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={signal.type === 'buy' ? 'default' : 'destructive'}>
+                      {signal.type.toUpperCase()}
+                    </Badge>
+                    <span className="text-foreground">${signal.price}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(signal.timestamp).toLocaleTimeString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }

@@ -182,16 +182,16 @@ export default function MoodBoard() {
       <div className="flex">
         <Sidebar />
         
-        <main className="flex-1 ml-0 md:ml-64 p-4 md:p-6">
+        <main className="flex-1 ml-64 p-6">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
-            <div className="mb-6 md:mb-8">
-              <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Trading Signal Mood Board</h1>
-              <p className="text-sm md:text-base text-gray-400">Interactive visualization of market sentiment through trading signals</p>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-white mb-2">Trading Signal Mood Board</h1>
+              <p className="text-gray-400">Interactive visualization of market sentiment through trading signals</p>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <Card className="bg-gray-900/50 border-gray-800">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">

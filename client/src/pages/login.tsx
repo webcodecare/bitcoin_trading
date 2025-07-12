@@ -47,13 +47,13 @@ export default function Login() {
 
   const handleDemoLogin = async () => {
     setEmail("demo@test.com");
-    setPassword("password123");
+    setPassword("demo123");
     setIsLoading(true);
 
     try {
       const response = await apiRequest("POST", "/api/auth/login", {
         email: "demo@test.com",
-        password: "password123",
+        password: "demo123",
       });
 
       const data = await response.json();
