@@ -67,10 +67,10 @@ setTimeout(() => {
     ws: true
   }));
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 Combined server running on port ${PORT}`);
-    console.log(`📱 Frontend: http://localhost:3000 (proxied through port ${PORT})`);
-    console.log(`🔧 Backend API: http://localhost:3001 (proxied through port ${PORT}/api)`);
+  app.listen(PORT, 'localhost', () => {
+    console.log(`🌐 Combined server running on http://localhost:${PORT}`);
+    console.log(`📱 Frontend: http://localhost:3000`);
+    console.log(`🔧 Backend API: http://localhost:3001`);
     console.log(`🩺 Health check: http://localhost:${PORT}/health`);
   });
 }, 5000);

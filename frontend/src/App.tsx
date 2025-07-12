@@ -14,6 +14,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Auth from "@/pages/auth";
 import Login from "@/pages/login";
+import TestApi from "@/test-api";
 
 // Heavy pages lazy loaded for better performance
 const Dashboard = lazy(() => import("@/pages/dashboard"));
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/auth" component={Auth} />
       <Route path="/signup" component={Auth} />
       <Route path="/login" component={Login} />
+      <Route path="/test-api" component={TestApi} />
       <Route path="/pricing">
         <Suspense fallback={<LoadingScreen />}>
           <Pricing />
