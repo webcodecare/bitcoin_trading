@@ -253,27 +253,29 @@ export default function TradingViewWidget({
 
     // Add technical indicators for advanced and professional modes
     if (viewMode === 'advanced' || viewMode === 'professional') {
-      // Moving Average (Simple)
-      const ma20 = [];
-      for (let i = 0; i < priceHistory.length; i++) {
-        const start = Math.max(0, i - 19);
-        const subset = priceHistory.slice(start, i + 1);
-        ma20.push(subset.reduce((a, b) => a + b, 0) / subset.length);
-      }
-
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ma20.forEach((price, index) => {
-        const x = (width / (ma20.length - 1)) * index;
-        const y = chartHeight - ((price - minPrice) / priceRange) * chartHeight;
-        if (index === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
+      // Moving Average (Simple) - with null check
+      if (priceHistory && priceHistory.length > 19) {
+        const ma20 = [];
+        for (let i = 0; i < priceHistory.length; i++) {
+          const start = Math.max(0, i - 19);
+          const subset = priceHistory.slice(start, i + 1);
+          ma20.push(subset.reduce((a, b) => a + b, 0) / subset.length);
         }
-      });
-      ctx.stroke();
+
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ma20.forEach((price, index) => {
+          const x = (width / (ma20.length - 1)) * index;
+          const y = chartHeight - ((price - minPrice) / priceRange) * chartHeight;
+          if (index === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+        ctx.stroke();
+      }
     }
 
     // Professional mode: Add volume bars at bottom
