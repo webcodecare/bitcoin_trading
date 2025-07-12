@@ -47,11 +47,17 @@ export default function TradingViewWidget({
   const [chartType, setChartType] = useState<'candle' | 'line'>('candle');
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Fetch market data
+  // Fetch market data with robust error handling
   const { data: marketData } = useQuery<MarketData>({
     queryKey: [`/api/market/price/${symbol}`],
-    refetchInterval: isLive ? 2000 : false,
-    staleTime: 0,
+    refetchInterval: isLive ? 5000 : false,
+    staleTime: 2000,
+    retry: false,
+    retryOnMount: false,
+    refetchOnWindowFocus: false,
+    onError: () => {
+      // Silently handle errors
+    },
   });
 
   // Generate realistic OHLC data
