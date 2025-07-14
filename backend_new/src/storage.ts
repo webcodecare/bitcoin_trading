@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, desc, and } from "drizzle-orm";
-import * as schema from "@shared/schema";
+import * as schema from "./schema.js";
 import type {
   User,
   InsertUser,
@@ -43,7 +43,7 @@ import type {
   InsertAchievement,
   InsertUserAchievement,
   InsertUserStats,
-} from "@shared/schema";
+} from "./schema.js";
 
 // Initialize database connection if URL is provided
 let db: any = null;

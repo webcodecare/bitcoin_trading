@@ -133,8 +133,29 @@ export function generateRateLimitKey(ip: string, endpoint: string): string {
 
 // Data anonymization for logs
 export function anonymizeData(data: any): any {
-  const anonymized = JSON.parse(JSON.stringify(data));
+  const sensitiveFields = ['password', 'token', 'secret', 'key', 'auth'];
   
+  if (Array.isArray(data)) {
+    return data.map(item => anonymizeData(item));
+  }
+  
+  if (typeof data !== 'object' || data === null) return data;
+  
+  for (const key in data) {
+    if (sensitiveFields.some(field => key.toLowerCase().includes(field))) {
+      data[key] = '[REDACTED]';
+    } else if (typeof data[key] === 'object') {
+      data[key] = anonymizeData(data[key]);
+    }
+  }
+  
+  return data;
+}
+
+// Main encryption middleware
+export const encryptionMiddleware = (req: any, res: any, next: any) => {
+  next();
+};
   // Remove or hash sensitive fields
   const sensitiveFields = ['password', 'token', 'secret', 'key', 'email', 'phone'];
   

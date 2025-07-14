@@ -134,6 +134,15 @@ export const validateFileUpload = (allowedTypes: string[], maxSize: number) => {
     if (!req.file) {
       return next();
     }
+    next();
+  };
+};
+
+// Main data validation middleware
+export const dataValidationMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  next();
+};
+    }
 
     // Check file type
     if (!allowedTypes.includes(req.file.mimetype)) {

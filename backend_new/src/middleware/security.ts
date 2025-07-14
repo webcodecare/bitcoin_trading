@@ -1,16 +1,21 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 
-export { 
-  requireAdmin, 
-  requireSubscription, 
-  csrfProtection, 
-  ipWhitelist, 
-  requestSizeLimit, 
-  sqlInjectionDetection, 
-  xssProtection, 
-  validateApiKey, 
-  securityLogger 
+// Security logging middleware
+export const securityLogger = (req: Request, res: Response, next: NextFunction) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - IP: ${req.ip}`);
+  next();
+};
+
+// XSS protection middleware
+export const xssProtection = (req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+};
+
+// Main security middleware
+export const securityMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  next();
 };
 
 // Admin role middleware

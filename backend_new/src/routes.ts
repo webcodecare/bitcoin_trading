@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import Stripe from "stripe";
 import { body, validationResult, param, query } from "express-validator";
 import { storage } from "./storage";
-import { insertUserSchema, insertSignalSchema, insertTickerSchema, insertUserAlertSchema, insertDashboardLayoutSchema } from "@shared/schema";
+import { insertUserSchema, insertSignalSchema, insertTickerSchema, insertUserAlertSchema } from "./schema.js";
 import { cycleForecastingService } from "./services/cycleForecasting";
 import { notificationService } from "./services/notificationService";
 import { smsService } from "./services/smsService";

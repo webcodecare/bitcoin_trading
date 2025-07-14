@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { notificationQueue, notificationLogs, notificationChannels, users, userSettings, alertSignals } from "../../shared/schema";
+import { notificationQueue, notificationLogs, notificationChannels, users, userSettings, alertSignals } from "../schema.js";
 import { eq, and, lte, isNull, sql, desc, asc } from "drizzle-orm";
 import { smsService } from "./smsService";
 import { telegramService } from "./telegramService";
