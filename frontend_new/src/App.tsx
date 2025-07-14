@@ -11,7 +11,7 @@ import AuthGuard from "@/components/auth/AuthGuard";
 
 // Critical pages loaded immediately
 import NotFound from "@/pages/not-found";
-import HomeSimple from "@/pages/home-simple";
+import Home from "@/pages/home";
 import Auth from "@/pages/auth";
 import Login from "@/pages/login";
 
@@ -42,7 +42,7 @@ const LoadingScreen = () => (
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomeSimple} />
+      <Route path="/" component={Home} />
       <Route path="/auth" component={Auth} />
       <Route path="/signup" component={Auth} />
       <Route path="/login" component={Login} />
