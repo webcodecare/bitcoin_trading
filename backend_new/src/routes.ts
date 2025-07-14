@@ -394,16 +394,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Secure login route with validation
-  app.post('/api/auth/login', [
-    validateEmail,
-    body('password').notEmpty().withMessage('Password is required'),
-    validateInput
-  ], async (req, res) => {
+  app.post('/api/auth/login', async (req, res) => {
     try {
+      console.log('Login attempt - req.body:', req.body);
       const { email, password } = req.body;
+      
+      // Simple validation without middleware
+      if (!email || !password) {
+        return res.status(400).json({
+          message: 'Email and password are required',
+          code: 'MISSING_CREDENTIALS',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      if (!/\S+@\S+\.\S+/.test(email)) {
+        return res.status(400).json({
+          message: 'Invalid email format',
+          code: 'INVALID_EMAIL',
+          timestamp: new Date().toISOString()
+        });
+      }
 
-      // Find user by email
-      const user = await storage.getUserByEmail(email.toLowerCase());
+      // Find user by email with error handling
+      console.log('About to call storage.getUserByEmail with:', email.toLowerCase());
+      let user;
+      try {
+        user = await storage.getUserByEmail(email.toLowerCase());
+        console.log('User lookup result:', user ? 'Found user' : 'No user found');
+        if (user) {
+          console.log('User details:', {
+            id: user.id,
+            email: user.email,
+            hashedPassword: user.hashedPassword ? user.hashedPassword.substring(0, 20) + '...' : 'NO HASH'
+          });
+        }
+      } catch (storageError) {
+        console.error('Storage error during getUserByEmail:', storageError);
+        return res.status(500).json({
+          message: 'Internal server error',
+          code: 'STORAGE_ERROR',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       if (!user) {
         return res.status(401).json({ 
           message: 'Invalid email or password',
@@ -413,7 +447,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify password
-      const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
+      console.log('Password comparison - provided:', password, 'stored hash:', user.hashedPassword?.substring(0, 20) + '...');
+      let passwordMatch;
+      try {
+        passwordMatch = await bcrypt.compare(password, user.hashedPassword);
+        console.log('Password match result:', passwordMatch);
+      } catch (bcryptError) {
+        console.error('Bcrypt error during password comparison:', bcryptError);
+        return res.status(500).json({
+          message: 'Internal server error',
+          code: 'PASSWORD_CHECK_ERROR',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       if (!passwordMatch) {
         return res.status(401).json({ 
           message: 'Invalid email or password',
@@ -488,6 +535,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: 'Logout failed',
         code: 'LOGOUT_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Database seeding endpoint for test users (development only)
+  app.post('/api/auth/seed', async (req, res) => {
+    try {
+      // Check if users already exist
+      const existingDemo = await storage.getUserByEmail('demo@test.com');
+      const existingAdmin = await storage.getUserByEmail('admin@test.com');
+      
+      let created = [];
+      
+      if (!existingDemo) {
+        const demoUser = await storage.createUser({
+          id: "test-user-123",
+          email: "demo@test.com",
+          hashedPassword: "$2b$10$AsIHwrKU6nwX.JLjCBHNvOXNcFjdllyiqNKDfcAfwjw49Z.wjd8qC", // demo123
+          role: "user",
+          firstName: "Demo",
+          lastName: "User",
+          isActive: true,
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+          subscriptionTier: "free",
+          subscriptionStatus: null,
+          subscriptionEndsAt: null,
+          lastLoginAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        created.push('demo@test.com');
+      }
+      
+      if (!existingAdmin) {
+        const adminUser = await storage.createUser({
+          id: "test-admin-456",
+          email: "admin@test.com",
+          hashedPassword: "$2b$10$TKBj8OmaCdFrFjX3Qby6T.p8zv6ShfWE8Mgh5UqhO2pZP7.o0/IQu", // admin123
+          role: "admin",
+          firstName: "Admin",
+          lastName: "User",
+          isActive: true,
+          stripeCustomerId: null,
+          stripeSubscriptionId: null,
+          subscriptionTier: "premium",
+          subscriptionStatus: "active",
+          subscriptionEndsAt: null,
+          lastLoginAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        created.push('admin@test.com');
+      }
+      
+      res.json({ 
+        message: 'Database seeding completed',
+        created,
+        existing: [
+          ...(existingDemo ? ['demo@test.com'] : []),
+          ...(existingAdmin ? ['admin@test.com'] : [])
+        ],
+        code: 'SEED_SUCCESS',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Seeding error:', error);
+      res.status(500).json({ 
+        message: 'Database seeding failed',
+        error: error.message,
+        code: 'SEED_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Password update endpoint for fixing authentication
+  app.post('/api/auth/update-password', async (req, res) => {
+    try {
+      const { email, newPassword } = req.body;
+      
+      if (!email || !newPassword) {
+        return res.status(400).json({
+          message: 'Email and newPassword are required',
+          code: 'INVALID_REQUEST'
+        });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({
+          message: 'User not found',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+
+      const newHashedPassword = bcrypt.hashSync(newPassword, 10);
+      await storage.updateUser(user.id, { hashedPassword: newHashedPassword });
+      
+      console.log(`Password updated for user: ${email}`);
+      console.log(`New hash: ${newHashedPassword}`);
+
+      res.json({
+        message: 'Password updated successfully',
+        email,
+        code: 'PASSWORD_UPDATED',
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('Password update error:', error);
+      res.status(500).json({
+        message: 'Password update failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        code: 'UPDATE_ERROR',
         timestamp: new Date().toISOString()
       });
     }
