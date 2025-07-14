@@ -1,0 +1,30 @@
+Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/signals/BTCUSDT:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/chart/heatmap/BTC:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/chart/cycle/BTC:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/chart/forecast/BTC:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:3000/:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:3000/:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/signals/BTCUSDT:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/chart/heatmap/BTC:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/chart/cycle/BTC:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/chart/forecast/BTC:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/market/price/BTCUSDT:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/signals/BTCUSDT:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/chart/heatmap/BTC:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/chart/cycle/BTC:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:3000/:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:5000/api/chart/forecast/BTC:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+localhost:3000/:1  Failed to load resource: net::ERR_CONNECTION_REFUSEDUnderstand this error
+  GET http://localhost:5000/api/market/price/BTCUSDT net::ERR_CONNECTION_REFUSED
+(anonymous) @ :3000/src/lib/queryClient.ts:43
+fetchFn @ @tanstack_react-query.js:840
+run @ @tanstack_react-query.js:494
+start @ @tanstack_react-query.js:536
+fetch @ @tanstack_react-query.js:926
+executeFetch_fn @ @tanstack_react-query.js:2211
+(anonymous) @ @tanstack_react-query.js:2245Understand this error
+  GET https://localhost:3000/ net::ERR_CONNECTION_REFUSED
+ping @ :3000/@vite/client:736
+waitForSuccessfulPing @ :3000/@vite/client:755Understand this error
+  GET https://localhost:3000/ net::ERR_CONNECTION_REFUSED
