@@ -76,8 +76,8 @@ app.use(dataValidationMiddleware);
 const frontendDistPath = path.join(__dirname, '../../../frontend_new/dist');
 app.use(express.static(frontendDistPath));
 
-// Add a simple dashboard interface at root
-app.get('/', (req, res) => {
+// Add API info route
+app.get('/api', (req, res) => {
   res.send(`
     <!DOCTYPE html>
     <html lang="en">
