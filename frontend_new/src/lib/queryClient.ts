@@ -1,21 +1,11 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { buildApiUrl } from "./config";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
-}
-
-// Build API URL with environment variable support
-function buildApiUrl(path: string): string {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-  // Handle paths that already include /api
-  if (path.startsWith('/api')) {
-    return `${baseUrl}${path}`;
-  }
-  // Handle paths without /api prefix
-  return `${baseUrl}/api${path.startsWith('/') ? '' : '/'}${path}`;
 }
 
 export async function apiRequest(
@@ -97,13 +87,13 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: 30000, // Refresh data every 30 seconds
+      refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 25000, // Data is fresh for 25 seconds
-      retry: 2,
+      staleTime: Infinity,
+      retry: false,
     },
     mutations: {
-      retry: 1,
+      retry: false,
     },
   },
 });

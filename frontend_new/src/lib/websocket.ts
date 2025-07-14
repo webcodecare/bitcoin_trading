@@ -17,10 +17,15 @@ export class WebSocketManager {
   private isConnecting = false;
 
   constructor() {
-    // Only initialize WebSocket in production or when explicitly needed
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const port = window.location.port || (protocol === "wss:" ? "443" : "80");
-    this.url = `${protocol}//${window.location.hostname}:${port}/ws`;
+    // Use centralized config for WebSocket URL
+    import('./config').then(({ buildWsUrl }) => {
+      this.url = buildWsUrl('/ws');
+    }).catch(() => {
+      // Fallback to current implementation if config import fails
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const port = window.location.port || (protocol === "wss:" ? "443" : "80");
+      this.url = `${protocol}//${window.location.hostname}:${port}/ws`;
+    });
   }
 
   connect(): Promise<void> {
