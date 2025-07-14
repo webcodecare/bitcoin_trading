@@ -205,6 +205,7 @@ The original monolith setup remains functional for backward compatibility.
 
 ```
 Changelog:
+- July 14, 2025. CRITICAL STARTUP FIXES: Resolved all application startup failures by creating missing .env file with JWT_SECRET, fixed TypeScript schema mismatches in user settings and storage layer, added missing required fields (category, marketCap) to ticker data, corrected timeframe values in signal entries (30M, 1H, 4H format). Application now running successfully on port 5000 with functional authentication, API endpoints, database integration, and real-time WebSocket connections.
 - July 05, 2025. Initial setup
 - July 05, 2025. Added PostgreSQL database with sample data
 - July 05, 2025. Created separate admin pages for user management, signal logs, and ticker management
