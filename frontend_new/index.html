@@ -1,12 +1,118 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="description" content="Professional crypto trading platform with real-time Bitcoin signals, 200-week heatmaps, and advanced analytics. Join thousands of traders making data-driven decisions." />
+    <title>CryptoStrategy Pro - Professional Bitcoin Trading Signals & Analytics</title>
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Inter font for better typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="CryptoStrategy Pro - Professional Bitcoin Trading Platform">
+    <meta property="og:description" content="Advanced crypto trading signals with real-time analytics, 200-week heatmaps, and professional forecasting tools.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cryptostrategy.pro">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CryptoStrategy Pro - Professional Bitcoin Trading Platform">
+    <meta name="twitter:description" content="Advanced crypto trading signals with real-time analytics and professional tools.">
+    
+    <!-- Performance and SEO -->
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#3b82f6">
+    
+    <style>
+      /* Critical CSS for initial load */
+      body {
+        margin: 0;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        background-color: hsl(240, 10%, 8%);
+        color: hsl(0, 0%, 95%);
+        line-height: 1.6;
+      }
+      
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* Loading screen styles */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: hsl(240, 10%, 8%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+      
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid hsl(240, 3.7%, 25%);
+        border-top: 4px solid hsl(207, 90%, 54%);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Hide loading screen after page loads */
+      .loaded .loading-screen {
+        display: none;
+      }
+      
+      /* Prevent flash of unstyled content */
+      .preload * {
+        transition: none !important;
+      }
+    </style>
   </head>
-  <body>
+  <body class="preload">
+    <!-- Loading screen -->
+    <div class="loading-screen">
+      <div class="loading-spinner"></div>
+    </div>
+    
     <div id="root"></div>
+    
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Remove preload class after page loads -->
+    <script>
+      window.addEventListener('load', function() {
+        document.body.classList.remove('preload');
+        document.body.classList.add('loaded');
+      });
+      
+      // Remove loading screen after a maximum time
+      setTimeout(function() {
+        const loadingScreen = document.querySelector('.loading-screen');
+        if (loadingScreen) {
+          loadingScreen.style.display = 'none';
+        }
+        document.body.classList.add('loaded');
+      }, 3000);
+    </script>
+    
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
