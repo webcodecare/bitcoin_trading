@@ -32,7 +32,13 @@ export default defineConfig({
   server: {
     port: 3000,
     host: "0.0.0.0",
-    allowedHosts: "all",
+    allowedHosts: [
+      "localhost",
+      "127.0.0.1",
+      "14dcc8b1-7e04-460a-98f6-3bb5bbb9cc0f-00-1pudjbz6ofd2u.spock.replit.dev",
+      ".replit.dev",
+      ".repl.co"
+    ],
     hmr: {
       host: "localhost",
       port: 3000
