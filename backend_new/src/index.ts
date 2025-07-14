@@ -72,6 +72,74 @@ app.use(securityMiddleware);
 app.use(encryptionMiddleware);
 app.use(dataValidationMiddleware);
 
+// Frontend redirect route - redirect root access to frontend port 3000
+app.get('/', (req, res) => {
+  const frontendUrl = `http://${req.hostname}:3000`;
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bitcoin Trading Platform - Redirecting...</title>
+        <style>
+            body { 
+                font-family: system-ui, sans-serif; 
+                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                color: white; 
+                margin: 0; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                min-height: 100vh;
+                text-align: center;
+            }
+            .container { max-width: 600px; padding: 2rem; }
+            .logo { font-size: 3rem; margin-bottom: 1rem; }
+            h1 { color: #f39c12; margin-bottom: 1rem; }
+            p { color: #bdc3c7; margin-bottom: 2rem; line-height: 1.6; }
+            .button { 
+                display: inline-block; 
+                background: #f39c12; 
+                color: white; 
+                padding: 1rem 2rem; 
+                text-decoration: none; 
+                border-radius: 8px; 
+                font-weight: bold;
+                transition: background 0.3s;
+            }
+            .button:hover { background: #e67e22; }
+            .status { 
+                background: rgba(255,255,255,0.1); 
+                padding: 1rem; 
+                border-radius: 8px; 
+                margin-top: 2rem;
+                font-size: 0.9rem;
+            }
+        </style>
+        <script>
+            // Auto-redirect after 3 seconds
+            setTimeout(() => {
+                window.location.href = '${frontendUrl}';
+            }, 3000);
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="logo">₿</div>
+            <h1>Bitcoin Trading Platform</h1>
+            <p>You've accessed the API backend. Redirecting you to the trading platform...</p>
+            <a href="${frontendUrl}" class="button">Go to Trading Platform</a>
+            <div class="status">
+                <strong>Backend Status:</strong> ✅ Online<br>
+                <strong>Frontend URL:</strong> <a href="${frontendUrl}" style="color: #3498db;">${frontendUrl}</a>
+            </div>
+        </div>
+    </body>
+    </html>
+  `);
+});
+
 // Serve static files from frontend_new/dist (if built) or a simple HTML page
 const frontendDistPath = path.join(__dirname, '../../../frontend_new/dist');
 app.use(express.static(frontendDistPath));

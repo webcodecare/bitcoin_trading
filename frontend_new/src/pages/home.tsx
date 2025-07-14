@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
-import TradingViewWidget from "@/components/charts/TradingViewWidget";
-import HeatmapChart from "@/components/charts/HeatmapChart";
-import CycleChart from "@/components/charts/CycleChart";
-import SimpleDemoChart from "@/components/charts/SimpleDemoChart";
+import SafeTradingViewWidget from "@/components/charts/SafeTradingViewWidget";
+import SafeHeatmapChart from "@/components/charts/SafeHeatmapChart";
+import SafeCycleChart from "@/components/charts/SafeCycleChart";
+import SafeSimpleDemoChart from "@/components/charts/SafeSimpleDemoChart";
 import MarketWidget from "@/components/widgets/MarketWidget";
 import { 
   Bitcoin, 
@@ -168,7 +168,7 @@ export default function Home() {
             
             {/* Live BTC Chart Preview */}
             <div className="order-first lg:order-last lg:ml-8">
-              <SimpleDemoChart 
+              <SafeSimpleDemoChart 
                 title="Bitcoin Live Chart"
                 symbol="BTCUSDT"
                 className="shadow-xl"
@@ -210,7 +210,7 @@ export default function Home() {
 
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             {/* Advanced BTC Chart with Buy/Sell Signals */}
-            <TradingViewWidget 
+            <SafeTradingViewWidget 
               symbol="BINANCE:BTCUSDT"
               height={400}
               enableTrading={true}
@@ -219,7 +219,7 @@ export default function Home() {
             />
 
             {/* 200-Week Heatmap */}
-            <HeatmapChart 
+            <SafeHeatmapChart 
               symbol="BTC"
               height={400}
               className="border border-border"
@@ -227,7 +227,7 @@ export default function Home() {
           </div>
 
           {/* Cycle Forecaster */}
-          <CycleChart 
+          <SafeCycleChart 
             symbol="BTC"
             height={300}
             className="border border-border"
@@ -241,12 +241,12 @@ export default function Home() {
             </div>
             
             <div className="grid lg:grid-cols-2 gap-6 mb-8">
-              <SimpleDemoChart 
+              <SafeSimpleDemoChart 
                 title="Bitcoin"
                 symbol="BTCUSDT"
                 className="shadow-lg"
               />
-              <SimpleDemoChart 
+              <SafeSimpleDemoChart 
                 title="Ethereum"
                 symbol="ETHUSDT"
                 className="shadow-lg"
@@ -254,12 +254,12 @@ export default function Home() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <SimpleDemoChart 
+              <SafeSimpleDemoChart 
                 title="Solana"
                 symbol="SOLUSDT"
                 className="shadow-lg"
               />
-              <SimpleDemoChart 
+              <SafeSimpleDemoChart 
                 title="Cardano"
                 symbol="ADAUSDT" 
                 className="shadow-lg"
