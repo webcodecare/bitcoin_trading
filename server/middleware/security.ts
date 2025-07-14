@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 
+// Security middleware functions
+
 // Admin role middleware
 export const requireAdmin = (req: any, res: Response, next: NextFunction) => {
   if (!req.user) {
