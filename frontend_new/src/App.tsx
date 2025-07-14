@@ -141,6 +141,28 @@ function Router() {
 }
 
 export default function App() {
+  // Global error handling for chart-related issues
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled promise rejection:', event.reason);
+      
+      // Prevent default behavior for specific known issues
+      if (event.reason && event.reason.message) {
+        const message = event.reason.message.toLowerCase();
+        if (message.includes('tradingview') || 
+            message.includes('chart') || 
+            message.includes('widget')) {
+          event.preventDefault();
+          console.warn('Chart-related error handled gracefully');
+          return;
+        }
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
