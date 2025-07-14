@@ -2290,49 +2290,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { interval = '1h', limit = 1000 } = req.query;
       
       const data = await storage.getOhlcData(ticker, interval as string, parseInt(limit as string));
-      
-      // If no data found, generate sample OHLC data
-      if (!data || data.length === 0) {
-        const sampleOhlcData = [];
-        const now = new Date();
-        let basePrice = 67000; // Bitcoin base price
-        
-        if (ticker.includes('ETH')) basePrice = 3400;
-        else if (ticker.includes('SOL')) basePrice = 98;
-        else if (ticker.includes('ADA')) basePrice = 0.45;
-        
-        for (let i = parseInt(limit as string) - 1; i >= 0; i--) {
-          const date = new Date(now.getTime() - (i * 60 * 60 * 1000)); // Hourly data
-          const variation = (Math.random() - 0.5) * 0.04;
-          const open = basePrice * (1 + variation);
-          const high = open * (1 + Math.random() * 0.02);
-          const low = open * (1 - Math.random() * 0.02);
-          const close = low + (high - low) * Math.random();
-          const volume = Math.random() * 1000000;
-          
-          sampleOhlcData.push({
-            id: `sample-ohlc-${ticker}-${i}`,
-            ticker: ticker.replace('USDT', ''),
-            interval,
-            timestamp: date,
-            createdAt: date,
-            open: open.toFixed(2),
-            high: high.toFixed(2),
-            low: low.toFixed(2),
-            close: close.toFixed(2),
-            volume: volume.toFixed(0),
-            source: "sample"
-          });
-          
-          basePrice = close; // Next candle starts at this close
-        }
-        
-        return res.json(sampleOhlcData);
-      }
-      
       res.json(data);
     } catch (error) {
-      console.error('Error fetching OHLC data:', error);
       res.status(500).json({ message: 'Failed to get OHLC data' });
     }
   });
@@ -2341,38 +2300,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { ticker } = req.params;
       const data = await storage.getHeatmapData(ticker);
-      
-      // If no data found, generate sample heatmap data
-      if (!data || data.length === 0) {
-        const sampleHeatmapData = [];
-        const now = new Date();
-        
-        for (let i = 200; i >= 0; i--) {
-          const date = new Date(now.getTime() - (i * 7 * 24 * 60 * 60 * 1000)); // Weekly data
-          const price = 45000 + (Math.sin(i * 0.05) * 15000) + (Math.random() * 5000);
-          const sma200Week = price * (0.85 + Math.random() * 0.3);
-          const deviation = ((price - sma200Week) / sma200Week * 100);
-          
-          sampleHeatmapData.push({
-            id: `sample-heatmap-${ticker}-${i}`,
-            ticker: ticker.replace('USDT', ''),
-            date,
-            createdAt: date,
-            price: price.toFixed(2),
-            sma200Week: sma200Week.toFixed(2),
-            deviation: deviation.toFixed(2),
-            percentile: Math.min(100, Math.max(0, 50 + deviation)).toFixed(1),
-            color: deviation > 20 ? "red" : deviation > 0 ? "orange" : deviation > -20 ? "green" : "blue",
-            intensity: Math.abs(deviation / 40).toFixed(2)
-          });
-        }
-        
-        return res.json(sampleHeatmapData);
-      }
-      
       res.json(data);
     } catch (error) {
-      console.error('Error fetching heatmap data:', error);
       res.status(500).json({ message: 'Failed to get heatmap data' });
     }
   });
