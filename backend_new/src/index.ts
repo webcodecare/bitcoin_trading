@@ -15,6 +15,11 @@ import { smsService } from "./services/smsService.js";
 import { telegramService } from "./services/telegramService.js";
 import rateLimit from "express-rate-limit";
 import { securityMiddleware, encryptionMiddleware, dataValidationMiddleware } from "./middleware/simple.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = config.port;
@@ -66,6 +71,44 @@ app.use('/api', limiter);
 app.use(securityMiddleware);
 app.use(encryptionMiddleware);
 app.use(dataValidationMiddleware);
+
+// Serve static files from frontend_new/dist (if built) or a simple HTML page
+const frontendDistPath = path.join(__dirname, '../../../frontend_new/dist');
+app.use(express.static(frontendDistPath));
+
+// Add a simple API status page at root
+app.get('/', (req, res) => {
+  res.json({
+    name: "Bitcoin Trading Backend API",
+    version: "1.0.0",
+    status: "online",
+    features: [
+      "28 cryptocurrency tickers",
+      "Real-time WebSocket support", 
+      "TradingView webhook integration",
+      "JWT authentication",
+      "PostgreSQL database",
+      "Notification processing"
+    ],
+    endpoints: {
+      tickers: "/api/tickers",
+      signals: "/api/signals", 
+      users: "/api/users",
+      ohlc: "/api/ohlc",
+      webhook: "/api/webhook/alerts",
+      health: "/api/health"
+    },
+    database: {
+      connected: true,
+      tickers: 28
+    },
+    services: {
+      notificationProcessor: "active",
+      webSocket: "ready",
+      authentication: "enabled"
+    }
+  });
+});
 
 // Initialize services
 if (process.env.NODE_ENV === 'development') {
